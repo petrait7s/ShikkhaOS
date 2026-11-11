@@ -1,0 +1,144 @@
+name: Desktop (Windows)
+
+# Builds the Electron app and the Windows installer (.exe, NSIS) + portable exe + latest.yml
+# (electron-updater metadata). Callable from release.yml.
+
+on:
+  pull_request:
+    paths: ["apps/desktop/**", "packages/**", "pnpm-lock.yaml", ".github/workflows/desktop.yml"]
+  push:
+    branches: [main]
+    paths: ["apps/desktop/**", "packages/**", "pnpm-lock.yaml", ".github/workflows/desktop.yml"]
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        default: ""
+      release:
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  windows:
+    name: Build Windows installer
+    runs-on: windows-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect desktop app
+        id: d
+        run: |
+          if [ -f apps/desktop/package.json ]; then echo "present=true" >> "$GITHUB_OUTPUT"
+          elif [ "${{ inputs.release }}" = "true" ]; then echo "::error::Release requires apps/desktop"; exit 1
+          else echo "::notice::No desktop app yet; skipped"; echo "present=false" >> "$GITHUB_OUTPUT"; fi
+      - uses: pnpm/action-setup@v4
+        if: steps.d.outputs.present == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.d.outputs.present == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - uses: actions/cache@v4
+        if: steps.d.outputs.present == 'true'
+        with:
+          path: |
+            ~\AppData\Local\electron\Cache
+            ~\AppData\Local\electron-builder\Cache
+          key: electron-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: Signing configuration
+        if: steps.d.outputs.present == 'true'
+        id: sign
+        env:
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+        run: |
+          if [ -n "$WIN_CSC_LINK" ] && [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          elif [ "${{ inputs.release }}" = "true" ] && [ "${{ vars.ALLOW_UNSIGNED_WINDOWS }}" != "true" ]; then
+            echo "::error::WIN_CSC_LINK secret missing. Auto-update trust requires a signed installer. Set repo variable ALLOW_UNSIGNED_WINDOWS=true to override (not recommended)."
+            exit 1
+          else
+            echo "::warning::Building UNSIGNED installer"
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Version
+        if: steps.d.outputs.present == 'true'
+        id: v
+        run: |
+          V="${{ inputs.version }}"
+          [ -n "$V" ] || V="0.0.0-ci.${{ github.run_number }}"
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+      - run: pnpm install --frozen-lockfile
+        if: steps.d.outputs.present == 'true'
+      - name: Stamp version into apps/desktop/package.json
+        if: steps.d.outputs.present == 'true'
+        working-directory: apps/desktop
+        run: npm pkg set version="${{ steps.v.outputs.version }}"
+      - name: Build renderer + main
+        if: steps.d.outputs.present == 'true'
+        env:
+          API_MODE: ${{ inputs.release && 'live' || 'mock' }}
+          SHIKKHAOS_API_BASE_URL: ${{ vars.PRODUCTION_API_BASE_URL }}
+          VITE_API_BASE_URL: ${{ vars.PRODUCTION_API_BASE_URL }}
+          VITE_API_MODE: ${{ inputs.release && 'live' || 'mock' }}
+        run: pnpm desktop:build
+      - name: Package Windows installer
+        if: steps.d.outputs.present == 'true'
+        env:
+          CSC_LINK: ${{ steps.sign.outputs.signed == 'true' && secrets.WIN_CSC_LINK || '' }}
+          CSC_KEY_PASSWORD: ${{ steps.sign.outputs.signed == 'true' && secrets.WIN_CSC_KEY_PASSWORD || '' }}
+          CSC_IDENTITY_AUTO_DISCOVERY: ${{ steps.sign.outputs.signed == 'true' && 'true' || 'false' }}
+          GH_TOKEN: ""   # never publish from the build step; release.yml publishes
+        run: pnpm desktop:dist:win
+      - name: Verify outputs
+        if: steps.d.outputs.present == 'true'
+        working-directory: apps/desktop/release
+        run: |
+          ls -l
+          ls ShikkhaOS-Setup-*.exe >/dev/null
+          test -f latest.yml
+          ls *.blockmap >/dev/null
+          grep -q "version: ${{ steps.v.outputs.version }}" latest.yml
+      - name: Verify Authenticode signature
+        if: steps.d.outputs.present == 'true' && steps.sign.outputs.signed == 'true'
+        shell: pwsh
+        run: |
+          Get-ChildItem apps/desktop/release/*.exe | ForEach-Object {
+            $s = Get-AuthenticodeSignature $_.FullName
+            "$($_.Name): $($s.Status)"
+            if ($s.Status -ne 'Valid') { throw "Invalid signature on $($_.Name)" }
+          }
+      - name: Silent install smoke test
+        if: steps.d.outputs.present == 'true' && inputs.release
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem apps/desktop/release/ShikkhaOS-Setup-*.exe | Select-Object -First 1
+          Start-Process -FilePath $setup.FullName -ArgumentList '/S' -Wait
+          $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse -Filter 'ShikkhaOS.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $exe) { throw 'ShikkhaOS.exe not found after silent install' }
+          "Installed: $($exe.FullName)"
+          $unin = Get-ChildItem (Split-Path $exe.FullName) -Filter 'Uninstall*.exe' | Select-Object -First 1
+          if ($unin) { Start-Process -FilePath $unin.FullName -ArgumentList '/S' -Wait }
+      - uses: actions/upload-artifact@v4
+        if: steps.d.outputs.present == 'true'
+        with:
+          name: desktop-windows
+          path: |
+            apps/desktop/release/*.exe
+            apps/desktop/release/*.blockmap
+            apps/desktop/release/latest.yml
+          if-no-files-found: error
+          retention-days: 30

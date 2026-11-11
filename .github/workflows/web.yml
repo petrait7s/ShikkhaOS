@@ -1,0 +1,165 @@
+name: Web
+
+# Next.js production build + tests, then optional deployment.
+# Hosting provider is chosen with the repository variable WEB_DEPLOY_PROVIDER = vercel | docker | none (default none).
+#   vercel : secrets VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
+#   docker : publishes ghcr.io/<owner>/<repo>-web (self-host on the school server)
+
+on:
+  pull_request:
+    paths: ["apps/web/**", "packages/**", "pnpm-lock.yaml", ".github/workflows/web.yml"]
+  push:
+    branches: [main]
+    paths: ["apps/web/**", "packages/**", "pnpm-lock.yaml", ".github/workflows/web.yml"]
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        default: ""
+      release:
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      present: ${{ steps.d.outputs.present }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: d
+        run: |
+          if [ -f apps/web/package.json ]; then echo "present=true" >> "$GITHUB_OUTPUT"
+          elif [ "${{ inputs.release }}" = "true" ]; then echo "::error::Release requires apps/web"; exit 1
+          else echo "::notice::No web app yet; skipped"; echo "present=false" >> "$GITHUB_OUTPUT"; fi
+      - uses: pnpm/action-setup@v4
+        if: steps.d.outputs.present == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.d.outputs.present == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        if: steps.d.outputs.present == 'true'
+      - name: Cache Next.js build cache
+        if: steps.d.outputs.present == 'true'
+        uses: actions/cache@v4
+        with:
+          path: apps/web/.next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/web/**/*.[jt]s', 'apps/web/**/*.[jt]sx') }}
+          restore-keys: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+      - name: Unit/component tests
+        if: steps.d.outputs.present == 'true'
+        run: pnpm --filter web run test
+      - name: Production build
+        if: steps.d.outputs.present == 'true'
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+          API_MODE: ${{ inputs.release && 'live' || 'mock' }}
+          NEXT_PUBLIC_API_MODE: ${{ inputs.release && 'live' || 'mock' }}
+          NEXT_PUBLIC_API_BASE_URL: ${{ vars.PRODUCTION_API_BASE_URL }}
+          SHIKKHAOS_API_BASE_URL: ${{ vars.PRODUCTION_API_BASE_URL }}
+          NEXT_PUBLIC_APP_VERSION: ${{ inputs.version || github.sha }}
+        run: pnpm web:build
+      - name: Package web build
+        if: steps.d.outputs.present == 'true' && inputs.release
+        run: |
+          mkdir -p dist
+          tar --sort=name --owner=0 --group=0 --numeric-owner -czf "dist/shikkhaos-web-${{ inputs.version }}.tar.gz" \
+              -C apps/web --exclude=.next/cache .next public package.json next.config.* 2>/dev/null || \
+          tar --sort=name --owner=0 --group=0 --numeric-owner -czf "dist/shikkhaos-web-${{ inputs.version }}.tar.gz" \
+              -C apps/web --exclude=.next/cache .next package.json
+      - uses: actions/upload-artifact@v4
+        if: steps.d.outputs.present == 'true' && inputs.release
+        with:
+          name: web-build
+          path: dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+
+  deploy-vercel:
+    name: Deploy (Vercel)
+    needs: build
+    if: needs.build.outputs.present == 'true' && vars.WEB_DEPLOY_PROVIDER == 'vercel' && (inputs.release || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: ${{ inputs.release && 'production' || 'staging' }}
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      TARGET: ${{ inputs.release && 'production' || 'preview' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Pull, build, deploy
+        env:
+          NEXT_PUBLIC_API_MODE: ${{ inputs.release && 'live' || 'mock' }}
+          NEXT_PUBLIC_API_BASE_URL: ${{ vars.PRODUCTION_API_BASE_URL }}
+        run: |
+          pnpm dlx vercel@39 pull --yes --environment="$TARGET" --token="$VERCEL_TOKEN"
+          if [ "$TARGET" = production ]; then
+            pnpm dlx vercel@39 build --prod --token="$VERCEL_TOKEN"
+            pnpm dlx vercel@39 deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+          else
+            pnpm dlx vercel@39 build --token="$VERCEL_TOKEN"
+            pnpm dlx vercel@39 deploy --prebuilt --token="$VERCEL_TOKEN"
+          fi
+
+  deploy-docker:
+    name: Publish web image (GHCR)
+    needs: build
+    if: needs.build.outputs.present == 'true' && vars.WEB_DEPLOY_PROVIDER == 'docker' && (inputs.release || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - id: img
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}-web" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.img.outputs.name }}
+          tags: |
+            type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
+            type=raw,value=latest,enable=${{ inputs.release && !contains(inputs.version, '-') }}
+            type=edge,branch=main
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infrastructure/docker/web.Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=${{ vars.PRODUCTION_API_BASE_URL }}
+            NEXT_PUBLIC_API_MODE=${{ inputs.release && 'live' || 'mock' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

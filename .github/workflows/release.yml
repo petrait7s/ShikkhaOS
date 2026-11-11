@@ -1,0 +1,153 @@
+name: Release
+
+# Tag v<MAJOR>.<MINOR>.<PATCH>[-prerelease] => build every platform, then publish ONE GitHub Release.
+# The release is created as a DRAFT, assets are uploaded and verified, and only then published.
+# If any job fails, nothing is published (and any draft is deleted).
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+", "v[0-9]+.[0-9]+.[0-9]+-*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Validate tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      prerelease: ${{ steps.v.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: v
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          [[ "$TAG" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z.-]+)?$ ]] || { echo "::error::Bad tag $TAG"; exit 1; }
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          [[ "$TAG" == *-* ]] && echo "prerelease=true" >> "$GITHUB_OUTPUT" || echo "prerelease=false" >> "$GITHUB_OUTPUT"
+      - name: Tagged commit must be on main
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "::error::Tag $GITHUB_REF_NAME is not on main"; exit 1; }
+
+  ci:
+    needs: prepare
+    uses: ./.github/workflows/ci.yml
+    with:
+      release: true
+
+  backend:
+    needs: [prepare, ci]
+    uses: ./.github/workflows/backend.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      release: true
+      push_image: true
+    secrets: inherit
+
+  desktop:
+    needs: [prepare, ci]
+    uses: ./.github/workflows/desktop.yml
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      release: true
+    secrets: inherit
+
+  android:
+    needs: [prepare, ci]
+    uses: ./.github/workflows/android.yml
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      release: true
+    secrets: inherit
+
+  web:
+    needs: [prepare, ci]
+    uses: ./.github/workflows/web.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      release: true
+    secrets: inherit
+
+  publish:
+    name: Publish GitHub Release
+    needs: [prepare, backend, desktop, android, web]   # all must succeed; no `always()` on purpose
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ github.ref_name }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+      PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Verify the complete artifact set
+        working-directory: dist
+        run: |
+          ls -l
+          ls shikkhaos-api-*-x86_64-linux.tar.gz
+          ls ShikkhaOS-Setup-*.exe
+          test -f latest.yml
+          ls ShikkhaOS-Student-*.apk
+          ls ShikkhaOS-Student-*.aab
+          ls shikkhaos-web-*.tar.gz
+          if ls ./*NOT-FOR-DISTRIBUTION* 2>/dev/null; then echo "::error::CI-only artifact in release set"; exit 1; fi
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum -- * | grep -v SHA256SUMS > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - name: Build provenance attestations
+        if: vars.ENABLE_ATTESTATIONS == 'true'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/*
+      - name: Release notes header
+        run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}-api:${VERSION}"
+          cat > header.md <<NOTES
+          ## ShikkhaOS ${VERSION}
+
+          | Platform | File |
+          |---|---|
+          | Windows desktop | \`ShikkhaOS-Setup-${VERSION}.exe\` (+ \`latest.yml\` for auto-update) |
+          | Android (students) | \`ShikkhaOS-Student-${VERSION}.apk\` (sideload) / \`.aab\` (Play) |
+          | Backend (Linux x86_64) | \`shikkhaos-api-${VERSION}-x86_64-linux.tar.gz\` or \`docker pull ${IMAGE}\` |
+          | Web | \`shikkhaos-web-${VERSION}.tar.gz\` (or the deployed site) |
+
+          Verify downloads with \`SHA256SUMS.txt\`. Full instructions: docs/releases/RELEASING.md
+          NOTES
+      - name: Create draft release, upload, verify, publish
+        run: |
+          set -euo pipefail
+          FLAGS=(--draft --verify-tag --title "ShikkhaOS ${VERSION}" --generate-notes --notes-file header.md)
+          [ "$PRERELEASE" = "true" ] && FLAGS+=(--prerelease) || FLAGS+=(--latest)
+          gh release create "$TAG" "${FLAGS[@]}"
+          gh release upload "$TAG" dist/* --clobber
+          expected=$(ls dist | wc -l)
+          actual=$(gh release view "$TAG" --json assets --jq '.assets | length')
+          [ "$expected" = "$actual" ] || { echo "::error::Uploaded $actual of $expected assets"; exit 1; }
+          gh release edit "$TAG" --draft=false
+      - name: Remove draft on failure
+        if: failure()
+        run: gh release delete "$TAG" --yes 2>/dev/null || true

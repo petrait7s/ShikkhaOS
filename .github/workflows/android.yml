@@ -1,0 +1,164 @@
+name: Android (Student app)
+
+# Builds the Expo/React Native student app: signed release APK (+ AAB) on release,
+# debug-signed validation APK on PR/main. Keystore comes ONLY from GitHub Secrets.
+
+on:
+  pull_request:
+    paths: ["apps/mobile/**", "packages/**", "pnpm-lock.yaml", ".github/workflows/android.yml"]
+  push:
+    branches: [main]
+    paths: ["apps/mobile/**", "packages/**", "pnpm-lock.yaml", ".github/workflows/android.yml"]
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        default: ""
+      release:
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: "22"
+  JAVA_VERSION: "17"
+
+jobs:
+  apk:
+    name: Build APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect mobile app
+        id: d
+        run: |
+          if [ -f apps/mobile/package.json ]; then echo "present=true" >> "$GITHUB_OUTPUT"
+          elif [ "${{ inputs.release }}" = "true" ]; then echo "::error::Release requires apps/mobile"; exit 1
+          else echo "::notice::No mobile app yet; skipped"; echo "present=false" >> "$GITHUB_OUTPUT"; fi
+      - name: Require signing secrets for releases
+        if: steps.d.outputs.present == 'true' && inputs.release
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KSP: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KA: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KP: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          for v in KS KSP KA KP; do
+            [ -n "${!v}" ] || { echo "::error::Android signing secret missing (ANDROID_KEYSTORE_BASE64 / _KEYSTORE_PASSWORD / _KEY_ALIAS / _KEY_PASSWORD). Releases are never published unsigned."; exit 1; }
+          done
+      - uses: pnpm/action-setup@v4
+        if: steps.d.outputs.present == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.d.outputs.present == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        if: steps.d.outputs.present == 'true'
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: actions/cache@v4
+        if: steps.d.outputs.present == 'true'
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'apps/mobile/app.config.*', 'apps/mobile/app.json', 'apps/mobile/package.json') }}
+          restore-keys: gradle-${{ runner.os }}-
+      - name: Version
+        if: steps.d.outputs.present == 'true'
+        id: v
+        run: |
+          V="${{ inputs.version }}"
+          if [ -n "$V" ]; then
+            core="${V%%-*}"; IFS=. read -r MA MI PA <<< "$core"
+            # versionCode = (MA*1e6 + MI*1e3 + PA)*100 + suffix; prerelease rc.N => N (max 98), final => 99,
+            # so 1.0.0-rc.1 < 1.0.0-rc.2 < 1.0.0 and in-place upgrades always work.
+            SUF=99
+            if [[ "$V" == *-* ]]; then n="${V##*[!0-9]}"; SUF=$(( ${n:-1} > 98 ? 98 : ${n:-1} )); fi
+            CODE=$(( (MA*1000000 + MI*1000 + PA)*100 + SUF ))
+          else
+            V="0.0.0-ci.${{ github.run_number }}"; CODE=${{ github.run_number }}
+          fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"; echo "code=$CODE" >> "$GITHUB_OUTPUT"
+          echo "Version $V (versionCode $CODE)"
+      - run: pnpm install --frozen-lockfile
+        if: steps.d.outputs.present == 'true'
+      - name: Typecheck mobile
+        if: steps.d.outputs.present == 'true'
+        run: pnpm --filter mobile run typecheck
+      - name: Generate native project (expo prebuild)
+        if: steps.d.outputs.present == 'true'
+        working-directory: apps/mobile
+        env:
+          API_MODE: ${{ inputs.release && 'live' || 'mock' }}
+          EXPO_PUBLIC_API_MODE: ${{ inputs.release && 'live' || 'mock' }}
+          EXPO_PUBLIC_API_BASE_URL: ${{ vars.PRODUCTION_API_BASE_URL }}
+          SHIKKHAOS_API_BASE_URL: ${{ vars.PRODUCTION_API_BASE_URL }}
+          APP_VERSION: ${{ steps.v.outputs.version }}
+          EXPO_NO_TELEMETRY: "1"
+        run: pnpm exec expo prebuild --platform android --clean --no-install
+      - name: Stamp versionName / versionCode
+        if: steps.d.outputs.present == 'true'
+        working-directory: apps/mobile/android/app
+        run: |
+          sed -i -E 's/versionCode [0-9]+/versionCode ${{ steps.v.outputs.code }}/' build.gradle
+          sed -i -E 's/versionName "[^"]*"/versionName "${{ steps.v.outputs.version }}"/' build.gradle
+          grep -nE 'versionCode|versionName' build.gradle
+      - name: Gradle assemble
+        if: steps.d.outputs.present == 'true'
+        working-directory: apps/mobile/android
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false"
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace assembleRelease ${{ inputs.release && 'bundleRelease' || '' }}
+      - name: Sign, align and verify (release)
+        if: steps.d.outputs.present == 'true' && inputs.release
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          V: ${{ steps.v.outputs.version }}
+        run: |
+          set -euo pipefail
+          KS="$RUNNER_TEMP/release.keystore"
+          echo "$KS_B64" | base64 -d > "$KS"
+          BT="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n1)"
+          OUT="$GITHUB_WORKSPACE/dist"; mkdir -p "$OUT"
+          RAW=$(ls apps/mobile/android/app/build/outputs/apk/release/*.apk | head -n1)
+          "$BT/zipalign" -p -f 4 "$RAW" "$RUNNER_TEMP/aligned.apk"
+          "$BT/apksigner" sign --ks "$KS" --ks-key-alias "$KEY_ALIAS" \
+            --ks-pass env:KS_PASS --key-pass env:KEY_PASS \
+            --out "$OUT/ShikkhaOS-Student-$V.apk" "$RUNNER_TEMP/aligned.apk"
+          "$BT/apksigner" verify --verbose --print-certs "$OUT/ShikkhaOS-Student-$V.apk"
+          AAB=$(ls apps/mobile/android/app/build/outputs/bundle/release/*.aab | head -n1)
+          jarsigner -keystore "$KS" -storepass:env KS_PASS -keypass:env KEY_PASS \
+            -signedjar "$OUT/ShikkhaOS-Student-$V.aab" "$AAB" "$KEY_ALIAS"
+          jarsigner -verify "$OUT/ShikkhaOS-Student-$V.aab"
+          ls -l "$OUT"
+      - name: Collect validation APK (non-release)
+        if: steps.d.outputs.present == 'true' && !inputs.release
+        run: |
+          mkdir -p dist
+          cp apps/mobile/android/app/build/outputs/apk/release/*.apk "dist/ShikkhaOS-Student-${{ steps.v.outputs.version }}-ci-NOT-FOR-DISTRIBUTION.apk"
+      - name: Remove keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.keystore" "$RUNNER_TEMP/aligned.apk"
+      - uses: actions/upload-artifact@v4
+        if: steps.d.outputs.present == 'true'
+        with:
+          name: android-student
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30

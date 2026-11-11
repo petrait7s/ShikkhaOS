@@ -1,0 +1,131 @@
+name: CI
+
+# Pull requests and pushes to main: lint, typecheck, test, contract and build validation
+# for the TypeScript workspace, plus repository hygiene. Rust has its own workflow (backend.yml).
+# Also callable from release.yml (release=true => missing components are errors, not skips).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
+    inputs:
+      release:
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  hygiene:
+    name: Repository hygiene
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Forbid committed keystores and private keys
+        run: |
+          bad=$(git ls-files | grep -Ei '\.(jks|keystore|p12|pfx|pem|key)$' | grep -Ev '(^|/)(fixtures|testdata)/' || true)
+          if [ -n "$bad" ]; then
+            echo "::error::Signing material must never be committed:"; echo "$bad"; exit 1
+          fi
+      - name: Forbid obvious secrets in tracked files
+        run: |
+          if git grep -nEI '(-----BEGIN (RSA |EC |OPENSSH |)PRIVATE KEY-----|AKIA[0-9A-Z]{16}|ghp_[0-9A-Za-z]{36})' -- . ':!docs' ':!*.md' ; then
+            echo "::error::Possible secret committed"; exit 1
+          fi
+      - name: Lint GitHub Actions workflows
+        uses: raven-actions/actionlint@v2
+
+  detect:
+    name: Detect workspace
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      js: ${{ steps.d.outputs.js }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: d
+        run: |
+          if [ -f package.json ] && [ -f pnpm-workspace.yaml ]; then
+            echo "js=true" >> "$GITHUB_OUTPUT"
+          elif [ "${{ inputs.release }}" = "true" ]; then
+            echo "::error::Release build requires the pnpm workspace (package.json + pnpm-workspace.yaml)"; exit 1
+          else
+            echo "::notice::No pnpm workspace yet; JS jobs skipped"
+            echo "js=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  frontend:
+    name: Typecheck, lint, test, build
+    needs: detect
+    if: needs.detect.outputs.js == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      API_MODE: mock
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4          # version from "packageManager" in package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+      - name: Contract check (mock responses vs docs/api/openapi.yaml)
+        run: pnpm contract:check
+      - run: pnpm build
+
+  e2e:
+    name: End-to-end (Playwright)
+    needs: detect
+    if: needs.detect.outputs.js == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      API_MODE: mock
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/cache@v4
+        id: pw
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  ci-ok:
+    name: CI result
+    if: always()
+    needs: [hygiene, detect, frontend, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every job to succeed or be skipped
+        run: |
+          echo '${{ toJSON(needs) }}'
+          if echo '${{ join(needs.*.result, ' ') }}' | grep -Eq 'failure|cancelled'; then exit 1; fi

@@ -29,7 +29,7 @@ docker build -f infrastructure/docker/api.Dockerfile -t shikkhaos-api:local .   
 If a gate fails, fix it. Do not weaken tests or skip them to get green. Do not package a build that fails `cargo build --release`.
 
 ## 4. ZIP deliverable
-Create `scripts/package-backend.sh` (bash, reproducible) that produces `dist/shikkhaos-backend-<version>.zip` (version from `apps/api` Cargo workspace version, default `0.1.0`), plus `dist/shikkhaos-backend-<version>.zip.sha256`.
+Create `scripts/package-backend.sh` (bash, reproducible) that produces `dist/backend.zip` (and an identical copy `dist/shikkhaos-backend-<version>.zip`; version from `apps/api` Cargo workspace version, default `0.1.0`), plus `dist/backend.zip.sha256`.
 
 ZIP layout (single top-level folder `shikkhaos-backend-<version>/`):
 ```

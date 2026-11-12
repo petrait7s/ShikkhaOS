@@ -21,7 +21,7 @@ const shot = (key, caption, opt = {}) => {
 };
 const phone = (key, caption) => `<figure class="phone"><div class="screen"><img src="${src(find(key))}" alt="${caption}"></div><figcaption>${caption}</figcaption></figure>`;
 let pageNo = 0;
-const page = (cls, body, { head = true } = {}) => { pageNo++; return `<section class="page ${cls}">${head ? `<header class="run"><span class="brand"><img src="${LOGO}" alt=""><b>ShikkhaOS</b> · Project proposal</span><span>School Managing Committee</span></header>` : ""}${body}<footer class="foot"><span>One School. One System. One Connected Community.</span><span>${pageNo}</span></footer></section>`; };
+const page = (cls, body, { head = true } = {}) => { pageNo++; return `<section class="page ${cls}">${head ? `<header class="run"><span class="brand"><img src="${LOGO}" alt=""><b>ShikkhaOS</b> · Project proposal</span><span>School Managing Committee</span></header>` : ""}${body}<footer class="foot"><span>One School. One System. One Connected Community. · <a href="https://petrait.site" style="color:inherit">petrait.site</a></span><span>${pageNo}</span></footer></section>`; };
 const b64 = (f, mime) => `data:${mime};base64,${readFileSync(path.join(dir, f)).toString("base64")}`;
 const LOGO = b64("logo-mark.png", "image/png"), LOGO_LIGHT = b64("logo-mark-light.png", "image/png"), TILE = b64("logo-tile.jpg", "image/jpeg");
 const icon = (n) => ({ headmaster: "★", registrar: "✎", teacher: "✐", student: "☺", check: "✓", lock: "🔒" }[n] ?? "•");
@@ -86,7 +86,7 @@ ${page("cover", `<div class="glow"></div><div class="glow2"></div><div class="in
   <h1>One school.<br>One system.</h1>
   <div class="tag">A single, secure digital platform for administration, teaching, examinations and communication — built for our school.</div>
   <div style="height:70mm"></div>
-  <div class="meta"><div><b>Project Proposal</b>For the School Managing Committee</div><div><b>November 2026</b>Version 1.0 — for decision</div><div><b>Platforms</b>Windows desktop · Web · Android</div></div>
+  <div class="meta"><div><b>Project Proposal</b>For the School Managing Committee</div><div><b>November 2026</b>Version 1.0 — for decision</div><div><b>Platforms</b>Windows desktop · Web · Android<br><a href="https://petrait.site" style="color:#5EEAD4;text-decoration:none">petrait.site</a></div></div>
   <div class="hero"><img src="${src(find("headmaster-dashboard"))}" alt="Headmaster dashboard"></div></div>`, { head: false })}
 
 ${page("", `
@@ -322,7 +322,7 @@ ${page("closing", `<div class="glow"></div><div class="glow2"></div><div class="
   <h1>Let’s begin with one class.</h1>
   <div class="tag" style="font-size:14pt;color:var(--mint);max-width:130mm;margin-bottom:10mm">A small pilot lets teachers, the Register and the Headmaster judge ShikkhaOS on real work — with paper as a safety net — before the whole school commits.</div>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6mm;border-top:1px solid rgba(220,239,235,.3);padding-top:6mm;font-size:9.5pt;color:#C7D6E8"><div><b style="color:#fff;display:block">Step 1</b>Committee approves the pilot</div><div><b style="color:#fff;display:block">Step 2</b>We prepare the server, accounts and training</div><div><b style="color:#fff;display:block">Step 3</b>One class, one term, weekly review</div></div>
-  <div style="margin-top:auto;font-size:9pt;color:#9FB1C9">ShikkhaOS · One School. One System. One Connected Community.</div></div>`, { head: false })}
+  <div style="margin-top:auto;font-size:9pt;color:#9FB1C9">ShikkhaOS · One School. One System. One Connected Community.<br><a href="https://petrait.site" style="color:#5EEAD4;text-decoration:none;font-size:11pt;font-weight:600">petrait.site</a></div></div>`, { head: false })}
 </body></html>`;
 
 writeFileSync(path.join(dir, "index.html"), html);

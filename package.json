@@ -10,7 +10,7 @@
     "typecheck": "pnpm -r --if-present typecheck",
     "lint": "pnpm -r --if-present lint",
     "test": "pnpm -r --if-present test",
-    "test:e2e": "pnpm --filter @shikkhaos/e2e test",
+    "test:e2e": "pnpm --filter @shikkhaos/e2e e2e",
     "contract:check": "node scripts/contract-check.mjs",
     "build": "pnpm -r --if-present build",
     "web:build": "pnpm --filter web build",

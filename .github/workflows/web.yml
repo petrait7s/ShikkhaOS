@@ -61,9 +61,9 @@ jobs:
           path: apps/web/.next/cache
           key: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/web/**/*.[jt]s', 'apps/web/**/*.[jt]sx') }}
           restore-keys: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
-      - name: Unit/component tests
+      - name: Unit/component tests (shared UI + clients)
         if: steps.d.outputs.present == 'true'
-        run: pnpm --filter web run test
+        run: pnpm --filter @shikkhaos/screens --filter @shikkhaos/api-client --filter @shikkhaos/validation --filter @shikkhaos/permissions run test
       - name: Production build
         if: steps.d.outputs.present == 'true'
         env:

@@ -1,6 +1,6 @@
 [advisories]
 version = 2
-ignore = []
+ignore = ["RUSTSEC-2023-0071", "RUSTSEC-2026-0459"]  # lock-file-only (unused sqlx drivers); see .cargo/audit.toml
 
 [licenses]
 version = 2

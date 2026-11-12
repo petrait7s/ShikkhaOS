@@ -88,13 +88,20 @@ jobs:
       - run: pnpm build
 
   e2e:
-    name: End-to-end (Playwright)
+    name: End-to-end (Playwright + Rust API)
     needs: detect
     if: needs.detect.outputs.js == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 40
-    env:
-      API_MODE: mock
+    timeout-minutes: 60
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -102,21 +109,30 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/api
       - run: pnpm install --frozen-lockfile
+      - name: Build the API (debug is enough for e2e)
+        working-directory: apps/api
+        run: cargo build --locked --bin shikkhaos-api
       - uses: actions/cache@v4
-        id: pw
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:e2e
+      - run: pnpm --filter @shikkhaos/e2e exec playwright install --with-deps chromium
+      - name: Run end-to-end tests against the real stack
+        env:
+          E2E_PG_URL: postgres://postgres:postgres@localhost:5432
+          PGPASSWORD: postgres
+        run: pnpm test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report
-          path: |
-            playwright-report/
-            test-results/
+          name: e2e-logs
+          path: e2e/.files
+          if-no-files-found: ignore
           retention-days: 7
 
   ci-ok:

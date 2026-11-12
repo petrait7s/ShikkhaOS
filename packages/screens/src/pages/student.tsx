@@ -3,7 +3,7 @@ import type { AttendanceSummary, PublishedResult, Student } from "@shikkhaos/typ
 import { useApp, useGet, useAction } from "../context";
 import { Badge, Button, Card, Empty, ErrorState, Field, Input, PageHeader, Select, Skeleton, StatusBadge, Table, fmtDate, useToast } from "../ui";
 import { ResultCard } from "./students";
-import { changePasswordSchema } from "@shikkhaos/validation";
+import { changePasswordSchema, firstErrors } from "@shikkhaos/validation";
 
 function useMe() { return useGet<Student>("/students/me"); }
 
@@ -33,7 +33,7 @@ export function MyClassTests() {
 export function MyProfile({ theme, setTheme, compact, setCompact }: { theme: string; setTheme: (t: "light" | "dark" | "system") => void; compact: boolean; setCompact: (v: boolean) => void }) {
   const { api, auth } = useApp(); const [cur, setCur] = React.useState(""); const [next, setNext] = React.useState(""); const [errs, setErrs] = React.useState<Record<string, string>>({});
   const devices = useGet<{ id: string; platform: string; lastSeenAt: string; current: boolean }[]>("/auth/devices");
-  const change = useAction(async () => { const v = changePasswordSchema.safeParse({ currentPassword: cur, newPassword: next }); if (!v.success) { setErrs(Object.fromEntries(v.error.issues.map((i) => [String(i.path[0]), i.message]))); throw new Error("Fix the highlighted fields"); } setErrs({}); try { await api.post("/auth/change-password", { currentPassword: cur, newPassword: next }); setCur(""); setNext(""); } catch (e: any) { if (e.fieldErrors) setErrs(Object.fromEntries(e.fieldErrors.map((x: any) => [x.field, x.message]))); throw e; } }, { success: "Password changed. Other devices were signed out." });
+  const change = useAction(async () => { const v = changePasswordSchema.safeParse({ currentPassword: cur, newPassword: next }); if (!v.success) { setErrs(firstErrors(v.error.issues)); throw new Error("Fix the highlighted fields"); } setErrs({}); try { await api.post("/auth/change-password", { currentPassword: cur, newPassword: next }); setCur(""); setNext(""); } catch (e: any) { if (e.fieldErrors) setErrs(Object.fromEntries(e.fieldErrors.map((x: any) => [x.field, x.message]))); throw e; } }, { success: "Password changed. Other devices were signed out." });
   const revoke = useAction((id: string) => api.del(`/auth/devices/${id}`), { invalidate: ["/auth"], success: "Device signed out" });
   return <><PageHeader title="Profile & settings" sub={`${auth.user.displayName} · ${auth.user.username}`} />
     <div className="grid cols-2">

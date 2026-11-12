@@ -95,7 +95,7 @@ function StudentHome() {
   return (
     <div className="stack">
       <div className="grid cols-3">
-        <Stat label="Attendance" value={att.data ? `${att.data.summary.percentage}%` : "—"} hint={att.data ? `${att.data.summary.absent} absent of ${att.data.summary.total} days` : undefined} />
+        <Stat label="Attendance" value={att.data?.summary ? `${att.data.summary.percentage}%` : "—"} hint={att.data?.summary ? `${att.data.summary.absent} absent of ${att.data.summary.total} days` : undefined} />
         <Stat label="Homework due" value={hw.data ? hw.data.filter((h) => h.status === "PUBLISHED" && !h.mySubmission).length : "—"} />
         <Stat label="Published results" value={results.data?.length ?? "—"} />
       </div>

@@ -18,3 +18,10 @@ export function checkMarks(raw: string, full: number, absent: boolean): MarkChec
   const n = Number(raw);
   return n >= 0 && n <= full ? { ok: true } : { ok: false, message: `Must be between 0 and ${full}` };
 }
+
+/** Map zod issues to {field: first message} (first message is the most specific/primary rule). */
+export function firstErrors(issues: readonly { path: readonly (string | number)[]; message: string }[]): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const i of issues) { const k = String(i.path[0] ?? "form"); if (!(k in out)) out[k] = i.message; }
+  return out;
+}

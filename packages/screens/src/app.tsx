@@ -4,7 +4,7 @@ import * as Icons from "lucide-react";
 import { ApiClient, ApiError, Realtime } from "@shikkhaos/api-client";
 import { navFor } from "@shikkhaos/permissions";
 import { ROLE_LABEL, type LoginResult, type NotificationItem, type User } from "@shikkhaos/types";
-import { changePasswordSchema, loginSchema } from "@shikkhaos/validation";
+import { changePasswordSchema, firstErrors, loginSchema } from "@shikkhaos/validation";
 import { AppCtx, makeQueryClient, Providers, useApp, useGet, useList, useRealtimeInvalidate, useLocalState, useAction, type AuthState, type Platform } from "./context";
 import { Button, Empty, ErrorState, Field, Input, Modal, Skeleton, ToastProvider, errText, fmtDateTime, useToast } from "./ui";
 import { Dashboard } from "./pages/dashboard";
@@ -88,7 +88,7 @@ function ForcePasswordChange({ api, onDone }: { api: ApiClient; onDone: () => vo
   const [cur, setCur] = React.useState(""); const [next, setNext] = React.useState(""); const [errs, setErrs] = React.useState<Record<string, string>>({}); const [busy, setBusy] = React.useState(false);
   const submit = async () => {
     const v = changePasswordSchema.safeParse({ currentPassword: cur, newPassword: next });
-    if (!v.success) { setErrs(Object.fromEntries(v.error.issues.map((i) => [String(i.path[0]), i.message]))); return; }
+    if (!v.success) { setErrs(firstErrors(v.error.issues)); return; }
     setBusy(true); setErrs({});
     try { await api.post("/auth/change-password", { currentPassword: cur, newPassword: next }); onDone(); }
     catch (e) { if (e instanceof ApiError && e.fieldErrors.length) setErrs(Object.fromEntries(e.fieldErrors.map((f) => [f.field, f.message]))); else setErrs({ newPassword: errText(e) }); }

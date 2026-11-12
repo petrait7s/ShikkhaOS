@@ -1,0 +1,5 @@
+# Both advisories concern crates that appear in Cargo.lock only because sqlx lists its MySQL/SQLite drivers as optional
+# dependencies. They are NOT compiled into shikkhaos-api: `cargo tree -i rsa` and `cargo tree -i libsqlite3-sys` print nothing.
+# Re-verify with those commands whenever sqlx features change; remove the ignores once sqlx drops the lock entries.
+[advisories]
+ignore = ["RUSTSEC-2023-0071", "RUSTSEC-2026-0459"]

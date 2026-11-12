@@ -1,0 +1,4 @@
+# Rust ecosystem decisions
+
+Versions are pinned in `apps/api/Cargo.lock` and were resolved from crates.io at build time. Selected: axum 0.8 + tower/tower-http 0.6 (web, middleware), tokio 1, sqlx 0.8 (rustls, postgres, migrate), serde/serde_json, argon2 0.5, jsonwebtoken 9, rust_decimal 1 (marks are never floats), chrono, uuid, tracing, tokio-tungstenite (tests only). Alternatives not adopted: utoipa (OpenAPI is generated from the router by `scripts/gen-openapi.mjs` instead), apalis/Redis jobs (single-instance scheduler used; see A-05), aws-sdk-s3 (local storage; A-04), printpdf/genpdf (built-in minimal PDF writer; A-13).
+Not performed: a formal maintenance/licence/advisory review per crate; `cargo audit` is run in CI (and attempted locally — see STATUS.md); `cargo deny` policy in `apps/api/deny.toml` has not been executed locally.

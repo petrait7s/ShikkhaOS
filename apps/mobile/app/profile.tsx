@@ -2,7 +2,7 @@ import * as React from "react";
 import { Switch, View } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import * as LocalAuth from "expo-local-authentication";
-import { changePasswordSchema } from "@shikkhaos/validation";
+import { changePasswordSchema, firstErrors } from "@shikkhaos/validation";
 import { ApiError } from "@shikkhaos/api-client";
 import { useApp, useAction, useGet } from "../lib/app";
 import { Badge, Btn, Card, Field, Screen, T, fmtDate } from "../components/ui";
@@ -12,7 +12,7 @@ export default function Profile() {
   const [bio, setBio] = React.useState(false); const devices = useGet<{ id: string; platform: string; lastSeenAt: string; current: boolean }[]>("/auth/devices");
   React.useEffect(() => { void SecureStore.getItemAsync("sos.biometric").then((v) => setBio(v === "1")).catch(() => {}); }, []);
   const toggle = async (v: boolean) => { if (v && !(await LocalAuth.hasHardwareAsync() && await LocalAuth.isEnrolledAsync())) { setErrs({ bio: "No biometrics are set up on this phone." }); return; } setBio(v); await SecureStore.setItemAsync("sos.biometric", v ? "1" : "0"); };
-  const change = useAction(async () => { const v = changePasswordSchema.safeParse({ currentPassword: cur, newPassword: next }); if (!v.success) { setErrs(Object.fromEntries(v.error.issues.map((i) => [String(i.path[0]), i.message]))); return; } setErrs({}); try { await api.post("/auth/change-password", { currentPassword: cur, newPassword: next }); setCur(""); setNext(""); setOk(true); } catch (e) { if (e instanceof ApiError) setErrs(Object.fromEntries(e.fieldErrors.map((f) => [f.field, f.message]))); } });
+  const change = useAction(async () => { const v = changePasswordSchema.safeParse({ currentPassword: cur, newPassword: next }); if (!v.success) { setErrs(firstErrors(v.error.issues)); return; } setErrs({}); try { await api.post("/auth/change-password", { currentPassword: cur, newPassword: next }); setCur(""); setNext(""); setOk(true); } catch (e) { if (e instanceof ApiError) setErrs(Object.fromEntries(e.fieldErrors.map((f) => [f.field, f.message]))); } });
   const revoke = useAction((id: string) => api.del(`/auth/devices/${id}`), { invalidate: ["/auth"] });
   return <Screen>
     <Card><T size={16} weight="700">Change password</T>{ok ? <Badge text="Password changed. Other devices were signed out." tone="ok" /> : null}

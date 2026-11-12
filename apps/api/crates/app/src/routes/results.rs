@@ -162,7 +162,8 @@ async fn get_one(
         .get("revision")
         .and_then(|r| r.parse().ok())
         .unwrap_or(rs.current_rev);
-    let rows: Vec<Value> = sqlx::query_scalar("SELECT to_jsonb(t) FROM (SELECT sr.student_id, st.full_name, st.student_code, sr.section_id, sec.name AS section_name, e.roll_no, sr.revision, sr.total_marks, sr.gpa, sr.grade, sr.passed, sr.position, sr.subjects \
+    let rows: Vec<Value> = sqlx::query_scalar("SELECT to_jsonb(t) FROM (SELECT sr.student_id, st.full_name, st.student_code, sr.section_id, sec.name AS section_name, e.roll_no, sr.revision, sr.total_marks, sr.gpa, sr.grade, sr.passed, sr.position, \
+        COALESCE((SELECT jsonb_agg(x.v || jsonb_build_object('subjectName', sb.name) ORDER BY x.n) FROM jsonb_array_elements(sr.subjects) WITH ORDINALITY AS x(v, n) JOIN subjects sb ON sb.id = (x.v->>'subjectId')::uuid), '[]'::jsonb) AS subjects \
         FROM student_results sr JOIN students st ON st.id = sr.student_id JOIN sections sec ON sec.id = sr.section_id JOIN result_sets rs ON rs.id = sr.result_set_id JOIN exams ex ON ex.id = rs.exam_id LEFT JOIN enrollments e ON e.student_id = sr.student_id AND e.session_id = ex.session_id \
         WHERE sr.result_set_id=$1 AND sr.revision=$2 ORDER BY sr.position NULLS LAST, e.roll_no) t").bind(id).bind(rev).fetch_all(&s.db).await?;
     let failed = rows

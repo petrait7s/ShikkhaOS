@@ -9,10 +9,11 @@ describe("charts", () => {
     expect(screen.getByRole("table", { name: "Attendance % per section" })).toBeInTheDocument();
   });
   it("maps reports to chart data and aggregates grade distribution", () => {
-    const c = reportChart("result-distribution", [{ grade: "A+", students: 3, class_name: "6" }, { grade: "A+", students: 2, class_name: "7" }, { grade: "B", students: 1, class_name: "6" }])!;
+    const c = reportChart("result-distribution", [{ grade: "A+", students: 3, className: "6" }, { grade: "A+", students: 2, className: "7" }, { grade: "B", students: 1, className: "6" }])!;
     expect(c.data).toEqual([{ label: "A+", value: 5 }, { label: "B", value: 1 }]);
     expect(reportChart("nope", [])).toBeNull();
-    expect(reportChart("attendance-summary", [{ class_name: "6", section_name: "A", percentage: "91.5" }])!.data[0]!.value).toBe(91.5);
+    const att = reportChart("attendance-summary", [{ className: "Class 6", sectionName: "A", percentage: "91.5" }])!;
+    expect(att.data[0]).toEqual({ label: "Class 6-A", value: 91.5 });
   });
   it("shows an empty state without data", () => {
     render(<BarChart title="x" data={[]} />);

@@ -31,7 +31,7 @@ interface Cell { paperId: string; subjectName: string; className: string; sectio
 export function ExamDetail() {
   const { id } = useParams(); const s = useSession(); const { api } = useApp(); const toast = useToast();
   const exam = useGet<Exam>(`/exams/${id}`); const papers = useList<ExamPaper>("/exam-papers", { examId: id }); const classes = useList<SchoolClass>("/classes"); const subjects = useList<Subject>("/subjects");
-  const progress = useGet<{ cells: Cell[]; totals: Record<string, number> }>(can(s, "exams.create") || can(s, "marks.review") || can(s, "exams.authorize") ? `/exams/${id}/progress` : null);
+  const progress = useGet<{ cells: Cell[]; totals: { status: string; count: number }[] }>(can(s, "exams.create") || can(s, "marks.review") || can(s, "exams.authorize") ? `/exams/${id}/progress` : null);
   const [adding, setAdding] = React.useState(false); const [confirm, setConfirm] = React.useState<"authorize" | "close" | null>(null);
   const authorize = useAction(() => api.post<{ submissionsCreated: number; missingAssignments: unknown[] }>(`/exams/${id}/authorize`), { invalidate: ["/exams", "/mark-submissions"], onSuccess: (r) => toast(`Authorized — ${r.submissionsCreated} submission${r.submissionsCreated === 1 ? "" : "s"} opened${r.missingAssignments.length ? `; ${r.missingAssignments.length} section(s) have no assigned teacher` : ""}`) });
   const close = useAction(() => api.post(`/exams/${id}/close`), { invalidate: ["/exams"], success: "Exam closed" });
@@ -46,7 +46,7 @@ export function ExamDetail() {
       <Card title="Papers" actions={can(s, "exams.create") && e.status === "DRAFT" ? <Button size="sm" variant="primary" onClick={() => setAdding(true)}>Add paper</Button> : null}>
         {papers.isLoading ? <Skeleton /> : <Table rows={papers.data ?? []} rowKey={(p) => p.id} empty={<Empty title="No papers yet">Add a paper for each class and subject.</Empty>} columns={[{ key: "c", header: "Class", render: (p) => cn(p.classId) }, { key: "s", header: "Subject", render: (p) => sn(p.subjectId) }, { key: "f", header: "Full marks", align: "r", render: (p) => p.fullMarks }, { key: "p", header: "Pass marks", align: "r", render: (p) => p.passMarks }, { key: "d", header: "Date", render: (p) => fmtDate(p.examDate) }]} />}</Card>
       {progress.data ? <Card title="Marks progress">
-        <div className="row" style={{ marginBottom: 8 }}>{Object.entries(progress.data.totals).map(([k, v]) => <span key={k}><StatusBadge status={k} /> <strong>{v}</strong></span>)}</div>
+        <div className="row" style={{ marginBottom: 8 }}>{progress.data.totals.map((x) => <span key={x.status}><StatusBadge status={x.status} /> <strong>{x.count}</strong></span>)}</div>
         <Table rows={progress.data.cells} rowKey={(c) => `${c.paperId}-${c.sectionId}`} empty={<Empty title="No papers" />} columns={[{ key: "p", header: "Paper", render: (c) => `${c.subjectName} · ${c.className}-${c.sectionName}` }, { key: "t", header: "Teacher", render: (c) => c.teacherName ?? <Badge tone="warn">No teacher assigned</Badge> }, { key: "s", header: "Status", render: (c) => <StatusBadge status={c.status ?? "NOT_STARTED"} /> }]} /></Card> : null}
     </div>
     {adding ? <AddPaper examId={e.id} onClose={() => setAdding(false)} /> : null}

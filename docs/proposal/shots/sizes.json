@@ -1,0 +1,122 @@
+{
+ "01-login.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 574
+ },
+ "02-headmaster-dashboard.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 606
+ },
+ "03-results-list.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 185
+ },
+ "04-results-approval.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 813
+ },
+ "05-exam-progress.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 771
+ },
+ "06-exams-list.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 222
+ },
+ "07-reports-chart.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 398
+ },
+ "08-permissions.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 711
+ },
+ "09-audit-log.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 813
+ },
+ "10-settings-policies.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 813
+ },
+ "11-students-registry.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 788
+ },
+ "12-review-inbox.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 275
+ },
+ "13-review-detail.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 813
+ },
+ "14-marks-list.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 295
+ },
+ "15-marks-entry-grid.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 801
+ },
+ "16-attendance-roll-call.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 813
+ },
+ "17-class-tests.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 238
+ },
+ "18-homework-teacher.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 185
+ },
+ "19-teacher-dashboard-correction.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 813
+ },
+ "20-correction-requested.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 813
+ },
+ "21-student-dashboard.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 578
+ },
+ "22-student-result.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 325
+ },
+ "23-messages-chat.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 813
+ },
+ "24-notices.jpg": {
+  "w": 2160,
+  "h": 1350,
+  "content": 377
+ }
+}

@@ -33,15 +33,15 @@ export function BarChart({ title, data, unit = "", max }: { title: string; data:
 export function reportChart(key: string, rows: Record<string, unknown>[]): { title: string; data: Datum[]; unit?: string; max?: number } | null {
   const num = (v: unknown) => Number(v ?? 0);
   switch (key) {
-    case "enrollment-summary": return { title: "Students per section", data: rows.map((r) => ({ label: `${r.class_name}-${r.section_name}`, value: num(r.students) })) };
-    case "attendance-summary": return { title: "Attendance % per section", unit: "%", max: 100, data: rows.map((r) => ({ label: `${r.class_name}-${r.section_name}`, value: num(r.percentage) })) };
-    case "exam-analysis": return { title: "Pass rate % per exam and class", unit: "%", max: 100, data: rows.map((r) => ({ label: `${r.exam_name} · ${r.class_name}`, value: num(r.pass_rate) })) };
+    case "enrollment-summary": return { title: "Students per section", data: rows.map((r) => ({ label: `${r.className}-${r.sectionName}`, value: num(r.students) })) };
+    case "attendance-summary": return { title: "Attendance % per section", unit: "%", max: 100, data: rows.map((r) => ({ label: `${r.className}-${r.sectionName}`, value: num(r.percentage) })) };
+    case "exam-analysis": return { title: "Pass rate % per exam and class", unit: "%", max: 100, data: rows.map((r) => ({ label: `${r.examName} · ${r.className}`, value: num(r.passRate) })) };
     case "result-distribution": {
       const by = new Map<string, number>();
       rows.forEach((r) => by.set(String(r.grade), (by.get(String(r.grade)) ?? 0) + num(r.students)));
       return { title: "Students per grade", data: [...by].sort(([a], [b]) => a.localeCompare(b)).map(([label, value]) => ({ label, value })) };
     }
-    case "teacher-submission-status": return { title: "Verified submissions per teacher", data: rows.map((r) => ({ label: `${r.teacher_name}`, value: num(r.verified) })) };
+    case "teacher-submission-status": return { title: "Verified submissions per teacher", data: rows.map((r) => ({ label: `${r.teacherName}`, value: num(r.verified) })) };
     default: return null;
   }
 }

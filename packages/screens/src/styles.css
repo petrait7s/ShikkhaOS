@@ -92,3 +92,19 @@ table.t td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical
 .pin-btn { border: 0; background: none; cursor: pointer; color: var(--text-3); opacity: 0; padding: 2px 6px; } .nav-row:hover .pin-btn, .pin-btn:focus-visible, .pin-btn[aria-pressed="true"] { opacity: 1; } .pin-btn[aria-pressed="true"] { color: var(--accent); }
 .dock { position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%); display: flex; gap: 6px; padding: 6px 10px; background: var(--sidebar); backdrop-filter: saturate(180%) blur(20px); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); z-index: 30; }
 .dock-btn { width: 40px; height: 40px; border-radius: 10px; border: 0; background: var(--surface); cursor: pointer; display: grid; place-items: center; color: var(--text); } .dock-btn:hover { background: var(--accent-weak); } .dock-btn[aria-current="page"] { background: var(--accent-strong); color: #fff; }
+
+/* phones and narrow windows */
+.menu-btn { display: none; }
+@media (max-width: 860px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .menu-btn { display: inline-flex; }
+  .titlebar { gap: 4px; padding: 0 8px; }
+  .search-btn { min-width: 0; padding: 6px 10px; } .search-btn .search-text, .search-btn kbd { display: none; }
+  .profile-name { display: none; }
+  .main { min-width: 0; padding: 14px; } .main > .inner { min-width: 0; }
+  .statusbar { flex-wrap: wrap; gap: 8px; }
+  .page-head { align-items: flex-start; } .table-wrap { max-width: 100%; }
+  .modal { max-height: 94vh; } .popover { width: min(360px, calc(100vw - 16px)); right: -40px; }
+  .stat .v { font-size: 22px; }
+}
+@media (max-width: 480px) { .brand { font-size: 0; gap: 0; } .brand .logo { font-size: 12px; } }

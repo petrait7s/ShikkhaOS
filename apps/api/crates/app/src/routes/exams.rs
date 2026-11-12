@@ -288,12 +288,17 @@ async fn progress(
     let rows: Vec<Value> = sqlx::query_scalar("SELECT to_jsonb(t) FROM (SELECT p.id AS paper_id, p.class_id, p.subject_id, sub.name AS subject_name, c.name AS class_name, sec.id AS section_id, sec.name AS section_name, \
         ms.id AS submission_id, ms.status, ms.teacher_id, t.full_name AS teacher_name, ms.current_revision FROM exam_papers p JOIN classes c ON c.id=p.class_id JOIN subjects sub ON sub.id=p.subject_id \
         JOIN sections sec ON sec.class_id=p.class_id LEFT JOIN mark_submissions ms ON ms.exam_paper_id=p.id AND ms.section_id=sec.id LEFT JOIN teachers t ON t.id=ms.teacher_id WHERE p.exam_id=$1 ORDER BY c.\"order\", sub.code, sec.name) t").bind(id).fetch_all(&s.db).await?;
-    let mut totals: HashMap<String, i64> = HashMap::new();
+    // totals is a list (not a map): map keys would be mangled by the camelCase key conversion
+    let mut counts: std::collections::BTreeMap<String, i64> = std::collections::BTreeMap::new();
     for r in &rows {
-        *totals
+        *counts
             .entry(r["status"].as_str().unwrap_or("NOT_STARTED").to_string())
             .or_default() += 1;
     }
+    let totals: Vec<Value> = counts
+        .into_iter()
+        .map(|(status, count)| json!({ "status": status, "count": count }))
+        .collect();
     Ok(ok(json!({ "exam": exam, "cells": rows, "totals": totals })))
 }
 

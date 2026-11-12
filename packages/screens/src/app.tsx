@@ -151,9 +151,9 @@ function Shell({ theme, setTheme }: { theme: string; setTheme: (t: "light" | "da
   return (
     <div className={`shell ${compact ? "compact" : ""} ${platform.kind}`}>
       <div className="titlebar">
-        <Button variant="ghost" size="sm" className="menu-btn" onClick={() => setMenu((m) => !m)} aria-label="Menu" style={{ display: "none" }}>☰</Button>
+        <Button variant="ghost" size="sm" className="menu-btn" onClick={() => setMenu((m) => !m)} aria-label="Menu" aria-expanded={menu}>☰</Button>
         <div className="brand"><span className="logo">S</span>ShikkhaOS</div>
-        <button className="search-btn" onClick={() => setPalette(true)}><Icons.Search size={14} /> {t("Search students, notices, exams…")} <kbd>Ctrl K</kbd></button>
+        <button className="search-btn" onClick={() => setPalette(true)}><Icons.Search size={14} /> <span className="search-text">{t("Search students, notices, exams…")}</span> <kbd>Ctrl K</kbd></button>
         <span className="spacer" />
         <div style={{ position: "relative" }}>
           <Button variant="ghost" className="icon" onClick={() => setNotif((v) => !v)} aria-label={`Notifications${unread.data?.count ? `, ${unread.data.count} unread` : ""}`} aria-expanded={notif}><Icons.Bell size={16} />{unread.data?.count ? <span className="badge-dot" style={{ background: "var(--bad)", color: "#fff", borderRadius: 10, fontSize: 11, padding: "0 6px", marginLeft: 2 }}>{unread.data.count}</span> : null}</Button>
@@ -217,7 +217,7 @@ function ProfileMenu({ name, role, onLogout, compact, setCompact }: { name: stri
   const [open, setOpen] = React.useState(false); const navigate = useNavigate();
   return (
     <div style={{ position: "relative" }}>
-      <Button variant="ghost" onClick={() => setOpen((o) => !o)} aria-expanded={open}><Icons.CircleUser size={16} /> {name}</Button>
+      <Button variant="ghost" onClick={() => setOpen((o) => !o)} aria-expanded={open}><Icons.CircleUser size={16} /> <span className="profile-name">{name}</span></Button>
       {open ? <div className="popover" style={{ width: 240 }} role="menu" onClick={() => setOpen(false)}>
         <div style={{ padding: 12 }}><strong>{name}</strong><div className="muted">{role}</div></div>
         <button className="nav-item" role="menuitem" onClick={() => navigate("/profile")}><Icons.Settings size={14} /> {t("Profile & settings")}</button>

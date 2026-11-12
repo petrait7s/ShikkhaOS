@@ -327,6 +327,22 @@ async fn full_official_exam_workflow() {
     let rs = data(&v)["id"].as_str().unwrap().to_string();
     assert_eq!(data(&v)["summary"]["students"], 8);
     assert_eq!(data(&v)["summary"]["failed"], 1); // the absent student
+    assert_eq!(
+        data(&v)["results"][0]["subjects"][0]["subjectName"],
+        "Mathematics",
+        "result sheets carry subject names, not ids"
+    );
+    let (_, prog) = t
+        .request("GET", &format!("/exams/{exam}/progress"), Some(&reg), None)
+        .await;
+    assert!(
+        data(&prog)["totals"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|x| x["status"] == "VERIFIED" && x["count"] == 2),
+        "progress totals keep status names intact: {prog}"
+    );
 
     // Students cannot see unpublished results
     let (_, sv) = t.request("GET", "/students/me", Some(&ayesha), None).await;

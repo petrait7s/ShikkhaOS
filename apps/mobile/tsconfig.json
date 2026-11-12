@@ -1,0 +1,1 @@
+{ "extends": "../../tsconfig.base.json", "compilerOptions": { "jsx": "react-native", "types": ["node"], "allowImportingTsExtensions": true }, "include": ["app", "lib", "components", "app.config.ts"] }

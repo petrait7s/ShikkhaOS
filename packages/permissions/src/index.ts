@@ -9,6 +9,10 @@ export const canAny = (s: Session | null | undefined, ps: readonly string[]): bo
 export interface NavItem { id: string; label: string; icon: string; any: readonly string[]; roles?: readonly Role[]; group: "Overview" | "People" | "Academics" | "Exams" | "Communication" | "Administration" }
 export const NAV: readonly NavItem[] = [
   { id: "dashboard", label: "Dashboard", icon: "layout-dashboard", any: [], group: "Overview" },
+  { id: "my-results", label: "My results", icon: "award", any: ["results.read_own"], roles: ["STUDENT"], group: "Academics" },
+  { id: "my-attendance", label: "My attendance", icon: "calendar-check", any: ["attendance.read_own"], roles: ["STUDENT"], group: "Academics" },
+  { id: "my-class-tests", label: "Class tests", icon: "clipboard-list", any: ["results.read_own"], roles: ["STUDENT"], group: "Academics" },
+  { id: "my-homework", label: "Homework", icon: "book-open", any: ["homework.submit"], roles: ["STUDENT"], group: "Academics" },
   { id: "students", label: "Students", icon: "graduation-cap", any: ["students.read"], group: "People" },
   { id: "teachers", label: "Teachers", icon: "users", any: ["teachers.read"], group: "People" },
   { id: "academics", label: "Academics", icon: "library", any: ["academic.classes.manage", "academic.assignments.manage"], group: "Academics" },

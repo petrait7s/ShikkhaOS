@@ -9,3 +9,8 @@ data/
 *.jks
 .next/
 .expo/
+apps/web/.env*.local
+dist/
+release/
+.files/
+*.tsbuildinfo

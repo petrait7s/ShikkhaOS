@@ -105,7 +105,7 @@ async fn messaging_policy_groups_and_moderation() {
 #[tokio::test]
 async fn websocket_realtime_flow() {
     let t = TestApp::new().await;
-    seed::demo_small(&t.db).await.unwrap();
+    let ids = seed::demo_small(&t.db).await.unwrap();
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
     let app = build_app(t.state.clone());
@@ -141,8 +141,7 @@ async fn websocket_realtime_flow() {
     let (got_ack, got_created) = (true, true);
     assert!(got_ack && got_created);
     // unauthorized send: a student cannot post into a conversation she is not in
-    let (_, v) = t.request("GET", "/conversations", Some(&rahim), None).await;
-    let group = data(&v).as_array().unwrap().iter().find(|c| c["type"] == "CLASS_GROUP").unwrap()["id"].as_str().unwrap().to_string();
+    let group: String = sqlx::query_scalar("SELECT id::text FROM conversations WHERE type='CLASS_GROUP' AND section_id=$1").bind(ids.sec6a).fetch_one(&t.db).await.unwrap();
     a.send(Message::Text(json!({ "id": "e1", "type": "message.send", "payload": { "conversationId": group, "body": "spam" } }).to_string().into())).await.unwrap();
     let m = tokio::time::timeout(std::time::Duration::from_secs(3), async { loop { if let Some(Ok(Message::Text(m))) = a.next().await { let v: Value = serde_json::from_str(&m).unwrap(); if v["type"] == "error" { return v; } } } }).await.unwrap();
     assert_eq!(m["payload"]["code"], "POSTING_NOT_ALLOWED");

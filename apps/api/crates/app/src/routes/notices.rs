@@ -20,12 +20,17 @@ struct Audience { #[serde(default)] roles: Vec<String>, #[serde(default)] class_
 
 const SEL: &str = "SELECT n.id, n.title, n.body, n.audience, n.status, n.published_at, n.pinned, n.attachment_file_ids, n.created_by, u.display_name AS created_by_name, n.version, n.created_at, n.updated_at FROM notices n JOIN users u ON u.id = n.created_by";
 
-/// Users who should receive a notice: whole roles, plus students/teachers of the targeted classes/sections.
+/// Audience semantics: no roles + no scope = everyone; roles only = every user of those roles; scope (classes/sections)
+/// only = students enrolled and teachers assigned there; roles + scope = that scope narrowed to those roles.
 async fn audience_users(conn: &mut sqlx::PgConnection, a: &Audience) -> ApiResult<Vec<Uuid>> {
-    Ok(sqlx::query_scalar("SELECT DISTINCT id FROM (
-        SELECT id FROM users WHERE status='ACTIVE' AND role = ANY($1)
-        UNION SELECT st.user_id FROM enrollments e JOIN students st ON st.id=e.student_id JOIN academic_sessions s ON s.id=e.session_id AND s.is_current WHERE e.status='ACTIVE' AND (e.class_id = ANY($2) OR e.section_id = ANY($3))
-        UNION SELECT t.user_id FROM teacher_assignments x JOIN teachers t ON t.id=x.teacher_id JOIN academic_sessions s ON s.id=x.session_id AND s.is_current WHERE (x.class_id = ANY($2) OR x.section_id = ANY($3))) u")
+    let scope_empty = a.class_ids.is_empty() && a.section_ids.is_empty();
+    if scope_empty {
+        return Ok(sqlx::query_scalar("SELECT id FROM users WHERE status='ACTIVE' AND (cardinality($1::text[]) = 0 OR role = ANY($1))").bind(&a.roles).fetch_all(conn).await?);
+    }
+    Ok(sqlx::query_scalar("SELECT DISTINCT u.id FROM (
+        SELECT st.user_id AS id FROM enrollments e JOIN students st ON st.id=e.student_id JOIN academic_sessions s ON s.id=e.session_id AND s.is_current WHERE e.status='ACTIVE' AND (e.class_id = ANY($2) OR e.section_id = ANY($3))
+        UNION SELECT t.user_id FROM teacher_assignments x JOIN teachers t ON t.id=x.teacher_id JOIN academic_sessions s ON s.id=x.session_id AND s.is_current WHERE (x.class_id = ANY($2) OR x.section_id = ANY($3))) q
+        JOIN users u ON u.id = q.id AND u.status='ACTIVE' WHERE cardinality($1::text[]) = 0 OR u.role = ANY($1)")
         .bind(&a.roles).bind(&a.class_ids).bind(&a.section_ids).fetch_all(conn).await?)
 }
 
@@ -33,9 +38,11 @@ async fn list(State(s): State<AppState>, ctx: Ctx, Query(q): Query<PageQuery>, Q
     ctx.require("notices.read")?;
     let staff_all = matches!(ctx.role, Role::Headmaster | Role::Registrar);
     let rows: Vec<Value> = sqlx::query_scalar(&format!("SELECT to_jsonb(t) FROM ({SEL} WHERE ($1::text IS NULL OR n.status=$1) AND ($2::text IS NULL OR n.title ILIKE $2) AND ( $3 OR n.created_by=$4 OR (n.status='PUBLISHED' AND ( \
-        jsonb_array_length(n.audience->'roles') + jsonb_array_length(n.audience->'classIds') + jsonb_array_length(n.audience->'sectionIds') = 0 OR n.audience->'roles' ? $5 \
-        OR EXISTS (SELECT 1 FROM enrollments e JOIN students st ON st.id=e.student_id JOIN academic_sessions s ON s.id=e.session_id AND s.is_current WHERE st.user_id=$4 AND e.status='ACTIVE' AND (n.audience->'classIds' ? e.class_id::text OR n.audience->'sectionIds' ? e.section_id::text)) \
-        OR EXISTS (SELECT 1 FROM teacher_assignments x JOIN teachers t ON t.id=x.teacher_id JOIN academic_sessions s ON s.id=x.session_id AND s.is_current WHERE t.user_id=$4 AND (n.audience->'classIds' ? x.class_id::text OR n.audience->'sectionIds' ? x.section_id::text))))) \
+        (jsonb_array_length(n.audience->'roles') + jsonb_array_length(n.audience->'classIds') + jsonb_array_length(n.audience->'sectionIds') = 0) \
+        OR (jsonb_array_length(n.audience->'classIds') + jsonb_array_length(n.audience->'sectionIds') = 0 AND n.audience->'roles' ? $5) \
+        OR (jsonb_array_length(n.audience->'classIds') + jsonb_array_length(n.audience->'sectionIds') > 0 AND (jsonb_array_length(n.audience->'roles') = 0 OR n.audience->'roles' ? $5) AND ( \
+            EXISTS (SELECT 1 FROM enrollments e JOIN students st ON st.id=e.student_id JOIN academic_sessions s ON s.id=e.session_id AND s.is_current WHERE st.user_id=$4 AND e.status='ACTIVE' AND (n.audience->'classIds' ? e.class_id::text OR n.audience->'sectionIds' ? e.section_id::text)) \
+            OR EXISTS (SELECT 1 FROM teacher_assignments x JOIN teachers t ON t.id=x.teacher_id JOIN academic_sessions s ON s.id=x.session_id AND s.is_current WHERE t.user_id=$4 AND (n.audience->'classIds' ? x.class_id::text OR n.audience->'sectionIds' ? x.section_id::text))))))) \
         ORDER BY n.pinned DESC, COALESCE(n.published_at, n.created_at) DESC, n.id LIMIT $6 OFFSET $7) t"))
         .bind(f.get("status")).bind(q.like()).bind(staff_all).bind(ctx.user_id).bind(ctx.role.as_str()).bind(q.limit() + 1).bind(q.offset()).fetch_all(&s.db).await?;
     // students never see unpublished notices (guarded in SQL: created_by never matches a student-authored draft)
@@ -123,8 +130,6 @@ async fn publish(State(s): State<AppState>, ctx: Ctx, Path(id): Path<Uuid>) -> A
     let mut tx = s.db.begin().await?;
     sqlx::query("UPDATE notices SET status='PUBLISHED', published_at=now(), version=version+1, updated_at=now() WHERE id=$1").bind(id).execute(&mut *tx).await?;
     let users: Vec<Uuid> = audience_users(&mut tx, &aud).await?;
-    let everyone = aud.roles.is_empty() && aud.class_ids.is_empty() && aud.section_ids.is_empty();
-    let users = if everyone { sqlx::query_scalar("SELECT id FROM users WHERE status='ACTIVE'").fetch_all(&mut *tx).await? } else { users };
     let users: Vec<Uuid> = users.into_iter().filter(|u| *u != ctx.user_id).collect();
     audit::log(&mut tx, &ctx, "notice.published", "notice", &id.to_string(), None, Some(json!({ "recipients": users.len() }))).await?;
     let mut ob = Outbox::new();

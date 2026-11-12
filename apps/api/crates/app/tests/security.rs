@@ -52,7 +52,8 @@ async fn token_tampering_expiry_and_web_cookie_csrf() {
     // tampered signature / payload / alg=none / garbage
     let mut parts: Vec<String> = tok.split('.').map(String::from).collect();
     let sig = parts[2].clone();
-    parts[2] = format!("{}A", &sig[..sig.len() - 1]);
+    let first = if sig.starts_with('A') { 'B' } else { 'A' };
+    parts[2] = format!("{first}{}", &sig[1..]);
     assert_eq!(t.request("GET", "/auth/me", Some(&parts.join(".")), None).await.0, StatusCode::UNAUTHORIZED);
     let none = format!("{}.{}.", base64url(r#"{"alg":"none","typ":"JWT"}"#), parts[1]);
     assert_eq!(t.request("GET", "/auth/me", Some(&none), None).await.0, StatusCode::UNAUTHORIZED);

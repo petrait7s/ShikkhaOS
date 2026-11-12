@@ -117,7 +117,7 @@ jobs:
       - name: Build the API (debug is enough for e2e)
         working-directory: apps/api
         run: cargo build --locked --bin shikkhaos-api
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}

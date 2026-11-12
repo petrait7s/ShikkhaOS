@@ -144,7 +144,7 @@ jobs:
           [ "$PRERELEASE" = "true" ] && FLAGS+=(--prerelease) || FLAGS+=(--latest)
           gh release create "$TAG" "${FLAGS[@]}"
           gh release upload "$TAG" dist/* --clobber
-          expected=$(ls dist | wc -l)
+          expected=$(find dist -maxdepth 1 -type f | wc -l)
           actual=$(gh release view "$TAG" --json assets --jq '.assets | length')
           [ "$expected" = "$actual" ] || { echo "::error::Uploaded $actual of $expected assets"; exit 1; }
           gh release edit "$TAG" --draft=false

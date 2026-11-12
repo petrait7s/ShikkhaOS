@@ -108,9 +108,9 @@ jobs:
         working-directory: apps/desktop/release
         run: |
           ls -l
-          ls ShikkhaOS-Setup-*.exe >/dev/null
+          compgen -G "ShikkhaOS-Setup-*.exe" >/dev/null
           test -f latest.yml
-          ls *.blockmap >/dev/null
+          compgen -G "./*.blockmap" >/dev/null
           grep -q "version: ${{ steps.v.outputs.version }}" latest.yml
       - name: Verify Authenticode signature
         if: steps.d.outputs.present == 'true' && steps.sign.outputs.signed == 'true'

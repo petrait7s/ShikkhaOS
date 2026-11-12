@@ -134,15 +134,15 @@ jobs:
           set -euo pipefail
           KS="$RUNNER_TEMP/release.keystore"
           echo "$KS_B64" | base64 -d > "$KS"
-          BT="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n1)"
+          BT="$ANDROID_HOME/build-tools/$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -printf '%f\n' | sort -V | tail -n1)"
           OUT="$GITHUB_WORKSPACE/dist"; mkdir -p "$OUT"
-          RAW=$(ls apps/mobile/android/app/build/outputs/apk/release/*.apk | head -n1)
+          RAW=$(find apps/mobile/android/app/build/outputs/apk/release -name '*.apk' | head -n1)
           "$BT/zipalign" -p -f 4 "$RAW" "$RUNNER_TEMP/aligned.apk"
           "$BT/apksigner" sign --ks "$KS" --ks-key-alias "$KEY_ALIAS" \
             --ks-pass env:KS_PASS --key-pass env:KEY_PASS \
             --out "$OUT/ShikkhaOS-Student-$V.apk" "$RUNNER_TEMP/aligned.apk"
           "$BT/apksigner" verify --verbose --print-certs "$OUT/ShikkhaOS-Student-$V.apk"
-          AAB=$(ls apps/mobile/android/app/build/outputs/bundle/release/*.aab | head -n1)
+          AAB=$(find apps/mobile/android/app/build/outputs/bundle/release -name '*.aab' | head -n1)
           jarsigner -keystore "$KS" -storepass:env KS_PASS -keypass:env KEY_PASS \
             -signedjar "$OUT/ShikkhaOS-Student-$V.aab" "$AAB" "$KEY_ALIAS"
           jarsigner -verify "$OUT/ShikkhaOS-Student-$V.aab"

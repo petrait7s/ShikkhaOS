@@ -23,6 +23,7 @@ pub fn router() -> Router<AppState> {
         .route("/result-sets", get(list).post(compile))
         .route("/result-sets/{id}", get(get_one))
         .route("/result-sets/{id}/approve", post(approve))
+        .route("/result-sets/{id}/reject", post(reject))
         .route("/result-sets/{id}/publish", post(publish))
         .route(
             "/result-sets/{id}/revision-requests",
@@ -86,7 +87,7 @@ async fn load(db: &sqlx::PgPool, id: Uuid) -> ApiResult<Rs> {
     })
 }
 
-const RS_SELECT: &str = "SELECT rs.id, rs.exam_id, e.name AS exam_name, rs.class_id, c.name AS class_name, rs.status, rs.published_revision, rs.current_revision, rs.approved_by, rs.approved_at, rs.published_by, rs.published_at, rs.version, rs.created_at, rs.updated_at \
+const RS_SELECT: &str = "SELECT rs.id, rs.exam_id, e.name AS exam_name, rs.class_id, c.name AS class_name, rs.status, rs.published_revision, rs.current_revision, rs.approved_by, rs.approved_at, rs.published_by, rs.published_at, rs.rejection_note, rs.version, rs.created_at, rs.updated_at \
     FROM result_sets rs JOIN exams e ON e.id = rs.exam_id JOIN classes c ON c.id = rs.class_id";
 
 async fn list(
@@ -282,12 +283,21 @@ async fn compile(
             .collect::<Vec<_>>(),
     );
     let mut tx = s.db.begin().await?;
-    let rs_id: Uuid = sqlx::query_scalar("INSERT INTO result_sets (exam_id, class_id, grading_snapshot, compiled_by) VALUES ($1,$2,$3,$4) RETURNING id").bind(r.exam_id).bind(r.class_id).bind(&scheme_v).bind(ctx.user_id).fetch_one(&mut *tx).await?;
+    // A previously REJECTED set is recompiled in place as the next revision; any other existing set is a duplicate.
+    let existing: Option<(Uuid, String, i32)> = sqlx::query_as("SELECT id, status, current_revision FROM result_sets WHERE exam_id=$1 AND class_id=$2 FOR UPDATE").bind(r.exam_id).bind(r.class_id).fetch_optional(&mut *tx).await?;
+    let (rs_id, rev): (Uuid, i32) = match existing {
+        Some((id, st, cur)) if st == "REJECTED" => {
+            sqlx::query("UPDATE result_sets SET status='VERIFIED', current_revision=$2, rejection_note=NULL, grading_snapshot=$3, compiled_by=$4, version=version+1, updated_at=now() WHERE id=$1").bind(id).bind(cur + 1).bind(&scheme_v).bind(ctx.user_id).execute(&mut *tx).await?;
+            (id, cur + 1)
+        }
+        Some(_) => return Err(ApiError::conflict("DUPLICATE", "A result set already exists for this exam and class")),
+        None => (sqlx::query_scalar("INSERT INTO result_sets (exam_id, class_id, grading_snapshot, compiled_by) VALUES ($1,$2,$3,$4) RETURNING id").bind(r.exam_id).bind(r.class_id).bind(&scheme_v).bind(ctx.user_id).fetch_one(&mut *tx).await?, 1),
+    };
     for (((stu, sec), c), pos) in students.iter().zip(&computed).zip(&positions) {
-        sqlx::query("INSERT INTO student_results (result_set_id, student_id, revision, section_id, total_marks, gpa, grade, passed, position, subjects) VALUES ($1,$2,1,$3,$4,$5,$6,$7,$8,$9)")
-            .bind(rs_id).bind(stu).bind(sec).bind(c.total_marks).bind(c.gpa).bind(&c.grade).bind(c.passed).bind(pos.map(|p| p as i32)).bind(serde_json::to_value(&c.subjects).unwrap()).execute(&mut *tx).await?;
+        sqlx::query("INSERT INTO student_results (result_set_id, student_id, revision, section_id, total_marks, gpa, grade, passed, position, subjects) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)")
+            .bind(rs_id).bind(stu).bind(rev).bind(sec).bind(c.total_marks).bind(c.gpa).bind(&c.grade).bind(c.passed).bind(pos.map(|p| p as i32)).bind(serde_json::to_value(&c.subjects).unwrap()).execute(&mut *tx).await?;
     }
-    sqlx::query("INSERT INTO result_set_status_history (result_set_id, from_status, to_status, revision, actor_id) VALUES ($1,NULL,'VERIFIED',1,$2)").bind(rs_id).bind(ctx.user_id).execute(&mut *tx).await?;
+    sqlx::query("INSERT INTO result_set_status_history (result_set_id, from_status, to_status, revision, actor_id) VALUES ($1,NULL,'VERIFIED',$3,$2)").bind(rs_id).bind(ctx.user_id).bind(rev).execute(&mut *tx).await?;
     audit::log(
         &mut tx,
         &ctx,
@@ -323,6 +333,37 @@ async fn compile(
             *r.status_mut() = axum::http::StatusCode::CREATED;
             r
         })
+}
+
+#[derive(Deserialize)]
+struct RejectReq {
+    reason: String,
+}
+
+/// Headmaster sends a compiled (VERIFIED) result set back: submissions of that exam x class return to UNDER_REVIEW so the
+/// Register can request corrections or re-verify, then recompile as the next revision.
+async fn reject(State(s): State<AppState>, ctx: Ctx, headers: HeaderMap, Path(id): Path<Uuid>, Json(r): Json<RejectReq>) -> ApiResult<Response> {
+    ctx.require("results.approve")?;
+    ctx.require_reauth(&s, &headers)?;
+    results::require_reason(&r.reason).map_err(terr)?;
+    if r.reason.chars().count() > 2000 { return Err(ApiError::field("reason", "OUT_OF_RANGE", "At most 2000 characters")); }
+    let rs = load(&s.db, id).await?;
+    if rs.status != ResultStatus::Verified { return Err(ApiError::invalid_transition("Only compiled (verified) results can be sent back")); }
+    let mut tx = s.db.begin().await?;
+    let n = sqlx::query("UPDATE result_sets SET status='REJECTED', rejection_note=$2, version=version+1, updated_at=now() WHERE id=$1 AND status='VERIFIED'").bind(id).bind(r.reason.trim()).execute(&mut *tx).await?.rows_affected();
+    if n == 0 { return Err(ApiError::version_conflict()); }
+    sqlx::query("INSERT INTO result_set_status_history (result_set_id, from_status, to_status, revision, actor_id, note) VALUES ($1,'VERIFIED','REJECTED',$2,$3,$4)").bind(id).bind(rs.current_rev).bind(ctx.user_id).bind(r.reason.trim()).execute(&mut *tx).await?;
+    let reopened: Vec<Uuid> = sqlx::query_scalar("UPDATE mark_submissions ms SET status='UNDER_REVIEW', verified_by=NULL, verified_at=NULL, version=ms.version+1, updated_at=now() FROM exam_papers p WHERE p.id=ms.exam_paper_id AND p.exam_id=$1 AND p.class_id=$2 AND ms.status='VERIFIED' RETURNING ms.id").bind(rs.exam).bind(rs.class).fetch_all(&mut *tx).await?;
+    for sid in &reopened {
+        sqlx::query("INSERT INTO mark_submission_status_history (submission_id, from_status, to_status, revision, actor_id, note) SELECT id, 'VERIFIED', 'UNDER_REVIEW', current_revision, $2, $3 FROM mark_submissions WHERE id=$1").bind(sid).bind(ctx.user_id).bind(format!("Reopened: result set sent back by Headmaster — {}", r.reason.trim())).execute(&mut *tx).await?;
+    }
+    audit::log(&mut tx, &ctx, "result_set.rejected", "result_set", &id.to_string(), Some(json!({"status":"VERIFIED"})), Some(json!({"status":"REJECTED","reason": r.reason, "reopenedSubmissions": reopened.len()}))).await?;
+    let regs: Vec<Uuid> = sqlx::query_scalar("SELECT id FROM users WHERE role='REGISTRAR' AND status='ACTIVE'").fetch_all(&mut *tx).await?;
+    let mut ob = Outbox::new();
+    ob.notify(&mut tx, &regs, "RESULTS_REJECTED", "Results sent back", "The Headmaster sent a result set back for correction.", "result_set", &id.to_string(), &format!("result-sets/{id}")).await?;
+    tx.commit().await?;
+    ob.flush(&s.hub);
+    get_one(State(s), ctx, Path(id), Query(HashMap::new())).await
 }
 
 async fn approve(

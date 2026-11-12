@@ -4,6 +4,7 @@
 pub mod audit;
 pub mod auth;
 pub mod crud;
+pub mod csv;
 pub mod error;
 pub mod groups;
 pub mod http;

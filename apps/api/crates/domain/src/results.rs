@@ -23,6 +23,8 @@ pub enum ResultStatus {
     Verified,
     Approved,
     Published,
+    /// Sent back by the Headmaster; terminal for this revision (the Register recompiles a new one).
+    Rejected,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -86,10 +88,12 @@ impl ResultStatus {
             Self::Verified => "VERIFIED",
             Self::Approved => "APPROVED",
             Self::Published => "PUBLISHED",
+            Self::Rejected => "REJECTED",
         }
     }
     pub fn parse(s: &str) -> Option<Self> {
         Some(match s {
+            "REJECTED" => Self::Rejected,
             "VERIFIED" => Self::Verified,
             "APPROVED" => Self::Approved,
             "PUBLISHED" => Self::Published,
@@ -226,6 +230,13 @@ mod tests {
         assert!(ResultStatus::Approved.next(ResultAction::Approve).is_err());
         assert!(ResultStatus::Published.next(ResultAction::Approve).is_err());
         assert!(ResultStatus::Published.next(ResultAction::Publish).is_err());
+    }
+
+    #[test]
+    fn rejected_result_sets_cannot_advance() {
+        assert!(ResultStatus::Rejected.next(ResultAction::Approve).is_err());
+        assert!(ResultStatus::Rejected.next(ResultAction::Publish).is_err());
+        assert_eq!(ResultStatus::parse("REJECTED"), Some(ResultStatus::Rejected));
     }
 
     #[test]

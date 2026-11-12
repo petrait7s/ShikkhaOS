@@ -16,6 +16,7 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/students", get(list_students).post(create_student))
         .route("/students/me", get(my_student))
+        .route("/students/import", post(import_students))
         .route("/students/{id}", get(get_student).patch(patch_student))
         .route("/students/{id}/archive", post(archive_student))
         .route("/students/{id}/academic-history", get(academic_history))
@@ -554,4 +555,120 @@ async fn patch_teacher(
     }
     tx.commit().await?;
     Ok(ok(fetch_teacher(&s.db, id).await?))
+}
+
+// ---------------- CSV bulk import ----------------
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct ImportReq {
+    csv: String,
+    #[serde(default = "yes")]
+    dry_run: bool,
+}
+fn yes() -> bool {
+    true
+}
+
+struct ImportRow {
+    line: usize,
+    code: String,
+    name: String,
+    dob: chrono::NaiveDate,
+    gender: String,
+    guardian_name: String,
+    guardian_phone: String,
+    address: String,
+    placement: Option<(Uuid, Uuid, i32)>, // class, section, roll
+}
+
+/// Validate (always) and create (when `dryRun=false` and there are no errors) up to 200 students from CSV text.
+/// Columns: studentCode, fullName, dob (YYYY-MM-DD), gender, guardianName, guardianPhone, address, className, sectionName, rollNo.
+async fn import_students(State(s): State<AppState>, ctx: Ctx, Json(r): Json<ImportReq>) -> ApiResult<Response> {
+    ctx.require("students.create")?;
+    let table = crate::csv::parse(&r.csv);
+    let Some((head, body)) = table.split_first() else { return Err(ApiError::field("csv", "EMPTY", "The file has no rows")) };
+    let col = |n: &str| head.iter().position(|h| h.trim().eq_ignore_ascii_case(n));
+    for req in ["studentCode", "fullName", "dob", "gender"] {
+        if col(req).is_none() {
+            return Err(ApiError::field("csv", "MISSING_COLUMN", &format!("Missing required column '{req}'")));
+        }
+    }
+    if body.is_empty() { return Err(ApiError::field("csv", "EMPTY", "The file has a header but no students")); }
+    if body.len() > 200 { return Err(ApiError::field("csv", "TOO_MANY_ROWS", "At most 200 students per import")); }
+    let get = |row: &Vec<String>, n: &str| col(n).and_then(|i| row.get(i)).map(|v| v.trim().to_string()).unwrap_or_default();
+    let session = scope::current_session(&s.db).await?;
+    let sections: Vec<(Uuid, Uuid, String, String, i32)> = sqlx::query_as("SELECT sec.id, c.id, lower(c.name), lower(sec.name), sec.capacity FROM sections sec JOIN classes c ON c.id=sec.class_id").fetch_all(&s.db).await?;
+    let taken_codes: std::collections::HashSet<String> = sqlx::query_scalar("SELECT student_code FROM students").fetch_all(&s.db).await?.into_iter().collect();
+    let mut seen_codes = std::collections::HashSet::new();
+    let mut seen_rolls = std::collections::HashSet::new();
+    let mut load: std::collections::HashMap<Uuid, i64> = std::collections::HashMap::new();
+    let mut errors: Vec<Value> = vec![];
+    let mut rows: Vec<ImportRow> = vec![];
+    for (i, row) in body.iter().enumerate() {
+        let line = i + 2; // header is line 1
+        macro_rules! err {
+            ($f:expr, $m:expr) => {
+                errors.push(json!({ "line": line, "field": $f, "message": $m }))
+            };
+        }
+        let code = get(row, "studentCode");
+        let name = get(row, "fullName");
+        let before = errors.len();
+        if let Err(e) = v::student_code(&code) { err!("studentCode", e.message.as_str()); }
+        else if taken_codes.contains(&code) { err!("studentCode", "Student code already exists"); }
+        else if !seen_codes.insert(code.clone()) { err!("studentCode", "Duplicate student code in this file"); }
+        if let Err(e) = v::text("fullName", &name, 1, 200) { err!("fullName", e.message.as_str()); }
+        let dob = chrono::NaiveDate::parse_from_str(&get(row, "dob"), "%Y-%m-%d").ok().filter(|d| *d < chrono::Utc::now().date_naive());
+        if dob.is_none() { err!("dob", "Use a past date as YYYY-MM-DD"); }
+        let gender = get(row, "gender").to_uppercase();
+        if !matches!(gender.as_str(), "MALE" | "FEMALE" | "OTHER") { err!("gender", "MALE, FEMALE or OTHER"); }
+        let phone = get(row, "guardianPhone");
+        if !phone.is_empty() { if let Err(e) = v::phone_bd(&phone) { err!("guardianPhone", e.message.as_str()); } }
+        let (cn, sn, rn) = (get(row, "className"), get(row, "sectionName"), get(row, "rollNo"));
+        let placement = if cn.is_empty() && sn.is_empty() && rn.is_empty() { None } else {
+            match (sections.iter().find(|x| x.2 == cn.to_lowercase() && x.3 == sn.to_lowercase()), rn.parse::<i32>().ok().filter(|n| *n > 0)) {
+                (Some(sec), Some(roll)) => {
+                    let used = load.entry(sec.0).or_insert(0);
+                    *used += 1;
+                    if !seen_rolls.insert((sec.0, roll)) { err!("rollNo", "Roll number repeated in this section"); }
+                    else if *used > sec.4 as i64 { err!("sectionName", "Section capacity exceeded"); }
+                    Some((sec.1, sec.0, roll))
+                }
+                (None, _) => { err!("className", "Unknown class/section"); None }
+                (_, None) => { err!("rollNo", "Roll must be a positive number"); None }
+            }
+        };
+        if errors.len() == before {
+            rows.push(ImportRow { line, code, name, dob: dob.unwrap(), gender, guardian_name: get(row, "guardianName"), guardian_phone: phone, address: get(row, "address"), placement });
+        }
+    }
+    // roll numbers already used in the database
+    for row in &rows {
+        if let Some((_, sec, roll)) = row.placement {
+            let used: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM enrollments WHERE section_id=$1 AND session_id=$2 AND roll_no=$3 AND status='ACTIVE')").bind(sec).bind(session).bind(roll).fetch_one(&s.db).await?;
+            if used { errors.push(json!({ "line": row.line, "field": "rollNo", "message": "Roll number already used in this section" })); }
+        }
+    }
+    let total = body.len();
+    if r.dry_run || !errors.is_empty() {
+        let preview: Vec<Value> = rows.iter().take(20).map(|x| json!({ "line": x.line, "studentCode": x.code, "fullName": x.name, "placement": x.placement.is_some() })).collect();
+        return Ok(ok(json!({ "dryRun": r.dry_run, "total": total, "valid": rows.len(), "errors": errors, "preview": preview, "created": 0 })));
+    }
+    let mut creds = vec![];
+    let mut tx = s.db.begin().await?;
+    for x in &rows {
+        let pw = temp_password();
+        let uid: Uuid = sqlx::query_scalar("INSERT INTO users (role, username, display_name, password_hash, must_change_password) VALUES ('STUDENT',$1,$2,$3,true) RETURNING id").bind(x.code.to_lowercase()).bind(&x.name).bind(hash_password(&pw)?).fetch_one(&mut *tx).await?;
+        let sid: Uuid = sqlx::query_scalar("INSERT INTO students (user_id, student_code, roll_no, full_name, dob, gender, address, guardian_name, guardian_phone) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id")
+            .bind(uid).bind(&x.code).bind(x.placement.map(|p| p.2)).bind(&x.name).bind(x.dob).bind(&x.gender).bind(&x.address).bind(&x.guardian_name).bind(&x.guardian_phone).fetch_one(&mut *tx).await?;
+        if let Some((class, section, roll)) = x.placement {
+            sqlx::query("INSERT INTO enrollments (student_id, session_id, class_id, section_id, roll_no) VALUES ($1,$2,$3,$4,$5)").bind(sid).bind(session).bind(class).bind(section).bind(roll).execute(&mut *tx).await?;
+        }
+        creds.push(json!({ "studentCode": x.code, "username": x.code.to_lowercase(), "fullName": x.name, "temporaryPassword": pw }));
+    }
+    let secs: std::collections::HashSet<Uuid> = rows.iter().filter_map(|x| x.placement.map(|p| p.1)).collect();
+    for sec in secs { groups::sync_class_group(&mut tx, sec).await?; }
+    audit::log(&mut tx, &ctx, "student.imported", "student", "bulk", None, Some(json!({ "created": rows.len() }))).await?;
+    tx.commit().await?;
+    Ok(created(json!({ "dryRun": false, "total": total, "valid": rows.len(), "errors": [], "created": rows.len(), "credentials": creds })))
 }

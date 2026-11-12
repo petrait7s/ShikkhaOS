@@ -151,8 +151,8 @@ impl TestApp {
 
 use shikkhaos_app::seed::Ids;
 
-/// Drive the whole official workflow through the API and return the published result set id.
-pub async fn publish_math_exam(t: &TestApp, ids: &Ids) -> (String, String) {
+/// Drive the workflow up to a compiled (VERIFIED) result set; returns (exam id, result set id).
+pub async fn compile_math_exam(t: &TestApp, ids: &Ids) -> (String, String) {
     let (hm, reg, rahim) = (
         t.login("headmaster").await,
         t.login("registrar").await,
@@ -239,7 +239,13 @@ pub async fn publish_math_exam(t: &TestApp, ids: &Ids) -> (String, String) {
         )
         .await;
     assert_eq!(s, StatusCode::CREATED, "{v}");
-    let rs = v["data"]["id"].as_str().unwrap().to_string();
+    (exam, v["data"]["id"].as_str().unwrap().to_string())
+}
+
+/// Drive the whole official workflow through the API and return the published result set id.
+pub async fn publish_math_exam(t: &TestApp, ids: &Ids) -> (String, String) {
+    let (exam, rs) = compile_math_exam(t, ids).await;
+    let hm = t.login("headmaster").await;
     let re = t.reauth(&hm).await;
     assert_eq!(
         t.request_h(

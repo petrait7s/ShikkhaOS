@@ -63,7 +63,10 @@ export class ApiClient {
     const text = await res.text();
     let json: any = null;
     try { json = text ? JSON.parse(text) : null; } catch { /* non-JSON error page */ }
-    if (res.ok) return { data: json?.data as T, meta: json?.meta };
+    if (res.ok) {
+      if (json === null || typeof json !== "object" || !("data" in json)) throw new ApiError(res.status, "BAD_GATEWAY", "The server did not return an API response. Check that the API is running and that API_PROXY_TARGET / the API base URL is configured.");
+      return { data: json.data as T, meta: json.meta };
+    }
     const err = (json as ApiErrorBody | null)?.error;
     if (res.status === 401 && err?.code === "TOKEN_EXPIRED" && !retried && (await this.refresh())) return this.raw<T>(method, path, o, true);
     if (res.status === 401 && (err?.code === "TOKEN_REVOKED" || err?.code === "UNAUTHENTICATED") && this.accessToken) { this.accessToken = null; this.opts.onSessionExpired?.(); }

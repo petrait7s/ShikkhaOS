@@ -57,3 +57,8 @@ test("sends idempotency key, if-match and cursor pagination helper", async () =>
   const h = calls.at(-1)!.init.headers as Record<string, string>;
   assert.equal(h["If-Match"], '"4"'); assert.equal(h["Idempotency-Key"], "k");
 });
+
+test("a 200 HTML page (misconfigured proxy) is reported as an error, not as empty data", async () => {
+  const api = new ApiClient({ baseUrl: "/api/v1", platform: "web", deviceId: "d", fetchImpl: fakeFetch(() => new Response("<html>app shell</html>", { status: 200, headers: { "content-type": "text/html" } })) });
+  await assert.rejects(() => api.login("u", "p"), (e: unknown) => e instanceof ApiError && e.code === "BAD_GATEWAY" && /API_PROXY_TARGET/.test(e.message));
+});

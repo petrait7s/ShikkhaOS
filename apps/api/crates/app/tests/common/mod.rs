@@ -57,3 +57,33 @@ impl TestApp {
         }
     }
 }
+
+use shikkhaos_app::seed::Ids;
+
+/// Drive the whole official workflow through the API and return the published result set id.
+pub async fn publish_math_exam(t: &TestApp, ids: &Ids) -> (String, String) {
+    let (hm, reg, rahim) = (t.login("headmaster").await, t.login("registrar").await, t.login("teacher.rahim").await);
+    let (_, v) = t.request("POST", "/exams", Some(&reg), Some(json!({ "name": "Annual 2026", "type": "FINAL", "startDate": "2026-11-01", "endDate": "2026-11-10" }))).await;
+    let exam = v["data"]["id"].as_str().unwrap().to_string();
+    t.request("POST", "/exam-papers", Some(&reg), Some(json!({ "examId": exam, "classId": ids.class6, "subjectId": ids.subj_math }))).await;
+    let (s, v) = t.request("POST", &format!("/exams/{exam}/authorize"), Some(&hm), None).await;
+    assert_eq!(s, StatusCode::OK, "{v}");
+    let (_, list) = t.request("GET", "/mark-submissions", Some(&rahim), None).await;
+    for sub in list["data"].as_array().unwrap() {
+        let id = sub["id"].as_str().unwrap();
+        let (_, d) = t.request("GET", &format!("/mark-submissions/{id}"), Some(&rahim), None).await;
+        let entries: Vec<Value> = d["data"]["entries"].as_array().unwrap().iter().enumerate().map(|(i, r)| json!({ "studentId": r["studentId"], "marksObtained": 90 - i as i32, "absent": false })).collect();
+        assert_eq!(t.request("PUT", &format!("/mark-submissions/{id}/entries"), Some(&rahim), Some(json!({ "entries": entries }))).await.0, StatusCode::OK);
+        assert_eq!(t.request("POST", &format!("/mark-submissions/{id}/submit"), Some(&rahim), None).await.0, StatusCode::OK);
+        assert_eq!(t.request("POST", &format!("/mark-submissions/{id}/start-review"), Some(&reg), None).await.0, StatusCode::OK);
+        assert_eq!(t.request("POST", &format!("/mark-submissions/{id}/verify"), Some(&reg), None).await.0, StatusCode::OK);
+    }
+    let (s, v) = t.request("POST", "/result-sets", Some(&reg), Some(json!({ "examId": exam, "classId": ids.class6 }))).await;
+    assert_eq!(s, StatusCode::CREATED, "{v}");
+    let rs = v["data"]["id"].as_str().unwrap().to_string();
+    let re = t.reauth(&hm).await;
+    assert_eq!(t.request_h("POST", &format!("/result-sets/{rs}/approve"), Some(&hm), None, &[("x-reauth-token", re.clone())]).await.0, StatusCode::OK);
+    let re = t.reauth(&hm).await;
+    assert_eq!(t.request_h("POST", &format!("/result-sets/{rs}/publish"), Some(&hm), None, &[("x-reauth-token", re)]).await.0, StatusCode::OK);
+    (exam, rs)
+}

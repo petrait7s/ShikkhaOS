@@ -19,6 +19,7 @@ async fn main() -> anyhow_like::Result<()> {
             MIGRATOR.run(&db).await.map_err(|e| e.to_string())?;
             seed::ensure_channels(&db).await.map_err(|e| e.message)?;
             let state = AppState { db, cfg: Arc::new(cfg), hub: Hub::default() };
+            shikkhaos_app::jobs::spawn(state.clone());
             let addr = std::env::var("BIND_ADDR").unwrap_or_else(|_| "0.0.0.0:8080".into());
             let listener = tokio::net::TcpListener::bind(&addr).await.map_err(|e| e.to_string())?;
             tracing::info!(%addr, %version, "listening");

@@ -108,3 +108,6 @@ pub async fn ctx_for_user(db: &sqlx::PgPool, user: Uuid) -> ApiResult<Ctx> {
     let perms = load_permissions(db, user, role).await?;
     Ok(Ctx { user_id: user, role, session_id: Uuid::nil(), device_id: Uuid::nil(), perms, ip: String::new(), request_id: String::new() })
 }
+
+/// Best-effort subject extraction for middleware (valid signature required).
+pub fn subject_of(state: &AppState, tok: &str) -> Option<Uuid> { decode_claims(state, tok).ok().filter(|c| c.purpose.is_none()).map(|c| c.sub) }

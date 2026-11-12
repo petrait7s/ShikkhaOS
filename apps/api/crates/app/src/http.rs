@@ -38,7 +38,9 @@ impl PageQuery {
     pub fn offset(&self) -> i64 {
         self.cursor.as_deref().and_then(|c| B64.decode(c).ok()).and_then(|b| String::from_utf8(b).ok()).and_then(|s| s.strip_prefix("o:").and_then(|n| n.parse().ok())).unwrap_or(0)
     }
-    pub fn like(&self) -> Option<String> { self.q.as_ref().filter(|s| !s.trim().is_empty()).map(|s| format!("%{}%", s.trim().replace('%', "\\%").replace('_', "\\_"))) }
+    pub fn like(&self) -> Option<String> {
+        self.q.as_ref().map(|s| s.chars().filter(|c| !c.is_control()).collect::<String>()).filter(|s| !s.trim().is_empty()).map(|s| format!("%{}%", s.trim().replace('\\', "\\\\").replace('%', "\\%").replace('_', "\\_")))
+    }
 }
 
 /// Build a list response from `limit+1` fetched rows.
@@ -52,4 +54,10 @@ pub fn list(mut rows: Vec<Value>, q: &PageQuery) -> Response {
 
 pub fn parse_version(headers: &axum::http::HeaderMap, body: Option<i32>) -> Option<i32> {
     headers.get("if-match").and_then(|h| h.to_str().ok()).and_then(|s| s.trim_matches(|c| c == '"' || c == 'W' || c == '/').parse().ok()).or(body)
+}
+
+/// Build a safe `ILIKE` pattern: strips control characters and escapes `\`, `%`, `_`.
+pub fn like_pattern(raw: &str) -> String {
+    let clean: String = raw.chars().filter(|c| !c.is_control()).collect();
+    format!("%{}%", clean.trim().replace('\\', "\\\\").replace('%', "\\%").replace('_', "\\_"))
 }

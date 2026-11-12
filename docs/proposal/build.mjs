@@ -21,7 +21,9 @@ const shot = (key, caption, opt = {}) => {
 };
 const phone = (key, caption) => `<figure class="phone"><div class="screen"><img src="${src(find(key))}" alt="${caption}"></div><figcaption>${caption}</figcaption></figure>`;
 let pageNo = 0;
-const page = (cls, body, { head = true } = {}) => { pageNo++; return `<section class="page ${cls}">${head ? `<header class="run"><span><b>ShikkhaOS</b> · Project proposal</span><span>School Managing Committee</span></header>` : ""}${body}<footer class="foot"><span>One School. One System. One Connected Community.</span><span>${pageNo}</span></footer></section>`; };
+const page = (cls, body, { head = true } = {}) => { pageNo++; return `<section class="page ${cls}">${head ? `<header class="run"><span class="brand"><img src="${LOGO}" alt=""><b>ShikkhaOS</b> · Project proposal</span><span>School Managing Committee</span></header>` : ""}${body}<footer class="foot"><span>One School. One System. One Connected Community.</span><span>${pageNo}</span></footer></section>`; };
+const b64 = (f, mime) => `data:${mime};base64,${readFileSync(path.join(dir, f)).toString("base64")}`;
+const LOGO = b64("logo-mark.png", "image/png"), LOGO_LIGHT = b64("logo-mark-light.png", "image/png"), TILE = b64("logo-tile.jpg", "image/jpeg");
 const icon = (n) => ({ headmaster: "★", registrar: "✎", teacher: "✐", student: "☺", check: "✓", lock: "🔒" }[n] ?? "•");
 
 const html = `<!doctype html>
@@ -64,14 +66,48 @@ table.t { width: 100%; border-collapse: collapse; font-size: 9.5pt; background: 
 .box { border-left: 1.2mm solid var(--teal); background: var(--mint); padding: 3.5mm 4.5mm; border-radius: 0 3mm 3mm 0; margin-bottom: 4mm; }
 .timeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; } .phase { background: #fff; border-top: 1.4mm solid var(--teal); border-radius: 2mm 2mm 3mm 3mm; padding: 3.5mm; border-left: 1px solid var(--line); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); } .phase .when { font-size: 8pt; font-weight: 700; color: var(--teal-ink); text-transform: uppercase; letter-spacing: .06em; }
 .decide li { list-style: none; padding: 2.5mm 3mm 2.5mm 9mm; position: relative; background: #fff; border: 1px solid var(--line); border-radius: 2.5mm; margin-bottom: 2mm; } .decide li::before { content: ""; position: absolute; left: 3mm; top: 3.3mm; width: 3.5mm; height: 3.5mm; border: 1.5px solid var(--navy); border-radius: 1mm; }
+.brand { display: flex; align-items: center; gap: 2mm; } .brand img { height: 4.6mm; width: auto; }
+.run { border-bottom: 1px solid var(--line); } .page:not(.cover):not(.closing)::before { content: ""; position: absolute; left: 0; top: 0; width: 100%; height: 1.6mm; background: linear-gradient(90deg, var(--navy) 0 70%, var(--teal) 70%); }
+.kicker::before { content: ""; display: inline-block; width: 6mm; height: .7mm; background: var(--teal); vertical-align: middle; margin-right: 2mm; }
+.cover .tile { width: 22mm; height: 22mm; border-radius: 5mm; box-shadow: 0 2mm 8mm rgba(0,0,0,.35); } .cover .brandname { font-size: 17pt; font-weight: 700; letter-spacing: -.01em; } .cover .brandsub { font-size: 8.5pt; color: var(--mint); letter-spacing: .14em; text-transform: uppercase; }
+.cover .hero { position: absolute; right: -24mm; bottom: 46mm; width: 112mm; transform: rotate(-4deg); border-radius: 3mm; overflow: hidden; box-shadow: 0 8mm 20mm rgba(0,0,0,.5); border: 1.2mm solid #1B2742; } .cover .hero img { display: block; width: 100%; }
+.cover .rule { width: 18mm; height: 1.2mm; background: var(--teal); margin: 0 0 5mm; }
+.toc { list-style: none; padding: 0; margin: 0; } .toc li { display: flex; align-items: baseline; gap: 3mm; padding: 2.6mm 0; border-bottom: 1px solid var(--line); margin: 0; } .toc .n { width: 9mm; font-weight: 800; color: var(--teal-ink); } .toc .t { flex: 1; font-weight: 600; } .toc .t small { display: block; font-weight: 400; color: var(--muted); font-size: 8.5pt; } .toc .p { color: var(--muted); font-variant-numeric: tabular-nums; }
+.day { position: relative; padding-left: 9mm; } .day::before { content: ""; position: absolute; left: 3mm; top: 2mm; bottom: 2mm; width: .6mm; background: var(--teal); } .day .ev { position: relative; background: #fff; border: 1px solid var(--line); border-radius: 3mm; padding: 2mm 4mm; margin-bottom: 2mm; } .day .ev::before { content: ""; position: absolute; left: -7.6mm; top: 4mm; width: 3.4mm; height: 3.4mm; border-radius: 50%; background: var(--navy); border: .8mm solid var(--teal); } .day .ev b { display: block; } .day .ev .who { font-size: 8pt; text-transform: uppercase; letter-spacing: .08em; color: var(--teal-ink); font-weight: 700; }
+.closing { background: var(--navy); color: #fff; padding: 0; } .closing .run, .closing .foot { display: none; } .closing .inner { position: relative; padding: 28mm 20mm; height: 100%; display: flex; flex-direction: column; justify-content: center; } .closing h1 { font-size: 34pt; } .closing .tile { margin-top: auto; width: 26mm; height: 26mm; border-radius: 6mm; margin-bottom: 10mm; }
+.quote { border-left: 1.2mm solid var(--teal); padding: 2mm 0 2mm 5mm; font-size: 13pt; color: var(--navy); font-weight: 600; letter-spacing: -.01em; margin: 0 0 5mm; }
 .small { font-size: 8.5pt; } .spacer { flex: 1; }
 </style></head><body>
 
 ${page("cover", `<div class="glow"></div><div class="glow2"></div><div class="inner">
-  <div class="logo"><i>S</i> ShikkhaOS</div>
+  <div style="display:flex;align-items:center;gap:5mm"><img class="tile" src="${TILE}" alt="ShikkhaOS logo"><div><div class="brandname">ShikkhaOS</div><div class="brandsub">School operating system</div></div></div>
+  <div class="spacer"></div>
+  <div class="rule"></div>
   <h1>One school.<br>One system.</h1>
   <div class="tag">A single, secure digital platform for administration, teaching, examinations and communication — built for our school.</div>
-  <div class="meta"><div><b>Project Proposal</b>For the School Managing Committee</div><div><b>November 2026</b>Version 1.0 — for decision</div><div><b>Platforms</b>Windows desktop · Web · Android</div></div></div>`, { head: false })}
+  <div style="height:70mm"></div>
+  <div class="meta"><div><b>Project Proposal</b>For the School Managing Committee</div><div><b>November 2026</b>Version 1.0 — for decision</div><div><b>Platforms</b>Windows desktop · Web · Android</div></div>
+  <div class="hero"><img src="${src(find("headmaster-dashboard"))}" alt="Headmaster dashboard"></div></div>`, { head: false })}
+
+${page("", `
+  <div class="kicker">Contents</div><h2>What is inside</h2>
+  <p class="lead" style="margin-bottom:6mm">Read pages 3–7 for the idea, pages 8–13 to see the system working, and pages 14–19 for safety, status and the decisions we ask for.</p>
+  <ol class="toc">
+    <li><span class="n">01</span><span class="t">What we are proposing<small>Executive summary and the decisions requested</small></span><span class="p">3</span></li>
+    <li><span class="n">02</span><span class="t">Why change<small>Common problems and what changes</small></span><span class="p">4</span></li>
+    <li><span class="n">03</span><span class="t">The system and who does what<small>Three apps, one server; four roles</small></span><span class="p">5</span></li>
+    <li><span class="n">04</span><span class="t">A day in the life<small>One school day, seen by each person</small></span><span class="p">7</span></li>
+    <li><span class="n">05</span><span class="t">From marks to published result<small>The seven-step, tamper-resistant process</small></span><span class="p">8</span></li>
+    <li><span class="n">06</span><span class="t">The system in use<small>Review, approval, students, daily school life</small></span><span class="p">9</span></li>
+    <li><span class="n">07</span><span class="t">Communication and student safety<small>Rules built in, not added later</small></span><span class="p">13</span></li>
+    <li><span class="n">08</span><span class="t">Trust, security and records<small>How student data and results are protected</small></span><span class="p">14</span></li>
+    <li><span class="n">09</span><span class="t">Where we are today<small>Built, tested, and what remains</small></span><span class="p">16</span></li>
+    <li><span class="n">10</span><span class="t">Rollout, cost and risks<small>A safe step-by-step start</small></span><span class="p">17</span></li>
+    <li><span class="n">11</span><span class="t">Decisions requested<small>Six decisions that let the pilot begin</small></span><span class="p">18</span></li>
+    <li><span class="n">12</span><span class="t">Appendix<small>Everything the system covers</small></span><span class="p">19</span></li></ol>
+  <div class="spacer"></div>
+  <div class="quote">“One School. One System. One Connected Community.”</div>
+`)}
 
 ${page("", `
   <div class="kicker">Executive summary</div><h1>What we are proposing</h1>
@@ -80,7 +116,7 @@ ${page("", `
     <div class="card stat"><b>3</b><span>apps: desktop, web, Android</span></div><div class="card stat"><b>4</b><span>user roles with separate powers</span></div><div class="card stat"><b>7</b><span>safe steps from marks to published result</span></div><div class="card stat"><b>1</b><span>permanent record of every change</span></div></div>
   <div class="cols c2">
     <div class="card"><h3>What the school gets</h3><ul class="check"><li>Marks entered once, checked by the Register, approved by the Headmaster, then published to students.</li><li>Daily attendance, class tests and homework in the same place.</li><li>Notices and messages that reach the right people — with student-safety rules built in.</li><li>Reports, report cards and certificates generated from the same data.</li></ul></div>
-    <div class="card mint"><h3>What the committee decides</h3><p>This document shows the real system working, explains how it protects students and results, and asks for four decisions (last pages):</p><ol style="padding-left:5mm;margin:0"><li>Approve a <b>pilot</b> in one class.</li><li>Choose <b>where the system runs</b>.</li><li>Confirm <b>who may publish results</b>.</li><li>Nominate a <b>system owner</b> and training time.</li></ol></div></div>
+    <div class="card mint"><h3>What the committee decides</h3><p>This document shows the real system working, explains how it protects students and results, and asks for six decisions (last pages):</p><ol style="padding-left:5mm;margin:0"><li>Approve a <b>pilot</b> in one class.</li><li>Choose <b>where the system runs</b>.</li><li>Confirm <b>who may publish results</b>.</li><li>Nominate a <b>system owner</b> and training time.</li><li>Confirm the <b>messaging policy</b>.</li><li>Confirm <b>data handling</b> and backups.</li></ol></div></div>
   <div class="spacer"></div>
   <div class="box small"><b>About the pictures.</b> Every screen in this document is a real screenshot of the working system. The names, marks and notices shown are invented demonstration data — no real student information is used.</div>
 `)}
@@ -126,6 +162,22 @@ ${page("", `
     <div class="card role"><h3><span class="ic">${icon("student")}</span>Student</h3><ul class="small"><li>Sees <b>only their own</b> record</li><li>Published results and report cards</li><li>Attendance, class tests, homework, notices</li><li>Messages to their own teachers (school-controlled)</li></ul></div></div>
   <div class="box"><b>Headmaster and Register are deliberately different.</b> The Register prepares and verifies; the Headmaster approves. The person who verified marks cannot also approve them, and approving or publishing needs the password to be typed again.</div>
   <div class="cols c2">${shot("teacher-dashboard-correction", "Teacher dashboard: a correction request from the Register is highlighted.")}${shot("students-registry", "Register: student registry with search and class filters.")}</div>
+`)}
+
+${page("", `
+  <div class="kicker">A day in the life</div><h2>One school day, seen by each person</h2>
+  <p class="lead" style="margin-bottom:5mm">An illustrative day, using the demonstration school. It shows how the pieces fit together without anyone retyping anything.</p>
+  <div class="cols c-5-7" style="align-items:start">
+    <div class="day">
+      <div class="ev"><span class="who">8:05 · Teacher</span><b>Takes attendance in seconds</b><span class="small muted">Roll call on a tablet or computer; absences are counted straight away.</span></div>
+      <div class="ev"><span class="who">10:30 · Teacher</span><b>Gives homework</b><span class="small muted">Posted to the class; students see it in the app.</span></div>
+      <div class="ev"><span class="who">12:00 · Teacher</span><b>Submits exam marks</b><span class="small muted">Range-checked, totalled; locked once submitted.</span></div>
+      <div class="ev"><span class="who">13:15 · Register</span><b>Checks the submission</b><span class="small muted">Spots a doubtful total and requests a correction with a reason.</span></div>
+      <div class="ev"><span class="who">14:00 · Teacher</span><b>Fixes and resubmits</b><span class="small muted">Saved as a new revision; the old one is kept.</span></div>
+      <div class="ev"><span class="who">15:30 · Headmaster</span><b>Approves and publishes</b><span class="small muted">Password typed again; the decision is recorded.</span></div>
+      <div class="ev"><span class="who">15:31 · Student</span><b>Sees the result</b><span class="small muted">A notification arrives; only their own result opens.</span></div></div>
+    <div style="display:grid;gap:4mm">${shot("attendance-roll-call", "Teacher: roll call with present, absent and late.")}${shot("results-approval", "Headmaster: approval screen with the full result before publishing.")}</div></div>
+  <div class="box small" style="margin-top:3mm"><b>Result:</b> the work that used to take days of sheets and walking between rooms becomes a short chain of clear steps — and each step is visible to the next person.</div>
 `)}
 
 ${page("", `
@@ -193,6 +245,22 @@ ${page("", `
 `)}
 
 ${page("", `
+  <div class="kicker">Trust and security</div><h2>How student data and results are protected</h2>
+  <p class="lead" style="margin-bottom:5mm">Protection is enforced by the school server — the screens only reflect it. This table lists what could go wrong and what stops it.</p>
+  <table class="t"><thead><tr><th style="width:30%">What could go wrong</th><th>What prevents it</th></tr></thead><tbody>
+    <tr><td>Someone guesses or steals a password</td><td>Passwords are stored in a one-way secure form; repeated wrong attempts lock the account; sessions expire and can be ended per device.</td></tr>
+    <tr><td>A staff member views or edits what they should not</td><td>Every request is checked against the person's role and assignment on the server. A teacher cannot open another teacher's class.</td></tr>
+    <tr><td>A mark is quietly changed after submission</td><td>Submitted marks are locked. Corrections require a reason and create a new revision; the audit log records who and when.</td></tr>
+    <tr><td>One person verifies and approves their own work</td><td>Separation of duties is enforced: the verifier cannot approve. Approving and publishing need the password again.</td></tr>
+    <tr><td>A published result is altered later</td><td>Published results are protected at the database level; changes appear only as a new, visible revision.</td></tr>
+    <tr><td>Students contact each other privately or are contacted by strangers</td><td>Student-to-student chat does not exist. Messages are limited to their own teachers and the office; any message can be reported and hidden.</td></tr>
+    <tr><td>An unsafe file is uploaded</td><td>Files are checked for type and size before being accepted.</td></tr>
+    <tr><td>Private data leaks through notifications</td><td>Notification text never contains marks or private details.</td></tr></tbody></table>
+  <div class="spacer"></div>
+  <div class="cols c2"><div class="card navy"><h3>Checked, not just promised</h3><p class="small muted">The server's security rules are covered by automated tests, a dependency vulnerability audit passes, and the screens were checked against accessibility standards (WCAG 2.1 A/AA).</p></div><div class="card mint"><h3>Still the school’s decision</h3><p class="small">Where the data is hosted, who holds admin passwords, and how often backups are checked are policy choices for the committee — see the decisions page.</p></div></div>
+`)}
+
+${page("", `
   <div class="kicker">Where we are today</div><h2>What is built, tested — and what remains</h2>
   <div class="cols c2" style="margin-bottom:5mm">
     <div class="card"><h3>Built and tested</h3><ul class="small check"><li>Complete school server and all four user roles.</li><li>Exam → marks → review → approval → publish workflow, including corrections, send-back and revisions.</li><li>Attendance, class tests, homework, notices, messaging with safety rules, reports, certificates and report cards (PDF).</li><li>Web app, Windows desktop app and Android student app (source complete).</li><li>Bulk student import from a spreadsheet (CSV).</li><li>English and Bengali (core screens on web/desktop).</li></ul></div>
@@ -222,7 +290,7 @@ ${page("", `
 
 ${page("", `
   <div class="kicker">For the committee</div><h2>Decisions we request</h2>
-  <p class="lead" style="margin-bottom:5mm">Four decisions allow the pilot to begin.</p>
+  <p class="lead" style="margin-bottom:5mm">Six decisions allow the pilot to begin.</p>
   <ol class="decide" style="padding:0;margin:0 0 5mm">
     <li><b>Approve the pilot</b> in one class (suggested: Class 6, two sections) for one term, as described in Phases 1–3.</li>
     <li><b>Choose where the system runs:</b> (a) rented cloud server, or (b) a school-owned server. We will prepare costs for the chosen option.</li>
@@ -248,6 +316,13 @@ ${page("", `
     <tr><td>Reports and oversight</td><td>Enrollment, attendance, exam analysis, teacher submission status, grade distribution; CSV export; audit log; global search.</td></tr></tbody></table>
   <div class="cols c2" style="margin-top:5mm"><div class="card"><h3>Technology, in plain words</h3><p class="small">The school server is written in Rust, a language known for speed and safety, and stores data in PostgreSQL, a widely trusted database. The apps use common, well-supported tools. Updates are delivered as versioned releases with checksums so the school can verify them.</p></div><div class="card"><h3>Document information</h3><p class="small">Prepared from the working system and its automated test results. Screens show demonstration data. Quality figures are those recorded at the time of writing (November 2026).</p></div></div>
 `)}
+${page("closing", `<div class="glow"></div><div class="glow2"></div><div class="inner">
+  <img class="tile" src="${TILE}" alt="ShikkhaOS logo">
+  <div class="rule" style="width:18mm;height:1.2mm;background:var(--teal);margin-bottom:6mm"></div>
+  <h1>Let’s begin with one class.</h1>
+  <div class="tag" style="font-size:14pt;color:var(--mint);max-width:130mm;margin-bottom:10mm">A small pilot lets teachers, the Register and the Headmaster judge ShikkhaOS on real work — with paper as a safety net — before the whole school commits.</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6mm;border-top:1px solid rgba(220,239,235,.3);padding-top:6mm;font-size:9.5pt;color:#C7D6E8"><div><b style="color:#fff;display:block">Step 1</b>Committee approves the pilot</div><div><b style="color:#fff;display:block">Step 2</b>We prepare the server, accounts and training</div><div><b style="color:#fff;display:block">Step 3</b>One class, one term, weekly review</div></div>
+  <div style="margin-top:auto;font-size:9pt;color:#9FB1C9">ShikkhaOS · One School. One System. One Connected Community.</div></div>`, { head: false })}
 </body></html>`;
 
 writeFileSync(path.join(dir, "index.html"), html);

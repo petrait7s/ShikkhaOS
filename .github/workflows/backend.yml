@@ -105,8 +105,8 @@ jobs:
           sqlx migrate run --source database/migrations
       - run: cargo fmt --all -- --check
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
-      - name: SQLx offline cache is up to date
-        run: cargo sqlx prepare --workspace --check -- --all-targets
+      # The API uses runtime-checked SQLx queries (no query! macros), so there is no .sqlx offline cache to verify.
+      # Query correctness is covered by the integration tests running against real PostgreSQL.
       - name: Build without a database (offline mode)
         env:
           SQLX_OFFLINE: "true"

@@ -1,0 +1,9 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "e2e"
+onlyBuiltDependencies:
+  - electron
+  - esbuild
+  - sharp
+  - unrs-resolver

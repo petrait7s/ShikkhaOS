@@ -1,0 +1,18 @@
+# Local/dev stack: docker compose -f infrastructure/docker-compose.yml up --build
+services:
+  db:
+    image: postgres:16
+    environment: { POSTGRES_USER: shikkhaos, POSTGRES_PASSWORD: shikkhaos, POSTGRES_DB: shikkhaos }
+    volumes: [dbdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U shikkhaos"], interval: 5s, retries: 10 }
+  api:
+    build: { context: .., dockerfile: infrastructure/docker/api.Dockerfile, args: { VERSION: dev } }
+    depends_on: { db: { condition: service_healthy } }
+    environment:
+      DATABASE_URL: postgres://shikkhaos:shikkhaos@db:5432/shikkhaos
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET (>=32 chars)}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    ports: ["8080:8080"]
+    volumes: [files:/app/data/files]
+volumes: { dbdata: {}, files: {} }

@@ -1,16 +1,26 @@
-use std::collections::HashMap;
-use axum::{extract::{Path, Query, State}, response::Response, routing::{get, post}, Router};
-use serde_json::{json, Value};
-use uuid::Uuid;
 use crate::{audit, auth::Ctx, error::*, http::*, state::AppState};
+use axum::{
+    extract::{Path, Query, State},
+    response::Response,
+    routing::{get, post},
+    Router,
+};
+use serde_json::{json, Value};
+use std::collections::HashMap;
+use uuid::Uuid;
 
 pub fn router() -> Router<AppState> {
-    Router::new().route("/reports/{key}", get(run)).route("/reports/{key}/export", post(export))
+    Router::new()
+        .route("/reports/{key}", get(run))
+        .route("/reports/{key}/export", post(export))
 }
 
 async fn compute(s: &AppState, key: &str, f: &HashMap<String, String>) -> ApiResult<Vec<Value>> {
     let uid = |k: &str| f.get(k).and_then(|x| Uuid::parse_str(x).ok());
-    let date = |k: &str| f.get(k).and_then(|v| chrono::NaiveDate::parse_from_str(v, "%Y-%m-%d").ok());
+    let date = |k: &str| {
+        f.get(k)
+            .and_then(|v| chrono::NaiveDate::parse_from_str(v, "%Y-%m-%d").ok())
+    };
     let q = match key {
         "enrollment-summary" => "SELECT to_jsonb(t) FROM (SELECT c.name AS class_name, sec.name AS section_name, count(*) FILTER (WHERE e.status='ACTIVE') AS students, count(*) FILTER (WHERE e.status='ACTIVE' AND st.gender='MALE') AS male, count(*) FILTER (WHERE e.status='ACTIVE' AND st.gender='FEMALE') AS female, sec.capacity \
             FROM sections sec JOIN classes c ON c.id=sec.class_id LEFT JOIN enrollments e ON e.section_id=sec.id AND e.session_id = COALESCE($1, (SELECT id FROM academic_sessions WHERE is_current)) LEFT JOIN students st ON st.id=e.student_id GROUP BY c.name, c.\"order\", sec.name, sec.capacity ORDER BY c.\"order\", sec.name) t",
@@ -23,26 +33,81 @@ async fn compute(s: &AppState, key: &str, f: &HashMap<String, String>) -> ApiRes
         "result-distribution" => "SELECT to_jsonb(t) FROM (SELECT ex.name AS exam_name, c.name AS class_name, sr.grade, count(*) AS students FROM result_sets rs JOIN exams ex ON ex.id=rs.exam_id JOIN classes c ON c.id=rs.class_id JOIN student_results sr ON sr.result_set_id=rs.id AND sr.revision=rs.current_revision WHERE ($4::uuid IS NULL OR rs.exam_id=$4) GROUP BY ex.name, ex.start_date, c.name, sr.grade ORDER BY ex.start_date DESC, c.name, sr.grade) t",
         _ => return Err(ApiError::not_found()),
     };
-    Ok(sqlx::query_scalar(q).bind(uid("sessionId")).bind(date("from")).bind(date("to")).bind(uid("examId")).fetch_all(&s.db).await?)
+    Ok(sqlx::query_scalar(q)
+        .bind(uid("sessionId"))
+        .bind(date("from"))
+        .bind(date("to"))
+        .bind(uid("examId"))
+        .fetch_all(&s.db)
+        .await?)
 }
 
-async fn run(State(s): State<AppState>, ctx: Ctx, Path(key): Path<String>, Query(f): Query<HashMap<String, String>>) -> ApiResult<Response> {
+async fn run(
+    State(s): State<AppState>,
+    ctx: Ctx,
+    Path(key): Path<String>,
+    Query(f): Query<HashMap<String, String>>,
+) -> ApiResult<Response> {
     ctx.require("reports.read")?;
-    Ok(ok(json!({ "key": key, "rows": compute(&s, &key, &f).await? })))
+    Ok(ok(
+        json!({ "key": key, "rows": compute(&s, &key, &f).await? }),
+    ))
 }
 
 fn cell(v: &Value) -> String {
-    let t = match v { Value::Null => String::new(), Value::String(s) => s.clone(), o => o.to_string() };
-    let t = if t.starts_with(['=', '+', '-', '@']) { format!("'{t}") } else { t };
+    let t = match v {
+        Value::Null => String::new(),
+        Value::String(s) => s.clone(),
+        o => o.to_string(),
+    };
+    let t = if t.starts_with(['=', '+', '-', '@']) {
+        format!("'{t}")
+    } else {
+        t
+    };
     format!("\"{}\"", t.replace('"', "\"\""))
 }
 
-async fn export(State(s): State<AppState>, ctx: Ctx, Path(key): Path<String>, Query(f): Query<HashMap<String, String>>) -> ApiResult<Response> {
+async fn export(
+    State(s): State<AppState>,
+    ctx: Ctx,
+    Path(key): Path<String>,
+    Query(f): Query<HashMap<String, String>>,
+) -> ApiResult<Response> {
     ctx.require("reports.read")?;
     let rows = compute(&s, &key, &f).await?;
-    let cols: Vec<String> = rows.first().and_then(|r| r.as_object()).map(|o| o.keys().cloned().collect()).unwrap_or_default();
-    let mut csv = cols.iter().map(|c| camel_key(c)).collect::<Vec<_>>().join(",") + "\n";
-    for r in &rows { csv.push_str(&cols.iter().map(|c| cell(&r[c])).collect::<Vec<_>>().join(",")); csv.push('\n'); }
-    audit::log(&mut *s.db.acquire().await?, &ctx, "report.exported", "report", &key, None, Some(json!({ "rows": rows.len() }))).await?;
-    Ok(ok(json!({ "filename": format!("{key}.csv"), "mimeType": "text/csv", "rows": rows.len(), "content": csv })))
+    let cols: Vec<String> = rows
+        .first()
+        .and_then(|r| r.as_object())
+        .map(|o| o.keys().cloned().collect())
+        .unwrap_or_default();
+    let mut csv = cols
+        .iter()
+        .map(|c| camel_key(c))
+        .collect::<Vec<_>>()
+        .join(",")
+        + "\n";
+    for r in &rows {
+        csv.push_str(
+            &cols
+                .iter()
+                .map(|c| cell(&r[c]))
+                .collect::<Vec<_>>()
+                .join(","),
+        );
+        csv.push('\n');
+    }
+    audit::log(
+        &mut *s.db.acquire().await?,
+        &ctx,
+        "report.exported",
+        "report",
+        &key,
+        None,
+        Some(json!({ "rows": rows.len() })),
+    )
+    .await?;
+    Ok(ok(
+        json!({ "filename": format!("{key}.csv"), "mimeType": "text/csv", "rows": rows.len(), "content": csv }),
+    ))
 }

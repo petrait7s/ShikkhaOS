@@ -1,12 +1,14 @@
 //! Class-group membership follows enrollments + teacher assignments (contract C13).
+use crate::error::ApiResult;
 use sqlx::PgConnection;
 use uuid::Uuid;
-use crate::error::ApiResult;
 
 /// Ensure a CLASS_GROUP conversation exists for the section and its members match current enrollments/assignments.
 pub async fn sync_class_group(conn: &mut PgConnection, section: Uuid) -> ApiResult<()> {
     let info: Option<(String, Uuid)> = sqlx::query_as("SELECT c.name || '-' || s.name, c.id FROM sections s JOIN classes c ON c.id = s.class_id WHERE s.id = $1").bind(section).fetch_optional(&mut *conn).await?;
-    let Some((title, class_id)) = info else { return Ok(()) };
+    let Some((title, class_id)) = info else {
+        return Ok(());
+    };
     let conv: Uuid = sqlx::query_scalar("INSERT INTO conversations (type, title, class_id, section_id) VALUES ('CLASS_GROUP', $1, $2, $3) ON CONFLICT (section_id) WHERE type = 'CLASS_GROUP' DO UPDATE SET title = EXCLUDED.title RETURNING id")
         .bind(&title).bind(class_id).bind(section).fetch_one(&mut *conn).await?;
     sqlx::query("DELETE FROM conversation_members m WHERE m.conversation_id = $1 AND m.user_id NOT IN (

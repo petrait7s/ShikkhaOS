@@ -106,7 +106,10 @@ impl ResultStatus {
 }
 
 /// The person who entered/submitted marks must not verify them.
-pub fn check_verifier(submitted_by: Option<uuid_like::Id>, verifier: uuid_like::Id) -> Result<(), TransitionError> {
+pub fn check_verifier(
+    submitted_by: Option<uuid_like::Id>,
+    verifier: uuid_like::Id,
+) -> Result<(), TransitionError> {
     match submitted_by {
         Some(s) if s == verifier => Err(TransitionError::SeparationOfDuties),
         _ => Ok(()),
@@ -114,7 +117,10 @@ pub fn check_verifier(submitted_by: Option<uuid_like::Id>, verifier: uuid_like::
 }
 
 /// A Headmaster/approver cannot approve a set whose submissions they verified themselves.
-pub fn check_approver(verifiers: &[uuid_like::Id], approver: uuid_like::Id) -> Result<(), TransitionError> {
+pub fn check_approver(
+    verifiers: &[uuid_like::Id],
+    approver: uuid_like::Id,
+) -> Result<(), TransitionError> {
     if verifiers.contains(&approver) {
         Err(TransitionError::SeparationOfDuties)
     } else {
@@ -131,7 +137,12 @@ pub fn require_reason(reason: &str) -> Result<(), TransitionError> {
 }
 
 /// Publishing rule: needs `results.publish`; a Registrar additionally needs the school switch AND the per-exam flag.
-pub fn can_publish(role: Role, has_publish_permission: bool, school_delegation: bool, exam_allows_registrar: bool) -> Result<(), TransitionError> {
+pub fn can_publish(
+    role: Role,
+    has_publish_permission: bool,
+    school_delegation: bool,
+    exam_allows_registrar: bool,
+) -> Result<(), TransitionError> {
     if !has_publish_permission {
         return Err(TransitionError::PublishNotPermitted);
     }
@@ -153,7 +164,8 @@ mod tests {
     use SubmissionAction::*;
     use SubmissionStatus::*;
 
-    const ALL: [SubmissionStatus; 5] = [Draft, Submitted, UnderReview, CorrectionRequested, Verified];
+    const ALL: [SubmissionStatus; 5] =
+        [Draft, Submitted, UnderReview, CorrectionRequested, Verified];
     const ACTS: [SubmissionAction; 4] = [Submit, StartReview, RequestCorrection, Verify];
 
     #[test]
@@ -162,7 +174,13 @@ mod tests {
         let s = s.next(StartReview).unwrap();
         let s = s.next(RequestCorrection).unwrap();
         assert_eq!(s, CorrectionRequested);
-        let s = s.next(Submit).unwrap().next(StartReview).unwrap().next(Verify).unwrap();
+        let s = s
+            .next(Submit)
+            .unwrap()
+            .next(StartReview)
+            .unwrap()
+            .next(Verify)
+            .unwrap();
         assert_eq!(s, Verified);
     }
 
@@ -196,8 +214,14 @@ mod tests {
 
     #[test]
     fn result_set_lifecycle_is_linear() {
-        assert_eq!(ResultStatus::Verified.next(ResultAction::Approve), Ok(ResultStatus::Approved));
-        assert_eq!(ResultStatus::Approved.next(ResultAction::Publish), Ok(ResultStatus::Published));
+        assert_eq!(
+            ResultStatus::Verified.next(ResultAction::Approve),
+            Ok(ResultStatus::Approved)
+        );
+        assert_eq!(
+            ResultStatus::Approved.next(ResultAction::Publish),
+            Ok(ResultStatus::Published)
+        );
         assert!(ResultStatus::Verified.next(ResultAction::Publish).is_err());
         assert!(ResultStatus::Approved.next(ResultAction::Approve).is_err());
         assert!(ResultStatus::Published.next(ResultAction::Approve).is_err());

@@ -38,13 +38,28 @@ pub fn can_start_direct(c: &DmContext) -> Result<(), Denial> {
     match (c.sender, c.recipient) {
         (Student, Student) => Err(Denial::StudentDmDisabled),
         (Student, Teacher) => {
-            if !c.student_to_teacher_enabled { Err(Denial::FeatureDisabled) }
-            else if !c.teacher_teaches_student { Err(Denial::NotAssigned) } else { Ok(()) }
+            if !c.student_to_teacher_enabled {
+                Err(Denial::FeatureDisabled)
+            } else if !c.teacher_teaches_student {
+                Err(Denial::NotAssigned)
+            } else {
+                Ok(())
+            }
         }
         (Student, Headmaster) | (Student, Registrar) => {
-            if c.student_to_admin_enabled { Ok(()) } else { Err(Denial::FeatureDisabled) }
+            if c.student_to_admin_enabled {
+                Ok(())
+            } else {
+                Err(Denial::FeatureDisabled)
+            }
         }
-        (Teacher, Student) => if c.teacher_teaches_student { Ok(()) } else { Err(Denial::NotAssigned) },
+        (Teacher, Student) => {
+            if c.teacher_teaches_student {
+                Ok(())
+            } else {
+                Err(Denial::NotAssigned)
+            }
+        }
         (Headmaster, _) | (Registrar, _) => Ok(()),
         (Teacher, _) => Ok(()),
     }
@@ -66,13 +81,22 @@ pub fn can_post(role: Role, kind: &str, students_can_post: bool, is_official_pos
 mod tests {
     use super::*;
     fn ctx(s: Role, r: Role) -> DmContext {
-        DmContext { sender: s, recipient: r, same_user: false, teacher_teaches_student: true, student_to_teacher_enabled: true, student_to_admin_enabled: true }
+        DmContext {
+            sender: s,
+            recipient: r,
+            same_user: false,
+            teacher_teaches_student: true,
+            student_to_teacher_enabled: true,
+            student_to_admin_enabled: true,
+        }
     }
     #[test]
     fn student_to_student_always_denied() {
         let mut c = ctx(Role::Student, Role::Student);
         assert_eq!(can_start_direct(&c), Err(Denial::StudentDmDisabled));
-        c.student_to_teacher_enabled = true; c.student_to_admin_enabled = true; c.teacher_teaches_student = true;
+        c.student_to_teacher_enabled = true;
+        c.student_to_admin_enabled = true;
+        c.teacher_teaches_student = true;
         assert_eq!(can_start_direct(&c), Err(Denial::StudentDmDisabled));
     }
     #[test]
@@ -81,7 +105,8 @@ mod tests {
         assert!(can_start_direct(&c).is_ok());
         c.teacher_teaches_student = false;
         assert_eq!(can_start_direct(&c), Err(Denial::NotAssigned));
-        c.teacher_teaches_student = true; c.student_to_teacher_enabled = false;
+        c.teacher_teaches_student = true;
+        c.student_to_teacher_enabled = false;
         assert_eq!(can_start_direct(&c), Err(Denial::FeatureDisabled));
     }
     #[test]
@@ -99,7 +124,8 @@ mod tests {
         let mut c = ctx(Role::Teacher, Role::Student);
         c.teacher_teaches_student = false;
         assert_eq!(can_start_direct(&c), Err(Denial::NotAssigned));
-        let mut s = ctx(Role::Teacher, Role::Teacher); s.same_user = true;
+        let mut s = ctx(Role::Teacher, Role::Teacher);
+        s.same_user = true;
         assert_eq!(can_start_direct(&s), Err(Denial::SelfMessage));
     }
     #[test]

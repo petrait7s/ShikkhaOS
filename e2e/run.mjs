@@ -28,7 +28,7 @@ try {
   if (!process.env.E2E_SKIP_WEB_BUILD) run("pnpm", ["--filter", "web", "build"], { env: { ...process.env, API_PROXY_TARGET: `http://127.0.0.1:${API_PORT}`, NEXT_PUBLIC_API_MODE: "live" } });
   children.push(spawn("pnpm", ["--filter", "web", "exec", "next", "start", "-p", String(WEB_PORT), "-H", "127.0.0.1"], { env: process.env, stdio: "inherit", cwd: root }));
   await waitFor(`http://127.0.0.1:${WEB_PORT}/`);
-  const r = spawnSync("node", ["--test", "--test-concurrency=1", "--test-timeout=240000", ...(process.env.E2E_FILTER ? ["--test-name-pattern", process.env.E2E_FILTER] : []), "e2e/tests/workflow.test.mjs"], { stdio: "inherit", cwd: root, env: { ...process.env, E2E_WEB: `http://127.0.0.1:${WEB_PORT}`, E2E_API: `http://127.0.0.1:${API_PORT}/api/v1`, E2E_DB: `${PG}/${dbName}` } });
+  const r = spawnSync("node", ["--test", "--test-concurrency=1", "--test-timeout=240000", ...(process.env.E2E_FILTER ? ["--test-name-pattern", process.env.E2E_FILTER] : []), ...(process.env.E2E_ONLY ? [process.env.E2E_ONLY] : ["e2e/tests/workflow.test.mjs", "e2e/tests/a11y.test.mjs"])], { stdio: "inherit", cwd: root, env: { ...process.env, E2E_WEB: `http://127.0.0.1:${WEB_PORT}`, E2E_API: `http://127.0.0.1:${API_PORT}/api/v1`, E2E_DB: `${PG}/${dbName}` } });
   process.exitCode = r.status ?? 1;
 } catch (e) { console.error(e); process.exitCode = 1; }
 cleanup();

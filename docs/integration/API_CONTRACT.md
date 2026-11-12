@@ -11,6 +11,9 @@
 
 ## Official result lifecycle
 Submission: `DRAFT → SUBMITTED → UNDER_REVIEW → (CORRECTION_REQUESTED → SUBMITTED …) → VERIFIED`. Result set (exam × class): `VERIFIED → APPROVED → PUBLISHED`. Invalid transitions return `409 INVALID_STATE_TRANSITION`. Separation of duties: the submitter cannot verify; a verifier cannot approve. Registrar may publish only when the school switch `registrarCanPublishResults` AND the per-exam `registrarMayPublish` are on AND the user holds `results.publish`. Published results are immutable (DB triggers); corrections are revisions (`revision+1`) requested by staff, approved by the Headmaster, applied with history retained.
+**Send back:** `POST /result-sets/{id}/reject` `{ reason }` (Headmaster + re-auth) moves a VERIFIED set to `REJECTED`, reopens its submissions to `UNDER_REVIEW` and notifies the Register; `POST /result-sets` for the same exam/class then recompiles it as the next revision (revision history kept).
+**Bulk import:** `POST /students/import` `{ csv, dryRun=true }` validates up to 200 rows (line-level errors) and, with `dryRun=false` and no errors, creates students + enrollments and returns one-time credentials.
+
 Class tests (`/class-tests`) are separate tables/endpoints and never touch result tables.
 
 ## Realtime

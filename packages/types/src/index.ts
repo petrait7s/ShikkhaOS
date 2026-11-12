@@ -12,7 +12,7 @@ export interface User { id: Uuid; role: Role; username: string; email: string | 
 export interface LoginResult { accessToken: string; refreshToken?: string; expiresIn: number; user: User; permissions: string[]; mustChangePassword: boolean }
 
 export type SubmissionStatus = "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "CORRECTION_REQUESTED" | "VERIFIED";
-export type ResultStatus = "VERIFIED" | "APPROVED" | "PUBLISHED";
+export type ResultStatus = "VERIFIED" | "APPROVED" | "PUBLISHED" | "REJECTED";
 export type AnyResultStatus = SubmissionStatus | ResultStatus;
 export type ExamStatus = "DRAFT" | "AUTHORIZED" | "IN_PROGRESS" | "CLOSED";
 
@@ -28,7 +28,7 @@ export interface ExamPaper { id: Uuid; examId: Uuid; classId: Uuid; subjectId: U
 export interface MarkSubmissionRow { id: Uuid; examId: Uuid; examName: string; className: string; sectionName: string; subjectName: string; subjectCode: string; teacherName: string; status: SubmissionStatus; currentRevision: number; fullMarks: number; passMarks: number; submittedAt: Iso | null; version: number }
 export interface MarkEntry { studentId: Uuid; fullName: string; studentCode: string; rollNo: number; marksObtained: number | null; absent: boolean; remark: string | null; flagged: boolean; flagNote: string | null; entered: boolean }
 export interface MarkSubmissionDetail extends MarkSubmissionRow { entries: MarkEntry[]; note: string | null; editable: boolean; examStatus: ExamStatus }
-export interface ResultSetRow { id: Uuid; examId: Uuid; examName: string; classId: Uuid; className: string; status: ResultStatus; publishedRevision: number; currentRevision: number; publishedAt: Iso | null; version: number }
+export interface ResultSetRow { id: Uuid; examId: Uuid; examName: string; classId: Uuid; className: string; status: ResultStatus; publishedRevision: number; currentRevision: number; publishedAt: Iso | null; rejectionNote?: string | null; version: number }
 export interface SubjectResult { subjectId: string; marks: number; fullMarks: number; grade: string; gradePoint: number; absent: boolean; passed: boolean; subjectName?: string }
 export interface StudentResultRow { studentId: Uuid; fullName: string; studentCode: string; sectionName: string; rollNo: number | null; revision: number; totalMarks: number; gpa: number | null; grade: string; passed: boolean; position: number | null; subjects: SubjectResult[] }
 export interface ResultSetDetail extends ResultSetRow { results: StudentResultRow[]; summary: { students: number; failed: number; withAbsence: number; passRate: number }; revision: number }
@@ -43,6 +43,6 @@ export interface AttendanceSummary { total: number; present: number; absent: num
 export interface AuditLog { id: Uuid; actorName: string | null; actorRole: string | null; action: string; entityType: string; entityId: string | null; createdAt: Iso; before?: unknown; after?: unknown }
 
 export const SUBMISSION_STATUS_LABEL: Record<AnyResultStatus, string> = {
-  DRAFT: "Draft", SUBMITTED: "Submitted", UNDER_REVIEW: "Under review", CORRECTION_REQUESTED: "Correction requested", VERIFIED: "Verified", APPROVED: "Approved", PUBLISHED: "Published",
+  DRAFT: "Draft", SUBMITTED: "Submitted", UNDER_REVIEW: "Under review", CORRECTION_REQUESTED: "Correction requested", VERIFIED: "Verified", APPROVED: "Approved", PUBLISHED: "Published", REJECTED: "Sent back",
 };
 export const ROLE_LABEL: Record<Role, string> = { HEADMASTER: "Headmaster", REGISTRAR: "Register", TEACHER: "Teacher", STUDENT: "Student" };

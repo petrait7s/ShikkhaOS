@@ -236,7 +236,10 @@ mod tests {
     fn rejected_result_sets_cannot_advance() {
         assert!(ResultStatus::Rejected.next(ResultAction::Approve).is_err());
         assert!(ResultStatus::Rejected.next(ResultAction::Publish).is_err());
-        assert_eq!(ResultStatus::parse("REJECTED"), Some(ResultStatus::Rejected));
+        assert_eq!(
+            ResultStatus::parse("REJECTED"),
+            Some(ResultStatus::Rejected)
+        );
     }
 
     #[test]

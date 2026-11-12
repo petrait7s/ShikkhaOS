@@ -1001,6 +1001,15 @@ paths:
       responses:
         '200': { description: Success, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
         default: { description: Error, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorBody' } } } }
+  /result-sets/{id}/reject:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    post:
+      operationId: results_reject_post
+      tags: [results]
+      responses:
+        '200': { description: Success, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+        default: { description: Error, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorBody' } } } }
   /result-sets/{id}/report-cards:
     parameters:
       - { name: id, in: path, required: true, schema: { type: string } }
@@ -1185,6 +1194,13 @@ paths:
     get:
       operationId: results_student_results_get
       tags: [results]
+      responses:
+        '200': { description: Success, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
+        default: { description: Error, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorBody' } } } }
+  /students/import:
+    post:
+      operationId: people_import_students_post
+      tags: [people]
       responses:
         '200': { description: Success, content: { application/json: { schema: { $ref: '#/components/schemas/Envelope' } } } }
         default: { description: Error, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorBody' } } } }

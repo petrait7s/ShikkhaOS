@@ -6,6 +6,7 @@ import { newId } from "@shikkhaos/api-client";
 import { useApp, useAction, useList } from "../../lib/app";
 import { Btn, Empty, ErrorView, Field, Loading, T, fmtDateTime } from "../../components/ui";
 import { useTheme } from "../../lib/theme";
+import { canPost as canPostIn } from "../../lib/format";
 
 export default function Thread() {
   const { id } = useLocalSearchParams<{ id: string }>(); const { api, rt, auth } = useApp(); const t = useTheme();
@@ -13,7 +14,7 @@ export default function Thread() {
   const msgs = useList<Message>(`/conversations/${id}/messages`, undefined, 100); const [body, setBody] = React.useState(""); const [err, setErr] = React.useState<string>();
   React.useEffect(() => { void api.post(`/conversations/${id}/read`).catch(() => {}); }, [api, id, msgs.data?.length]);
   React.useEffect(() => { const off = [rt.on("message.created", (p) => { if (p.conversationId === id) void msgs.refetch(); }), rt.on("ws.open", () => void msgs.refetch())]; return () => off.forEach((f) => f()); }, [rt, id]);
-  const canPost = !!conv && (conv.type === "DIRECT" || (conv.type === "CLASS_GROUP" && conv.studentsCanPost));
+  const canPost = !!conv && canPostIn(conv);
   const send = useAction(async () => { const text = body.trim(); if (!text) return; const cid = newId(); setBody(""); try { await api.post(`/conversations/${id}/messages`, { body: text, clientMessageId: cid }, { idempotencyKey: cid }); void msgs.refetch(); } catch (e) { setBody(text); setErr((e as Error).message); } }, { invalidate: ["/conversations"] });
   if (msgs.isLoading || convs.isLoading) return <Loading />; if (msgs.error) return <ErrorView error={msgs.error} onRetry={() => void msgs.refetch()} />;
   return (

@@ -53,3 +53,71 @@ describe("App", () => {
     await waitFor(() => expect(within(dialog).getByText(/At least 10 characters/)).toBeInTheDocument());
   });
 });
+
+describe("Bengali language", () => {
+  it("switches the sign-in screen and the role-based navigation to Bengali and back", async () => {
+    render(<App api={fakeApi({ role: "STUDENT", permissions: ["students.read_own", "results.read_own", "attendance.read_own", "homework.read", "homework.submit", "notices.read", "messages.read"] })} platform={{ kind: "desktop" }} router="hash" />);
+    const u = userEvent.setup();
+    await u.click(await screen.findByRole("button", { name: /switch language/i }));
+    expect(await screen.findByRole("button", { name: "সাইন ইন" })).toBeInTheDocument();
+    expect(screen.getByLabelText("ইউজারনেম, ইমেইল বা শিক্ষার্থী আইডি")).toBeInTheDocument();
+    await u.type(screen.getByLabelText("ইউজারনেম, ইমেইল বা শিক্ষার্থী আইডি"), "s"); await u.type(screen.getByLabelText("পাসওয়ার্ড"), "pw");
+    await u.click(screen.getByRole("button", { name: "সাইন ইন" }));
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    expect(within(nav).getByRole("link", { name: /আমার ফলাফল/ })).toBeInTheDocument();
+    expect(within(nav).getByRole("link", { name: /বার্তা/ })).toBeInTheDocument();
+    expect(document.documentElement.lang).toBe("bn");
+    await u.click(screen.getByRole("button", { name: /switch language/i }));
+    expect(await within(await screen.findByRole("navigation", { name: "Main" })).findByRole("link", { name: /My results/ })).toBeInTheDocument();
+    expect(document.documentElement.lang).toBe("en");
+  });
+});
+
+describe("workspace: tabs, dock and dashboard widgets", () => {
+  const teacher = ["students.read", "marks.enter", "marks.submit", "attendance.mark", "classtests.manage", "messages.read", "notices.read", "homework.manage", "notices.create"];
+  async function signedIn(kind: "desktop" | "web" = "desktop") {
+    render(<App api={fakeApi({ role: "TEACHER", permissions: teacher })} platform={{ kind }} router="hash" />);
+    const u = userEvent.setup();
+    await u.type(await screen.findByLabelText("Username, email or student ID"), "t"); await u.type(screen.getByLabelText("Password"), "pw");
+    await u.click(screen.getByRole("button", { name: "Sign in" }));
+    await screen.findByRole("navigation", { name: "Main" });
+    return u;
+  }
+
+  it("opens modules in tabs, restores them and closes them", async () => {
+    const u = await signedIn();
+    const strip = screen.getByRole("navigation", { name: "Open tabs" });
+    expect(within(strip).getByRole("button", { name: "Dashboard" })).toBeInTheDocument();
+    await u.click(within(screen.getByRole("navigation", { name: "Main" })).getByRole("link", { name: /Messages/ }));
+    expect(await within(strip).findByRole("button", { name: "Messages" })).toHaveAttribute("aria-current", "page");
+    await u.click(within(strip).getByRole("button", { name: /Close tab: Messages/ }));
+    await waitFor(() => expect(within(strip).queryByRole("button", { name: "Messages" })).toBeNull());
+    expect(within(strip).getByRole("button", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("pins modules to the dock on desktop only, and the pin survives re-render", async () => {
+    const u = await signedIn("desktop");
+    expect(screen.queryByRole("navigation", { name: "Pinned" })).toBeNull();
+    await u.click(screen.getByRole("button", { name: /Pin to dock: Messages/ }));
+    const dock = await screen.findByRole("navigation", { name: "Pinned" });
+    expect(within(dock).getByRole("button", { name: "Messages" })).toBeInTheDocument();
+    await u.click(screen.getByRole("button", { name: /Unpin: Messages/ }));
+    await waitFor(() => expect(screen.queryByRole("navigation", { name: "Pinned" })).toBeNull());
+  });
+
+  it("web has no dock pins", async () => {
+    await signedIn("web");
+    expect(screen.queryByRole("button", { name: /Pin to dock/ })).toBeNull();
+  });
+
+  it("lets the user hide and reorder dashboard widgets", async () => {
+    const u = await signedIn();
+    expect(await screen.findByText("Marks entry", { selector: "h2" })).toBeInTheDocument();
+    await u.click(screen.getByRole("button", { name: "Customize" }));
+    const dlg = screen.getByRole("dialog", { name: "Customize" });
+    await u.click(within(dlg).getByRole("checkbox", { name: /Marks entry list/ }));
+    await u.click(within(dlg).getByRole("button", { name: "Done" }));
+    expect(screen.queryByText("Marks entry", { selector: "h2" })).toBeNull();
+    expect(JSON.parse(localStorage.getItem("sos.widgets.u1.TEACHER")!).hidden).toContain("marks");
+  });
+});

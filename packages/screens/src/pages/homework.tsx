@@ -1,6 +1,7 @@
 import * as React from "react";
 import type { Homework as HW, Section, SchoolClass, Subject, TeacherAssignment } from "@shikkhaos/types";
 import { useApp, useAction, useGet, useList, usePagedList } from "../context";
+import { t } from "../i18n";
 import { Badge, Button, Card, Empty, ErrorState, Field, Input, Modal, PageHeader, Select, Skeleton, StatusBadge, Table, Textarea, fmtDateTime } from "../ui";
 
 export function Homework() {
@@ -40,9 +41,9 @@ export function MyHomework() {
   const { api } = useApp(); const q = usePagedList<HW>("/homework"); const [open, setOpen] = React.useState<HW | null>(null);
   void api;
   return <>
-    <PageHeader title="Homework" sub="Your assignments" />
+    <PageHeader title={t("Homework")} sub={t("Your assignments")} />
     <div className="card">{q.isLoading && !q.rows.length ? <div style={{ padding: 16 }}><Skeleton /></div> : q.error ? <ErrorState error={q.error} /> :
-      <Table rows={q.rows} rowKey={(r) => r.id} onRow={setOpen} empty={<Empty title="No homework">You're all caught up.</Empty>} columns={[{ key: "t", header: "Title", render: (r) => <strong>{r.title}</strong> }, { key: "s", header: "Subject", render: (r) => r.subjectName ?? "—" }, { key: "d", header: "Due", render: (r) => fmtDateTime(r.dueAt) }, { key: "m", header: "Status", render: (r) => r.mySubmission ? (r.mySubmission.grade ? <Badge tone="ok">Graded {r.mySubmission.grade}</Badge> : <Badge tone="info">Submitted</Badge>) : new Date(r.dueAt) < new Date() ? <Badge tone="bad">Overdue</Badge> : <Badge tone="warn">To do</Badge> }]} />}</div>
+      <Table rows={q.rows} rowKey={(r) => r.id} onRow={setOpen} empty={<Empty title={t("No homework")}>{t("You're all caught up.")}</Empty>} columns={[{ key: "t", header: "Title", render: (r) => <strong>{r.title}</strong> }, { key: "s", header: "Subject", render: (r) => r.subjectName ?? "—" }, { key: "d", header: "Due", render: (r) => fmtDateTime(r.dueAt) }, { key: "m", header: "Status", render: (r) => r.mySubmission ? (r.mySubmission.grade ? <Badge tone="ok">Graded {r.mySubmission.grade}</Badge> : <Badge tone="info">{t("Submitted")}</Badge>) : new Date(r.dueAt) < new Date() ? <Badge tone="bad">{t("Overdue")}</Badge> : <Badge tone="warn">{t("To do")}</Badge> }]} />}</div>
     {open ? <SubmitHw hw={open} onClose={() => setOpen(null)} /> : null}</>;
 }
 
@@ -52,10 +53,10 @@ function SubmitHw({ hw, onClose }: { hw: HW; onClose: () => void }) {
   const send = useAction(() => api.post(`/homework/${hw.id}/submissions`, { text, fileIds: files }).catch((e) => { setErr(e.message); throw e; }), { invalidate: ["/homework"], success: "Submitted", onSuccess: onClose });
   const pick = async (e: React.ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (!f) return; setUp(true); setErr(undefined); try { const r = await api.upload({ name: f.name, type: f.type || "application/octet-stream", size: f.size, data: f }, "HOMEWORK"); setFiles((x) => [...x, r.id]); } catch (ex) { setErr((ex as Error).message); } finally { setUp(false); e.target.value = ""; } };
   const graded = !!q.data?.mySubmission?.grade;
-  return <Modal title={hw.title} onClose={onClose} footer={graded ? null : <><Button onClick={onClose}>Cancel</Button><Button variant="primary" busy={send.isPending} disabled={!text.trim() && !files.length} onClick={() => send.mutate(undefined)}>{q.data?.mySubmission ? "Resubmit" : "Submit"}</Button></>}>
+  return <Modal title={hw.title} onClose={onClose} footer={graded ? null : <><Button onClick={onClose}>Cancel</Button><Button variant="primary" busy={send.isPending} disabled={!text.trim() && !files.length} onClick={() => send.mutate(undefined)}>{q.data?.mySubmission ? t("Resubmit") : t("Submit")}</Button></>}>
     <div className="stack">{err ? <div className="banner bad" role="alert">{err}</div> : null}<div className="muted">{hw.description}</div><div>Due {fmtDateTime(hw.dueAt)}</div>
       {graded ? <div className="banner info">Graded <strong>{q.data!.mySubmission!.grade}</strong>. {q.data!.mySubmission!.feedback}</div> : <>
-        <Field label="Your answer"><Textarea value={text} onChange={(e) => setText(e.target.value)} /></Field>
+        <Field label={t("Your answer")}><Textarea value={text} onChange={(e) => setText(e.target.value)} /></Field>
         <Field label="Attach a file or photo" hint={up ? "Uploading…" : files.length ? `${files.length} attached` : "PDF, image or document up to 15 MB"}><input type="file" accept="image/*,.pdf,.docx,.xlsx,.txt" onChange={(e) => void pick(e)} /></Field></>}</div></Modal>;
 }
 void Card;

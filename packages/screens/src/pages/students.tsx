@@ -5,17 +5,17 @@ import type { AttendanceSummary, PublishedResult, SchoolClass, Section, Student 
 import { ApiError, newId } from "@shikkhaos/api-client";
 import { studentCode as studentCodeRule, phoneBd } from "@shikkhaos/validation";
 import { useApp, useAction, useDebounced, useGet, useList, usePagedList, useSession } from "../context";
-import { Button, Card, Empty, ErrorState, Field, Input, Modal, PageHeader, Select, Skeleton, StatusBadge, Table, Tabs, fmtDate, useToast } from "../ui";
+import { Badge, Button, Card, Empty, ErrorState, Field, Input, Modal, PageHeader, Select, Skeleton, StatusBadge, Table, Tabs, Textarea, fmtDate, useToast } from "../ui";
 
 export function Students() {
   const s = useSession(); const navigate = useNavigate();
-  const [q, setQ] = React.useState(""); const dq = useDebounced(q);
+  const [q, setQ] = React.useState(""); const dq = useDebounced(q); const [importing, setImporting] = React.useState(false);
   const [classId, setClass] = React.useState(""); const [sectionId, setSection] = React.useState(""); const [creating, setCreating] = React.useState(false);
   const classes = useList<SchoolClass>("/classes"); const sections = useList<Section>("/sections", classId ? { classId } : undefined);
   const list = usePagedList<Student>("/students", { q: dq, classId, sectionId });
   return (
     <>
-      <PageHeader title="Students" sub="Registry of enrolled students" actions={can(s, "students.create") ? <Button variant="primary" onClick={() => setCreating(true)}>Admit student</Button> : null} />
+      <PageHeader title="Students" sub="Registry of enrolled students" actions={can(s, "students.create") ? <><Button onClick={() => setImporting(true)}>Import CSV</Button><Button variant="primary" onClick={() => setCreating(true)}>Admit student</Button></> : null} />
       <div className="row" style={{ marginBottom: 12 }}>
         <Input placeholder="Search name or ID" aria-label="Search students" value={q} onChange={(e) => setQ(e.target.value)} style={{ width: 260 }} />
         <Select aria-label="Class" value={classId} onChange={(e) => { setClass(e.target.value); setSection(""); }} style={{ width: 160 }}><option value="">All classes</option>{classes.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</Select>
@@ -26,7 +26,35 @@ export function Students() {
           columns={[{ key: "roll", header: "Roll", render: (r) => r.currentRollNo ?? "—", width: 60 }, { key: "name", header: "Name", render: (r) => <strong>{r.fullName}</strong> }, { key: "code", header: "Student ID", render: (r) => <span className="mono">{r.studentCode}</span> }, { key: "cls", header: "Class", render: (r) => r.className ? `${r.className}-${r.sectionName}` : "—" }, { key: "st", header: "Status", render: (r) => <StatusBadge status={r.status} /> }]} />}
         {list.hasMore ? <div style={{ padding: 12, textAlign: "center" }}><Button onClick={list.loadMore}>Load more</Button></div> : null}</div>
       {creating ? <AdmitStudent onClose={() => setCreating(false)} /> : null}
+      {importing ? <ImportStudents onClose={() => { setImporting(false); void list.refetch(); }} /> : null}
     </>
+  );
+}
+
+const CSV_TEMPLATE = "studentCode,fullName,dob,gender,guardianName,guardianPhone,address,className,sectionName,rollNo\nS-2026-301,Example Student,2014-03-15,MALE,Guardian Name,01712345678,Sylhet,Class 6,A,31\n";
+function download(name: string, text: string) { const url = URL.createObjectURL(new Blob([text], { type: "text/csv;charset=utf-8" })); const a = document.createElement("a"); a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url); }
+const csvCell = (v: string) => `"${(/^[=+\-@]/.test(v) ? `'${v}` : v).replace(/"/g, '""')}"`;
+
+interface ImportResult { dryRun: boolean; total: number; valid: number; created: number; errors: { line: number; field: string; message: string }[]; preview?: { line: number; studentCode: string; fullName: string }[]; credentials?: { studentCode: string; username: string; fullName: string; temporaryPassword: string }[] }
+
+function ImportStudents({ onClose }: { onClose: () => void }) {
+  const { api } = useApp(); const [text, setText] = React.useState(""); const [res, setRes] = React.useState<ImportResult | null>(null); const [busy, setBusy] = React.useState(false); const [err, setErr] = React.useState<string>();
+  const run = async (dryRun: boolean) => { setBusy(true); setErr(undefined); try { setRes(await api.post<ImportResult>("/students/import", { csv: text, dryRun })); } catch (e) { setErr((e as Error).message); setRes(null); } finally { setBusy(false); } };
+  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (f) { setText(await f.text()); setRes(null); } };
+  const done = res && !res.dryRun && res.created > 0;
+  return (
+    <Modal wide title="Import students from CSV" onClose={onClose} footer={done ? <Button variant="primary" onClick={onClose}>Done</Button> : <><Button onClick={onClose}>Cancel</Button><Button busy={busy} disabled={!text.trim()} onClick={() => void run(true)}>Check file</Button><Button variant="primary" busy={busy} disabled={!res || !res.dryRun || res.errors.length > 0 || res.valid === 0} onClick={() => void run(false)}>Import {res?.valid ?? 0} students</Button></>}>
+      <div className="stack">
+        {err ? <div className="banner bad" role="alert">{err}</div> : null}
+        {done ? <>
+          <div className="banner info">Created {res!.created} students. Temporary passwords are shown once — download them now.</div>
+          <Button onClick={() => download("student-credentials.csv", "studentCode,username,fullName,temporaryPassword\n" + res!.credentials!.map((c) => [c.studentCode, c.username, c.fullName, c.temporaryPassword].map(csvCell).join(",")).join("\n") + "\n")}>Download credentials (CSV)</Button></> : <>
+          <div className="row"><input type="file" accept=".csv,text/csv" aria-label="CSV file" onChange={(e) => void onFile(e)} /><Button size="sm" variant="ghost" onClick={() => download("students-template.csv", CSV_TEMPLATE)}>Download template</Button></div>
+          <Field label="…or paste CSV text" hint="Required columns: studentCode, fullName, dob (YYYY-MM-DD), gender. Optional: guardianName, guardianPhone, address, className, sectionName, rollNo. Up to 200 rows."><Textarea value={text} onChange={(e) => { setText(e.target.value); setRes(null); }} style={{ fontFamily: "var(--mono)", minHeight: 120 }} /></Field>
+          {res ? <div className="stack">
+            <div className="row"><Badge tone={res.errors.length ? "bad" : "ok"}>{res.errors.length ? `${res.errors.length} problem${res.errors.length > 1 ? "s" : ""}` : "File is valid"}</Badge><span className="muted">{res.valid} of {res.total} rows valid</span></div>
+            {res.errors.length ? <div className="table-wrap" style={{ maxHeight: 220 }}><table className="t"><thead><tr><th scope="col">Line</th><th scope="col">Field</th><th scope="col">Problem</th></tr></thead><tbody>{res.errors.map((e, i) => <tr key={i}><td>{e.line}</td><td>{e.field}</td><td>{e.message}</td></tr>)}</tbody></table></div> : <div className="muted">Nothing has been created yet. Review, then import.</div>}</div> : null}</>}
+      </div></Modal>
   );
 }
 

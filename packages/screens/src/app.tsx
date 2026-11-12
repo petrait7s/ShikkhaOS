@@ -29,6 +29,8 @@ import { Settings } from "./pages/settings";
 import { MyResults, MyAttendance, MyClassTests, MyProfile } from "./pages/student";
 import { NotificationsPage } from "./pages/notifications";
 
+import { LangProvider, t, useLang } from "./i18n";
+
 export interface AppProps { api: ApiClient; platform: Platform; router?: "browser" | "hash" }
 
 const icon = (name: string) => { const key = name.split("-").map((p) => p[0]!.toUpperCase() + p.slice(1)).join(""); const I = (Icons as unknown as Record<string, React.ComponentType<{ size?: number }>>)[key] ?? Icons.Circle; return <I size={16} />; };
@@ -49,11 +51,11 @@ export function App({ api, platform, router = "browser" }: AppProps) {
   const onLogin = (r: LoginResult) => setBoot({ state: "ready", auth: { user: r.user, permissions: r.permissions, role: r.user.role }, mustChange: r.mustChangePassword });
   const Router = router === "hash" ? HashRouter : BrowserRouter;
   return (
-    <Providers qc={qc}><ToastProvider><Router>
+    <LangProvider><Providers qc={qc}><ToastProvider><Router>
       {boot.state === "loading" ? <div className="login"><div style={{ width: 240 }}><Skeleton rows={3} /></div></div>
         : boot.state === "anon" ? <Login api={api} onLogin={onLogin} />
         : <Authed key={boot.auth.user.id} api={api} rt={rt} platform={platform} auth={boot.auth} mustChange={boot.mustChange} theme={theme} setTheme={setTheme} setAuth={(a) => setBoot({ state: "ready", auth: a, mustChange: false })} onLogout={async () => { rt.stop(); await api.logout(); qc.clear(); setBoot({ state: "anon" }); }} />}
-    </Router></ToastProvider></Providers>
+    </Router></ToastProvider></Providers></LangProvider>
   );
 }
 
@@ -66,19 +68,20 @@ function Login({ api, onLogin }: { api: ApiClient; onLogin: (r: LoginResult) => 
     if (!v.success) { setErr(v.error.issues[0]!.message); return; }
     setBusy(true); setErr(undefined);
     try { onLogin(await api.login(identifier.trim(), password)); }
-    catch (ex) { setErr(ex instanceof ApiError && ex.code === "ACCOUNT_LOCKED" ? "Too many attempts. Try again in a few minutes." : ex instanceof ApiError && ex.status === 401 ? "Incorrect username or password." : errText(ex)); }
+    catch (ex) { setErr(ex instanceof ApiError && ex.code === "ACCOUNT_LOCKED" ? t("Too many attempts. Try again in a few minutes.") : ex instanceof ApiError && ex.status === 401 ? t("Incorrect username or password.") : errText(ex)); }
     finally { setBusy(false); }
   };
   return (
     <div className="login"><form className="card" onSubmit={submit} aria-labelledby="t">
       <div className="stack">
         <div className="brand" style={{ width: "auto" }}><span className="logo">S</span><span id="t" style={{ fontSize: 18 }}>ShikkhaOS</span></div>
-        <div className="muted">One School. One System. One Connected Community.</div>
+        <div className="muted">{t("One School. One System. One Connected Community.")}</div>
         {err ? <div className="banner bad" role="alert">{err}</div> : null}
-        <Field label="Username, email or student ID"><Input value={identifier} onChange={(e) => setId(e.target.value)} autoComplete="username" autoFocus /></Field>
-        <Field label="Password"><Input type="password" value={password} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" /></Field>
-        <Button variant="primary" type="submit" busy={busy}>Sign in</Button>
-        <div className="faint">Forgot your password? Ask the school office to reset it.</div>
+        <Field label={t("Username, email or student ID")}><Input value={identifier} onChange={(e) => setId(e.target.value)} autoComplete="username" autoFocus /></Field>
+        <Field label={t("Password")}><Input type="password" value={password} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" /></Field>
+        <Button variant="primary" type="submit" busy={busy}>{t("Sign in")}</Button>
+        <div><LangToggle /></div>
+        <div className="faint">{t("Forgot your password? Ask the school office to reset it.")}</div>
       </div>
     </form></div>
   );
@@ -95,10 +98,10 @@ function ForcePasswordChange({ api, onDone }: { api: ApiClient; onDone: () => vo
     finally { setBusy(false); }
   };
   return (
-    <Modal title="Choose a new password" onClose={() => {}} footer={<Button variant="primary" busy={busy} onClick={submit}>Save password</Button>}>
+    <Modal title={t("Choose a new password")} onClose={() => {}} footer={<Button variant="primary" busy={busy} onClick={submit}>{t("Save password")}</Button>}>
       <div className="stack"><div className="banner info">You signed in with a temporary password. Set your own password to continue.</div>
         <Field label="Current (temporary) password" error={errs.currentPassword}><Input type="password" value={cur} onChange={(e) => setCur(e.target.value)} autoComplete="current-password" /></Field>
-        <Field label="New password" error={errs.newPassword} hint="At least 10 characters, with a letter and a digit."><Input type="password" value={next} onChange={(e) => setNext(e.target.value)} autoComplete="new-password" /></Field></div>
+        <Field label={t("New password")} error={errs.newPassword} hint="At least 10 characters, with a letter and a digit."><Input type="password" value={next} onChange={(e) => setNext(e.target.value)} autoComplete="new-password" /></Field></div>
     </Modal>
   );
 }
@@ -119,6 +122,15 @@ function Shell({ theme, setTheme }: { theme: string; setTheme: (t: "light" | "da
   const [palette, setPalette] = React.useState(false); const [menu, setMenu] = React.useState(false); const [notif, setNotif] = React.useState(false);
   const [compact, setCompact] = useLocalState("sos.compact", false);
   const [wsState, setWsState] = React.useState(rt.state);
+  const [tabs, setTabs] = useLocalState<{ path: string; label: string }[]>(`sos.tabs.${auth.user.id}`, [{ path: "/", label: "Dashboard" }]);
+  const [pinned, setPinned] = useLocalState<string[]>(`sos.dock.${auth.user.id}`, []);
+  const labelFor = React.useCallback((path: string) => { const seg = path.split("/")[1] ?? ""; const item = nav.find((n) => (n.id === "dashboard" ? seg === "" : n.id === seg)); const base = item?.label ?? (seg ? seg.replace(/-/g, " ").replace(/^./, (c) => c.toUpperCase()) : "Dashboard"); return path.split("/").length > 2 ? `${base} ›` : base; }, [nav]);
+  React.useEffect(() => {
+    if (loc.pathname === "/login") return;
+    setTabs(tabs.some((x) => x.path === loc.pathname) ? tabs : [...tabs.slice(-7), { path: loc.pathname, label: labelFor(loc.pathname) }]);
+  }, [loc.pathname]);
+  const closeTab = (path: string) => { const rest = tabs.filter((x) => x.path !== path); const next = rest.length ? rest : [{ path: "/", label: "Dashboard" }]; setTabs(next); if (path === loc.pathname) { const i = tabs.findIndex((x) => x.path === path); navigate((next[Math.max(0, i - 1)] ?? next[0]!).path); } };
+  const togglePin = (id: string) => setPinned(pinned.includes(id) ? pinned.filter((x) => x !== id) : [...pinned, id].slice(-8));
   React.useEffect(() => rt.onState(setWsState), [rt]);
   const unread = useGet<{ count: number }>("/notifications/unread-count", undefined, { refetchInterval: wsState === "open" ? 120_000 : 30_000 });
   useRealtimeInvalidate(["notification.created"], ["/notifications"]);
@@ -130,29 +142,37 @@ function Shell({ theme, setTheme }: { theme: string; setTheme: (t: "light" | "da
       if (mod && e.key.toLowerCase() === "k") { e.preventDefault(); setPalette(true); }
       else if (mod && e.shiftKey && e.key.toLowerCase() === "n") { e.preventDefault(); setNotif((v) => !v); }
       else if (mod && e.key === ",") { e.preventDefault(); navigate("/profile"); }
+      else if (mod && e.key.toLowerCase() === "w" && tabs.length > 0) { e.preventDefault(); closeTab(loc.pathname); }
       else if (mod && /^[1-9]$/.test(e.key)) { const t = nav[Number(e.key) - 1]; if (t) { e.preventDefault(); navigate(t.id === "dashboard" ? "/" : `/${t.id}`); } }
     };
     window.addEventListener("keydown", h); return () => window.removeEventListener("keydown", h);
-  }, [navigate, nav]);
+  }, [navigate, nav, tabs, loc.pathname]);
   const groups = [...new Set(nav.map((n) => n.group))];
   return (
     <div className={`shell ${compact ? "compact" : ""} ${platform.kind}`}>
       <div className="titlebar">
         <Button variant="ghost" size="sm" className="menu-btn" onClick={() => setMenu((m) => !m)} aria-label="Menu" style={{ display: "none" }}>☰</Button>
         <div className="brand"><span className="logo">S</span>ShikkhaOS</div>
-        <button className="search-btn" onClick={() => setPalette(true)} aria-label="Search (Ctrl+K)"><Icons.Search size={14} /> Search students, notices, exams… <kbd>Ctrl K</kbd></button>
+        <button className="search-btn" onClick={() => setPalette(true)}><Icons.Search size={14} /> {t("Search students, notices, exams…")} <kbd>Ctrl K</kbd></button>
         <span className="spacer" />
         <div style={{ position: "relative" }}>
           <Button variant="ghost" className="icon" onClick={() => setNotif((v) => !v)} aria-label={`Notifications${unread.data?.count ? `, ${unread.data.count} unread` : ""}`} aria-expanded={notif}><Icons.Bell size={16} />{unread.data?.count ? <span className="badge-dot" style={{ background: "var(--bad)", color: "#fff", borderRadius: 10, fontSize: 11, padding: "0 6px", marginLeft: 2 }}>{unread.data.count}</span> : null}</Button>
           {notif ? <NotificationPopover onClose={() => setNotif(false)} /> : null}
         </div>
+        <LangToggle />
         <Button variant="ghost" className="icon" aria-label="Toggle theme" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? <Icons.Sun size={16} /> : <Icons.Moon size={16} />}</Button>
-        <ProfileMenu name={auth.user.displayName} role={ROLE_LABEL[auth.role]} onLogout={logout} compact={compact} setCompact={setCompact} />
+        <ProfileMenu name={auth.user.displayName} role={t(ROLE_LABEL[auth.role])} onLogout={logout} compact={compact} setCompact={setCompact} />
       </div>
+      <nav className="tabs-strip" aria-label="Open tabs">
+        {tabs.map((tb) => <div key={tb.path} className="tab"><button aria-current={tb.path === loc.pathname ? "page" : undefined} className="tab-btn" onClick={() => navigate(tb.path)}>{t(tb.label.replace(" ›", ""))}{tb.label.endsWith("›") ? " ›" : ""}</button>{tabs.length > 1 ? <button className="tab-x" aria-label={`${t("Close tab")}: ${tb.label}`} onClick={() => closeTab(tb.path)}>×</button> : null}</div>)}
+      </nav>
       <nav className={`sidebar ${menu ? "open" : ""}`} aria-label="Main" onClick={() => setMenu(false)}>
-        {groups.map((g) => <div key={g}><div className="nav-group">{g}</div>{nav.filter((n) => n.group === g).map((n) => (
-          <NavLink key={n.id} to={n.id === "dashboard" ? "/" : `/${n.id}`} end={n.id === "dashboard"} className="nav-item" aria-current={(n.id === "dashboard" ? loc.pathname === "/" : loc.pathname.startsWith(`/${n.id}`)) ? "page" : undefined}>
-            {icon(n.icon)}<span>{n.label}</span>{n.id === "messages" ? <MessagesBadge /> : null}</NavLink>))}</div>)}
+        {groups.map((g) => <div key={g}><div className="nav-group">{t(g)}</div>{nav.filter((n) => n.group === g).map((n) => (
+          <div key={n.id} className="nav-row">
+            <NavLink to={n.id === "dashboard" ? "/" : `/${n.id}`} end={n.id === "dashboard"} className="nav-item" aria-current={(n.id === "dashboard" ? loc.pathname === "/" : loc.pathname.startsWith(`/${n.id}`)) ? "page" : undefined}>
+              {icon(n.icon)}<span>{t(n.label)}</span>{n.id === "messages" ? <MessagesBadge /> : null}</NavLink>
+            {platform.kind === "desktop" ? <button className="pin-btn" aria-pressed={pinned.includes(n.id)} aria-label={`${pinned.includes(n.id) ? t("Unpin") : t("Pin to dock")}: ${t(n.label)}`} title={pinned.includes(n.id) ? t("Unpin") : t("Pin to dock")} onClick={() => togglePin(n.id)}>{pinned.includes(n.id) ? "★" : "☆"}</button> : null}
+          </div>))}</div>)}
       </nav>
       <main className="main" id="main"><div className="inner"><Routes>
         <Route path="/" element={<Dashboard />} />
@@ -170,14 +190,20 @@ function Shell({ theme, setTheme }: { theme: string; setTheme: (t: "light" | "da
         <Route path="/notifications" element={<NotificationsPage />} /><Route path="/profile" element={<MyProfile theme={theme} setTheme={setTheme} compact={compact} setCompact={setCompact} />} />
         <Route path="*" element={<Empty title="Page not found">This page does not exist.</Empty>} />
       </Routes></div></main>
+      {platform.kind === "desktop" && pinned.length ? <nav className="dock" aria-label={t("Pinned")}>{pinned.map((id) => nav.find((n) => n.id === id)).filter(Boolean).map((n) => <button key={n!.id} className="dock-btn" aria-label={t(n!.label)} title={t(n!.label)} aria-current={(n!.id === "dashboard" ? loc.pathname === "/" : loc.pathname.startsWith(`/${n!.id}`)) ? "page" : undefined} onClick={() => navigate(n!.id === "dashboard" ? "/" : `/${n!.id}`)}>{icon(n!.icon)}</button>)}</nav> : null}
       <div className="statusbar" role="status">
-        <span><span className={`dot ${wsState === "open" ? "ok" : wsState === "connecting" ? "warn" : "bad"}`} />{wsState === "open" ? "Live" : wsState === "connecting" ? "Connecting…" : "Offline — refreshing every 30 s"}</span>
+        <span><span className={`dot ${wsState === "open" ? "ok" : wsState === "connecting" ? "warn" : "bad"}`} />{wsState === "open" ? t("Live") : wsState === "connecting" ? t("Connecting…") : t("Offline — refreshing every 30 s")}</span>
         <span>{platform.kind === "desktop" ? "Desktop" : "Web"} {platform.version ? `v${platform.version}` : ""}</span>
-        <span className="spacer" /><span>{ROLE_LABEL[auth.role]} · {auth.user.username}</span>
+        <span className="spacer" /><span>{t(ROLE_LABEL[auth.role])} · {auth.user.username}</span>
       </div>
       {palette ? <CommandPalette onClose={() => setPalette(false)} /> : null}
     </div>
   );
+}
+
+function LangToggle() {
+  const { lang, setLang } = useLang();
+  return <Button variant="ghost" size="sm" aria-label={`${lang === "bn" ? "EN" : "বাংলা"} — switch language`} onClick={() => setLang(lang === "bn" ? "en" : "bn")}>{lang === "bn" ? "EN" : "বাংলা"}</Button>;
 }
 
 function MessagesBadge() {
@@ -194,9 +220,9 @@ function ProfileMenu({ name, role, onLogout, compact, setCompact }: { name: stri
       <Button variant="ghost" onClick={() => setOpen((o) => !o)} aria-expanded={open}><Icons.CircleUser size={16} /> {name}</Button>
       {open ? <div className="popover" style={{ width: 240 }} role="menu" onClick={() => setOpen(false)}>
         <div style={{ padding: 12 }}><strong>{name}</strong><div className="muted">{role}</div></div>
-        <button className="nav-item" role="menuitem" onClick={() => navigate("/profile")}><Icons.Settings size={14} /> Profile & settings</button>
-        <button className="nav-item" role="menuitem" onClick={() => setCompact(!compact)}><Icons.Rows3 size={14} /> {compact ? "Comfortable density" : "Compact density"}</button>
-        <button className="nav-item" role="menuitem" onClick={() => void onLogout()}><Icons.LogOut size={14} /> Sign out</button>
+        <button className="nav-item" role="menuitem" onClick={() => navigate("/profile")}><Icons.Settings size={14} /> {t("Profile & settings")}</button>
+        <button className="nav-item" role="menuitem" onClick={() => setCompact(!compact)}><Icons.Rows3 size={14} /> {compact ? t("Comfortable density") : t("Compact density")}</button>
+        <button className="nav-item" role="menuitem" onClick={() => void onLogout()}><Icons.LogOut size={14} /> {t("Sign out")}</button>
       </div> : null}
     </div>
   );
@@ -209,8 +235,8 @@ function NotificationPopover({ onClose }: { onClose: () => void }) {
   const open = async (n: NotificationItem) => { await api.post(`/notifications/${n.id}/read`).catch(() => {}); onClose(); const link = n.data?.deepLink?.replace("shikkhaos://", "") ?? ""; navigate(deepLinkToRoute(link)); };
   return (
     <div className="popover" role="dialog" aria-label="Notifications">
-      <div className="row" style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)" }}><h3>Notifications</h3><span className="spacer" /><Button size="sm" variant="ghost" onClick={() => readAll.mutate(undefined)}>Mark all read</Button><Button size="sm" variant="ghost" onClick={() => { onClose(); navigate("/notifications"); }}>See all</Button></div>
-      {q.isLoading ? <div style={{ padding: 14 }}><Skeleton rows={3} /></div> : q.error ? <ErrorState error={q.error} onRetry={() => void q.refetch()} /> : !q.data?.length ? <Empty title="You're all caught up" /> :
+      <div className="row" style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)" }}><h3>{t("Notifications")}</h3><span className="spacer" /><Button size="sm" variant="ghost" onClick={() => readAll.mutate(undefined)}>{t("Mark all read")}</Button><Button size="sm" variant="ghost" onClick={() => { onClose(); navigate("/notifications"); }}>{t("See all")}</Button></div>
+      {q.isLoading ? <div style={{ padding: 14 }}><Skeleton rows={3} /></div> : q.error ? <ErrorState error={q.error} onRetry={() => void q.refetch()} /> : !q.data?.length ? <Empty title={t("You're all caught up")} /> :
         q.data.map((n) => <button key={n.id} className="nav-item" style={{ display: "block", borderBottom: "1px solid var(--border)", borderRadius: 0, fontWeight: n.readAt ? 400 : 600 }} onClick={() => void open(n)}><div>{n.title}</div><div className="muted" style={{ fontWeight: 400 }}>{n.body}</div><div className="faint">{fmtDateTime(n.createdAt)}</div></button>)}
     </div>
   );
@@ -241,9 +267,9 @@ function CommandPalette({ onClose }: { onClose: () => void }) {
   return (
     <div className="overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal palette" role="dialog" aria-label="Command palette">
-        <input autoFocus value={q} placeholder="Search or jump to…" aria-label="Search" onChange={(e) => { setQ(e.target.value); setSel(0); }}
+        <input autoFocus value={q} placeholder={t("Search or jump to…")} aria-label="Search" onChange={(e) => { setQ(e.target.value); setSel(0); }}
           onKeyDown={(e) => { if (e.key === "Escape") onClose(); else if (e.key === "ArrowDown") { e.preventDefault(); setSel((s) => Math.min(items.length - 1, s + 1)); } else if (e.key === "ArrowUp") { e.preventDefault(); setSel((s) => Math.max(0, s - 1)); } else if (e.key === "Enter") go(sel); }} />
-        <div className="res" role="listbox">{items.length === 0 ? <Empty title={search.isLoading ? "Searching…" : "No matches"} /> : items.slice(0, 30).map((it, i) => <button key={i} role="option" aria-selected={i === sel} onClick={() => go(i)}><span>{it.label}</span><span className="faint">{it.sub}</span></button>)}</div>
+        <div className="res" role="listbox">{items.length === 0 ? <Empty title={search.isLoading ? t("Searching…") : t("No matches")} /> : items.slice(0, 30).map((it, i) => <button key={i} role="option" aria-selected={i === sel} onClick={() => go(i)}><span>{it.label}</span><span className="faint">{it.sub}</span></button>)}</div>
       </div>
     </div>
   );

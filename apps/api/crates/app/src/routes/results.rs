@@ -342,25 +342,67 @@ struct RejectReq {
 
 /// Headmaster sends a compiled (VERIFIED) result set back: submissions of that exam x class return to UNDER_REVIEW so the
 /// Register can request corrections or re-verify, then recompile as the next revision.
-async fn reject(State(s): State<AppState>, ctx: Ctx, headers: HeaderMap, Path(id): Path<Uuid>, Json(r): Json<RejectReq>) -> ApiResult<Response> {
+async fn reject(
+    State(s): State<AppState>,
+    ctx: Ctx,
+    headers: HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(r): Json<RejectReq>,
+) -> ApiResult<Response> {
     ctx.require("results.approve")?;
     ctx.require_reauth(&s, &headers)?;
     results::require_reason(&r.reason).map_err(terr)?;
-    if r.reason.chars().count() > 2000 { return Err(ApiError::field("reason", "OUT_OF_RANGE", "At most 2000 characters")); }
+    if r.reason.chars().count() > 2000 {
+        return Err(ApiError::field(
+            "reason",
+            "OUT_OF_RANGE",
+            "At most 2000 characters",
+        ));
+    }
     let rs = load(&s.db, id).await?;
-    if rs.status != ResultStatus::Verified { return Err(ApiError::invalid_transition("Only compiled (verified) results can be sent back")); }
+    if rs.status != ResultStatus::Verified {
+        return Err(ApiError::invalid_transition(
+            "Only compiled (verified) results can be sent back",
+        ));
+    }
     let mut tx = s.db.begin().await?;
     let n = sqlx::query("UPDATE result_sets SET status='REJECTED', rejection_note=$2, version=version+1, updated_at=now() WHERE id=$1 AND status='VERIFIED'").bind(id).bind(r.reason.trim()).execute(&mut *tx).await?.rows_affected();
-    if n == 0 { return Err(ApiError::version_conflict()); }
+    if n == 0 {
+        return Err(ApiError::version_conflict());
+    }
     sqlx::query("INSERT INTO result_set_status_history (result_set_id, from_status, to_status, revision, actor_id, note) VALUES ($1,'VERIFIED','REJECTED',$2,$3,$4)").bind(id).bind(rs.current_rev).bind(ctx.user_id).bind(r.reason.trim()).execute(&mut *tx).await?;
     let reopened: Vec<Uuid> = sqlx::query_scalar("UPDATE mark_submissions ms SET status='UNDER_REVIEW', verified_by=NULL, verified_at=NULL, version=ms.version+1, updated_at=now() FROM exam_papers p WHERE p.id=ms.exam_paper_id AND p.exam_id=$1 AND p.class_id=$2 AND ms.status='VERIFIED' RETURNING ms.id").bind(rs.exam).bind(rs.class).fetch_all(&mut *tx).await?;
     for sid in &reopened {
         sqlx::query("INSERT INTO mark_submission_status_history (submission_id, from_status, to_status, revision, actor_id, note) SELECT id, 'VERIFIED', 'UNDER_REVIEW', current_revision, $2, $3 FROM mark_submissions WHERE id=$1").bind(sid).bind(ctx.user_id).bind(format!("Reopened: result set sent back by Headmaster — {}", r.reason.trim())).execute(&mut *tx).await?;
     }
-    audit::log(&mut tx, &ctx, "result_set.rejected", "result_set", &id.to_string(), Some(json!({"status":"VERIFIED"})), Some(json!({"status":"REJECTED","reason": r.reason, "reopenedSubmissions": reopened.len()}))).await?;
-    let regs: Vec<Uuid> = sqlx::query_scalar("SELECT id FROM users WHERE role='REGISTRAR' AND status='ACTIVE'").fetch_all(&mut *tx).await?;
+    audit::log(
+        &mut tx,
+        &ctx,
+        "result_set.rejected",
+        "result_set",
+        &id.to_string(),
+        Some(json!({"status":"VERIFIED"})),
+        Some(
+            json!({"status":"REJECTED","reason": r.reason, "reopenedSubmissions": reopened.len()}),
+        ),
+    )
+    .await?;
+    let regs: Vec<Uuid> =
+        sqlx::query_scalar("SELECT id FROM users WHERE role='REGISTRAR' AND status='ACTIVE'")
+            .fetch_all(&mut *tx)
+            .await?;
     let mut ob = Outbox::new();
-    ob.notify(&mut tx, &regs, "RESULTS_REJECTED", "Results sent back", "The Headmaster sent a result set back for correction.", "result_set", &id.to_string(), &format!("result-sets/{id}")).await?;
+    ob.notify(
+        &mut tx,
+        &regs,
+        "RESULTS_REJECTED",
+        "Results sent back",
+        "The Headmaster sent a result set back for correction.",
+        "result_set",
+        &id.to_string(),
+        &format!("result-sets/{id}"),
+    )
+    .await?;
     tx.commit().await?;
     ob.flush(&s.hub);
     get_one(State(s), ctx, Path(id), Query(HashMap::new())).await

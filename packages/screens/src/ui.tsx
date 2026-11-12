@@ -1,6 +1,7 @@
 import * as React from "react";
 import { ApiError } from "@shikkhaos/api-client";
 import { SUBMISSION_STATUS_LABEL, type AnyResultStatus } from "@shikkhaos/types";
+import { t } from "./i18n";
 
 type BtnProps = React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "danger" | "ghost"; size?: "sm"; busy?: boolean };
 export function Button({ variant, size, busy, className = "", children, disabled, ...p }: BtnProps) {
@@ -21,11 +22,11 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
 export const Select = (p: React.SelectHTMLAttributes<HTMLSelectElement>) => <select {...p} className={`input ${p.className ?? ""}`} />;
 export const Textarea = (p: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...p} className={`input ${p.className ?? ""}`} />;
 
-const STATUS_TONE: Record<string, string> = { DRAFT: "", SUBMITTED: "info", UNDER_REVIEW: "info", CORRECTION_REQUESTED: "warn", VERIFIED: "ok", APPROVED: "ok", PUBLISHED: "ok", AUTHORIZED: "info", IN_PROGRESS: "info", CLOSED: "", ACTIVE: "ok", SUSPENDED: "bad", ARCHIVED: "", PENDING_APPROVAL: "warn", OPEN: "warn", NOT_STARTED: "" };
-const STATUS_MARK: Record<string, string> = { VERIFIED: "✓ ", APPROVED: "✓ ", PUBLISHED: "● ", CORRECTION_REQUESTED: "! ", DRAFT: "○ " };
+const STATUS_TONE: Record<string, string> = { DRAFT: "", SUBMITTED: "info", UNDER_REVIEW: "info", CORRECTION_REQUESTED: "warn", VERIFIED: "ok", APPROVED: "ok", PUBLISHED: "ok", AUTHORIZED: "info", IN_PROGRESS: "info", CLOSED: "", ACTIVE: "ok", SUSPENDED: "bad", ARCHIVED: "", PENDING_APPROVAL: "warn", REJECTED: "bad", OPEN: "warn", NOT_STARTED: "" };
+const STATUS_MARK: Record<string, string> = { REJECTED: "↩ ", VERIFIED: "✓ ", APPROVED: "✓ ", PUBLISHED: "● ", CORRECTION_REQUESTED: "! ", DRAFT: "○ " };
 export function StatusBadge({ status }: { status: string }) {
   const label = (SUBMISSION_STATUS_LABEL as Record<string, string>)[status as AnyResultStatus] ?? status.replace(/_/g, " ").toLowerCase().replace(/^./, (c) => c.toUpperCase());
-  return <span className={`badge ${STATUS_TONE[status] ?? ""}`}>{STATUS_MARK[status] ?? ""}{label}</span>;
+  return <span className={`badge ${STATUS_TONE[status] ?? ""}`}>{STATUS_MARK[status] ?? ""}{t(label)}</span>;
 }
 export const Badge = ({ tone, children }: { tone?: "ok" | "warn" | "bad" | "info"; children: React.ReactNode }) => <span className={`badge ${tone ?? ""}`}>{children}</span>;
 
@@ -41,21 +42,21 @@ export function Skeleton({ rows = 4 }: { rows?: number }) { return <div classNam
 export function Empty({ title, children, action }: { title: string; children?: React.ReactNode; action?: React.ReactNode }) { return <div className="empty"><div className="big">{title}</div>{children}{action ? <div style={{ marginTop: 12 }}>{action}</div> : null}</div>; }
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
   const e = error as ApiError;
-  if (e instanceof ApiError && (e.status === 403)) return <Empty title="You don't have access to this">Your role is not permitted to view this area.</Empty>;
-  if (e instanceof ApiError && e.status === 404) return <Empty title="Not found">It may have been removed, or you may not have access.</Empty>;
+  if (e instanceof ApiError && (e.status === 403)) return <Empty title={t("You don't have access to this")}>Your role is not permitted to view this area.</Empty>;
+  if (e instanceof ApiError && e.status === 404) return <Empty title={t("Not found")}>It may have been removed, or you may not have access.</Empty>;
   return (
     <div className="empty" role="alert">
-      <div className="big">{e instanceof ApiError && e.code === "NETWORK" ? "You appear to be offline" : "Something went wrong"}</div>
+      <div className="big">{e instanceof ApiError && e.code === "NETWORK" ? t("You appear to be offline") : t("Something went wrong")}</div>
       <div>{e?.message ?? "Unexpected error"}</div>
       {e instanceof ApiError && e.requestId ? <div className="faint mono" style={{ marginTop: 4 }}>Request ID {e.requestId}</div> : null}
-      {onRetry ? <div style={{ marginTop: 12 }}><Button onClick={onRetry}>Try again</Button></div> : null}
+      {onRetry ? <div style={{ marginTop: 12 }}><Button onClick={onRetry}>{t("Try again")}</Button></div> : null}
     </div>
   );
 }
 
 export interface Column<T> { key: string; header: string; render: (row: T) => React.ReactNode; align?: "r"; width?: number }
 export function Table<T>({ rows, columns, rowKey, onRow, empty }: { rows: T[]; columns: Column<T>[]; rowKey: (r: T) => string; onRow?: (r: T) => void; empty?: React.ReactNode }) {
-  if (!rows.length) return <>{empty ?? <Empty title="Nothing here yet" />}</>;
+  if (!rows.length) return <>{empty ?? <Empty title={t("Nothing here yet")} />}</>;
   return (
     <div className="table-wrap"><table className="t">
       <thead><tr>{columns.map((c) => <th key={c.key} className={c.align} style={c.width ? { width: c.width } : undefined} scope="col">{c.header}</th>)}</tr></thead>
@@ -101,7 +102,7 @@ export function errText(e: unknown): string {
 export function ConfirmDialog({ title, message, confirmLabel = "Confirm", danger, typed, onConfirm, onClose }: { title: string; message: React.ReactNode; confirmLabel?: string; danger?: boolean; typed?: string; onConfirm: () => Promise<void> | void; onClose: () => void }) {
   const [text, setText] = React.useState(""); const [busy, setBusy] = React.useState(false);
   return (
-    <Modal title={title} onClose={onClose} footer={<><Button onClick={onClose}>Cancel</Button><Button variant={danger ? "danger" : "primary"} busy={busy} disabled={typed ? text !== typed : false} onClick={async () => { setBusy(true); try { await onConfirm(); onClose(); } finally { setBusy(false); } }}>{confirmLabel}</Button></>}>
+    <Modal title={title} onClose={onClose} footer={<><Button onClick={onClose}>{t("Cancel")}</Button><Button variant={danger ? "danger" : "primary"} busy={busy} disabled={typed ? text !== typed : false} onClick={async () => { setBusy(true); try { await onConfirm(); onClose(); } finally { setBusy(false); } }}>{confirmLabel}</Button></>}>
       <div className="stack"><div>{message}</div>{typed ? <Field label={`Type "${typed}" to confirm`}><Input value={text} onChange={(e) => setText(e.target.value)} autoFocus /></Field> : null}</div>
     </Modal>
   );
@@ -112,8 +113,8 @@ export function ReauthDialog({ onToken, onClose, reauth, title = "Confirm with y
   const [pw, setPw] = React.useState(""); const [err, setErr] = React.useState<string>(); const [busy, setBusy] = React.useState(false);
   const submit = async () => { setBusy(true); setErr(undefined); try { await onToken(await reauth(pw)); onClose(); } catch (e) { setErr(errText(e)); } finally { setBusy(false); } };
   return (
-    <Modal title={title} onClose={onClose} footer={<><Button onClick={onClose}>Cancel</Button><Button variant="primary" busy={busy} disabled={!pw} onClick={submit}>Confirm</Button></>}>
-      <form onSubmit={(e) => { e.preventDefault(); void submit(); }}><Field label="Password" error={err}><Input type="password" autoFocus value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" /></Field></form>
+    <Modal title={title} onClose={onClose} footer={<><Button onClick={onClose}>{t("Cancel")}</Button><Button variant="primary" busy={busy} disabled={!pw} onClick={submit}>{t("Confirm")}</Button></>}>
+      <form onSubmit={(e) => { e.preventDefault(); void submit(); }}><Field label={t("Password")} error={err}><Input type="password" autoFocus value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" /></Field></form>
     </Modal>
   );
 }

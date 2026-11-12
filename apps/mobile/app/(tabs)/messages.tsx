@@ -4,7 +4,7 @@ import type { Conversation } from "@shikkhaos/types";
 import { useList, useRealtimeInvalidate } from "../../lib/app";
 import { Badge, Card, Empty, ErrorView, Loading, Screen, T } from "../../components/ui";
 
-export const convTitle = (c: Conversation) => (c.type === "DIRECT" ? c.peer?.displayName ?? "Message" : c.title ?? "Channel");
+import { convTitle } from "../../lib/format";
 
 export default function Messages() {
   const router = useRouter(); const q = useList<Conversation>("/conversations");

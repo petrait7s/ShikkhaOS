@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import type { Conversation, Message } from "@shikkhaos/types";
 import { newId } from "@shikkhaos/api-client";
 import { useApp, useAction, useGet, useList, usePagedList, useRealtimeInvalidate } from "../context";
+import { t } from "../i18n";
 import { Badge, Button, Empty, ErrorState, Field, Input, Modal, PageHeader, Select, Skeleton, errText, fmtDateTime, useToast } from "../ui";
 
 interface Recipient { userId: string; displayName: string; role: string; detail: string | null }
@@ -15,11 +16,11 @@ export function Messages() {
   const title = (c: Conversation) => c.type === "DIRECT" ? c.peer?.displayName ?? "Direct message" : c.title ?? "Channel";
   const canNew = auth.permissions.includes("messages.send_direct");
   return <>
-    <PageHeader title="Messages" sub="Direct messages, class groups and school channels" actions={canNew ? <Button variant="primary" onClick={() => setNewDm(true)}>New message</Button> : null} />
+    <PageHeader title={t("Messages")} sub={t("Direct messages, class groups and school channels")} actions={canNew ? <Button variant="primary" onClick={() => setNewDm(true)}>{t("New message")}</Button> : null} />
     <div className="card chat">
-      <div className="list" role="list" aria-label="Conversations">{convs.isLoading ? <div style={{ padding: 12 }}><Skeleton /></div> : convs.error ? <ErrorState error={convs.error} onRetry={() => void convs.refetch()} /> : !convs.data!.length ? <Empty title="No conversations yet">{canNew ? "Start a new message." : "Your class group appears once you are enrolled."}</Empty> :
+      <div className="list" role="list" aria-label="Conversations">{convs.isLoading ? <div style={{ padding: 12 }}><Skeleton /></div> : convs.error ? <ErrorState error={convs.error} onRetry={() => void convs.refetch()} /> : !convs.data!.length ? <Empty title={t("No conversations yet")}>{canNew ? "Start a new message." : "Your class group appears once you are enrolled."}</Empty> :
         convs.data!.map((c) => <button key={c.id} className="conv" role="listitem" aria-current={c.id === id} onClick={() => navigate(`/messages/${c.id}`)}><div className="row"><strong>{title(c)}</strong><span className="spacer" />{c.unread ? <Badge tone="info">{c.unread}</Badge> : null}</div><div className="faint" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.type === "CLASS_GROUP" ? "Class group · " : c.type === "CHANNEL" ? "Channel · " : ""}{c.lastMessage?.preview ?? "No messages yet"}</div></button>)}</div>
-      {active ? <Thread key={active.id} conv={active} title={title(active)} /> : <div className="thread"><Empty title="Select a conversation" /></div>}
+      {active ? <Thread key={active.id} conv={active} title={title(active)} /> : <div className="thread"><Empty title={t("Select a conversation")} /></div>}
     </div>
     {newDm ? <NewDm onClose={() => setNewDm(false)} onOpen={(cid) => { setNewDm(false); navigate(`/messages/${cid}`); }} /> : null}
   </>;
@@ -43,15 +44,15 @@ function Thread({ conv, title }: { conv: Conversation; title: string }) {
   const del = useAction((m: Message) => api.del(`/messages/${m.id}`), { invalidate: ["/conversations"], success: "Deleted", onSuccess: () => void msgs.refetch() });
   return (
     <div className="thread">
-      <div className="row" style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)" }}><h2>{title}</h2><span className="spacer" />{conv.type === "CLASS_GROUP" && auth.role === "STUDENT" && !conv.studentsCanPost ? <Badge>Read-only for students</Badge> : null}{conv.type === "CLASS_GROUP" && auth.role === "TEACHER" ? <label className="row"><input type="checkbox" checked={conv.studentsCanPost} onChange={(e) => void api.patch(`/conversations/${conv.id}`, { studentsCanPost: e.target.checked }).then(() => { toast("Updated"); }).catch((x) => toast(errText(x), "bad"))} /> Students can post</label> : null}</div>
+      <div className="row" style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)" }}><h2>{title}</h2><span className="spacer" />{conv.type === "CLASS_GROUP" && auth.role === "STUDENT" && !conv.studentsCanPost ? <Badge>{t("Read-only for students")}</Badge> : null}{conv.type === "CLASS_GROUP" && auth.role === "TEACHER" ? <label className="row"><input type="checkbox" checked={conv.studentsCanPost} onChange={(e) => void api.patch(`/conversations/${conv.id}`, { studentsCanPost: e.target.checked }).then(() => { toast("Updated"); }).catch((x) => toast(errText(x), "bad"))} /> Students can post</label> : null}</div>
       <div className="msgs" role="log" aria-live="polite">
-        {msgs.isLoading && !all.length ? <Skeleton /> : msgs.error ? <ErrorState error={msgs.error} onRetry={() => void msgs.refetch()} /> : all.length === 0 ? <Empty title="No messages yet" /> : all.map((m) => { const mine = m.senderId === auth.user.id; return (
+        {msgs.isLoading && !all.length ? <Skeleton /> : msgs.error ? <ErrorState error={msgs.error} onRetry={() => void msgs.refetch()} /> : all.length === 0 ? <Empty title={t("No messages yet")} /> : all.map((m) => { const mine = m.senderId === auth.user.id; return (
           <div key={m.id} className={`bubble ${mine ? "me" : ""} ${m.kind === "CLASS_TEST_SHARED" ? "sys" : ""}`}>{!mine ? <div className="who">{m.senderName ?? "—"}{m.senderRole ? ` · ${m.senderRole.toLowerCase()}` : ""}</div> : null}<div>{m.body}</div>
             <div className="who">{fmtDateTime(m.createdAt)} {mine && !m.deletedAt ? <button className="btn ghost sm" style={{ color: "inherit" }} onClick={() => del.mutate(m)}>delete</button> : !mine ? <button className="btn ghost sm" onClick={() => setReport(m)}>report</button> : null}</div></div>); })}
         {msgs.hasMore ? <Button size="sm" onClick={msgs.loadMore}>Load earlier messages</Button> : null}
       </div>
       {typing ? <div className="faint" style={{ padding: "0 14px" }}>typing…</div> : null}
-      {canPost ? <form className="composer" onSubmit={(e) => { e.preventDefault(); send.mutate(undefined); }}><Input aria-label="Message" placeholder="Write a message" value={body} maxLength={4000} onChange={(e) => onType(e.target.value)} /><Button variant="primary" type="submit" disabled={!body.trim()}>Send</Button></form> : <div className="composer faint">You can read this conversation but not post in it.</div>}
+      {canPost ? <form className="composer" onSubmit={(e) => { e.preventDefault(); send.mutate(undefined); }}><Input aria-label="Message" placeholder={t("Write a message")} value={body} maxLength={4000} onChange={(e) => onType(e.target.value)} /><Button variant="primary" type="submit" disabled={!body.trim()}>{t("Send")}</Button></form> : <div className="composer faint">{t("You can read this conversation but not post in it.")}</div>}
       {report ? <ReportDialog m={report} onClose={() => setReport(null)} /> : null}
     </div>
   );

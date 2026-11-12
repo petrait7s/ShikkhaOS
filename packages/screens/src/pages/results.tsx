@@ -36,6 +36,9 @@ export function ResultDetail() {
   const q = useGet<ResultSetDetail>(`/result-sets/${id}`); const revs = useGet<RevReq[]>(can(s, "marks.review") || can(s, "results.revise_published") || can(s, "results.approve") ? `/result-sets/${id}/revision-requests` : null);
   const [reauth, setReauth] = React.useState<{ title: string; run: (t: string) => Promise<unknown>; ok: string } | null>(null); const [typed, setTyped] = React.useState<"publish" | null>(null); const [revOpen, setRevOpen] = React.useState(false);
   const inv = { invalidate: ["/result-sets", "/result-revision", "/students"] };
+  const reject = useAction(({ reason, t }: { reason: string; t: string }) => api.post(`/result-sets/${id}/reject`, { reason }, { reauthToken: t }), { ...inv, success: "Sent back to the Register" });
+  const recompile = useAction(() => api.post("/result-sets", { examId: q.data!.examId, classId: q.data!.classId }), { ...inv, success: "Compiled again as a new revision" });
+  const [rejecting, setRejecting] = React.useState(false);
   const approve = useAction((t: string) => api.post(`/result-sets/${id}/approve`, {}, { reauthToken: t }), { ...inv, success: "Results approved" });
   const publish = useAction((t: string) => api.post(`/result-sets/${id}/publish`, {}, { reauthToken: t }), { ...inv, success: "Results published — students notified" });
   const cards = useAction(() => api.post<{ generated: number }>(`/result-sets/${id}/report-cards`), { success: "Report cards generated" });
@@ -45,10 +48,12 @@ export function ResultDetail() {
   const subjectIds = [...names.keys()];
   return <>
     <PageHeader title={`${r.examName} · ${r.className}`} sub={`Revision ${r.revision}`} actions={<><Link className="btn" to="/results">Back</Link><StatusBadge status={r.status} />
-      {r.status === "VERIFIED" && can(s, "results.approve") ? <Button variant="primary" onClick={() => setReauth({ title: "Approve results", ok: "approve", run: (t) => approve.mutateAsync(t) })}>Approve</Button> : null}
+      {r.status === "VERIFIED" && can(s, "results.approve") ? <><Button onClick={() => setRejecting(true)}>Send back to Register</Button><Button variant="primary" onClick={() => setReauth({ title: "Approve results", ok: "approve", run: (t) => approve.mutateAsync(t) })}>Approve</Button></> : null}
+      {r.status === "REJECTED" && can(s, "marks.verify") ? <Button variant="primary" busy={recompile.isPending} onClick={() => recompile.mutate(undefined)}>Compile again</Button> : null}
       {r.status === "APPROVED" && can(s, "results.publish") ? <Button variant="primary" onClick={() => setTyped("publish")}>Publish</Button> : null}
       {r.status === "PUBLISHED" && can(s, "reportcards.generate") ? <Button busy={cards.isPending} onClick={() => cards.mutate(undefined)}>Generate report cards</Button> : null}
       {r.status === "PUBLISHED" && (can(s, "marks.review") || can(s, "results.revise_published")) ? <Button onClick={() => setRevOpen(true)}>Request revision</Button> : null}</>} />
+    {r.status === "REJECTED" ? <div className="banner" role="alert" style={{ marginBottom: 12 }}><strong>Sent back by the Headmaster:</strong> {r.rejectionNote} {can(s, "marks.verify") ? <>Re-verify the reopened submissions in the <Link to="/review">inbox</Link> (request corrections if marks must change), then compile again.</> : null}</div> : null}
     {r.status === "VERIFIED" ? <div className="banner info" style={{ marginBottom: 12 }}>Compiled from verified marks. {can(s, "results.approve") ? "Review the figures, then approve." : "Waiting for the Headmaster's approval."}</div> : r.status === "APPROVED" ? <div className="banner info" style={{ marginBottom: 12 }}>Approved. Publishing makes results visible to students and cannot be undone; later changes need a revision with approval.</div> : null}
     <div className="grid cols-4" style={{ marginBottom: 16 }}>{[["Students", r.summary.students], ["Pass rate", `${r.summary.passRate.toFixed(0)}%`], ["Failed", r.summary.failed], ["With absence", r.summary.withAbsence]].map(([l, v]) => <div key={String(l)} className="card stat"><div className="v">{v}</div><div className="l">{l}</div></div>)}</div>
     <div className="card"><div className="table-wrap"><table className="t"><thead><tr><th>Pos</th><th>Roll</th><th>Student</th>{subjectIds.map((sid) => <th key={sid} className="r">{names.get(sid)}</th>)}<th className="r">Total</th><th className="r">GPA</th><th>Grade</th></tr></thead>
@@ -58,7 +63,14 @@ export function ResultDetail() {
     {reauth ? <ReauthDialog title={reauth.title} reauth={(pw) => api.reauth(pw)} onToken={async (t) => { await reauth.run(t); }} onClose={() => setReauth(null)} /> : null}
     {typed === "publish" ? <ConfirmDialog title="Publish results" typed="PUBLISH" danger={false} confirmLabel="Continue" message={<>Publishing notifies <strong>{r.summary.students}</strong> students and makes results visible. You will confirm with your password next.</>} onConfirm={() => { setReauth({ title: "Publish results", ok: "publish", run: (t) => publish.mutateAsync(t) }); }} onClose={() => setTyped(null)} /> : null}
     {revOpen ? <RevisionDialog r={r} onClose={() => setRevOpen(false)} /> : null}
+    {rejecting ? <RejectDialog onClose={() => setRejecting(false)} onSend={(reason) => { setRejecting(false); setReauth({ title: "Send results back", ok: "reject", run: (t) => reject.mutateAsync({ reason, t }) }); }} /> : null}
   </>;
+}
+
+function RejectDialog({ onSend, onClose }: { onSend: (reason: string) => void; onClose: () => void }) {
+  const [reason, setReason] = React.useState("");
+  return <Modal title="Send results back to the Register" onClose={onClose} footer={<><Button onClick={onClose}>Cancel</Button><Button variant="danger" disabled={!reason.trim()} onClick={() => onSend(reason.trim())}>Continue</Button></>}>
+    <div className="stack"><div className="banner info">The submissions for this exam and class return to review. The Register fixes them and compiles a new revision; this revision stays on record.</div><Field label="What needs to change? (required)"><Textarea value={reason} onChange={(e) => setReason(e.target.value)} /></Field></div></Modal>;
 }
 
 function RevisionDialog({ r, onClose }: { r: ResultSetDetail; onClose: () => void }) {

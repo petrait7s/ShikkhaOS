@@ -25,7 +25,7 @@ cat > "$STAGE/BUILD_REPORT.md" <<DOC
 Commit: $(git rev-parse --short HEAD). Real results from the development container; see STATUS.md for the full table.
 - cargo fmt --check: pass
 - cargo clippy --workspace --all-targets --locked -- -D warnings: pass
-- cargo test --workspace: 44 passed (33 domain, 1 pdf, 10 integration incl. real WebSocket + full exam workflow)
+- cargo test --workspace: 48 passed (34 domain, 2 lib, 12 integration incl. real WebSocket, full exam workflow, result rejection, CSV import)
 - cargo build --release --locked --bin shikkhaos-api: pass
 - cargo audit: pass with 2 documented lock-file-only ignores (apps/api/.cargo/audit.toml)
 UNVERIFIED here: cargo deny, Docker image build, load tests, coverage, FCM, S3 (not implemented).

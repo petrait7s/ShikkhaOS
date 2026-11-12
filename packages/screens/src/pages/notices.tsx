@@ -2,6 +2,7 @@ import * as React from "react";
 import { can } from "@shikkhaos/permissions";
 import type { Notice, Role, SchoolClass, Section } from "@shikkhaos/types";
 import { useApp, useAction, usePagedList, useList, useSession, useRealtimeInvalidate } from "../context";
+import { t } from "../i18n";
 import { Badge, Button, Card, Empty, ErrorState, Field, Input, Modal, PageHeader, Skeleton, StatusBadge, Tabs, Textarea, fmtDate } from "../ui";
 
 export function Notices() {
@@ -12,9 +13,9 @@ export function Notices() {
   const publish = act("publish", "Notice updated"); const archive = act("archive", "Archived");
   const staff = can(s, "notices.create");
   return <>
-    <PageHeader title="Notices" sub="School noticeboard" actions={staff ? <Button variant="primary" onClick={() => setCreating(true)}>New notice</Button> : null} />
+    <PageHeader title={t("Notices")} sub={t("School noticeboard")} actions={staff ? <Button variant="primary" onClick={() => setCreating(true)}>New notice</Button> : null} />
     {staff ? <Tabs value={tab} onChange={setTab} tabs={[{ id: "PUBLISHED", label: "Published" }, { id: "DRAFT", label: "Drafts" }, { id: "PENDING_APPROVAL", label: "Pending approval" }, { id: "ARCHIVED", label: "Archived" }]} /> : null}
-    {q.isLoading && !q.rows.length ? <Skeleton rows={5} /> : q.error ? <ErrorState error={q.error} onRetry={() => void q.refetch()} /> : q.rows.length === 0 ? <Empty title="No notices">{staff ? "Create a notice to inform students and staff." : "There are no notices for you right now."}</Empty> :
+    {q.isLoading && !q.rows.length ? <Skeleton rows={5} /> : q.error ? <ErrorState error={q.error} onRetry={() => void q.refetch()} /> : q.rows.length === 0 ? <Empty title={t("No notices")}>{staff ? "Create a notice to inform students and staff." : "There are no notices for you right now."}</Empty> :
       <div className="stack">{q.rows.map((n) => <Card key={n.id} title={<>{n.pinned ? "📌 " : ""}{n.title}</>} actions={<><StatusBadge status={n.status} />{staff && (n.status === "DRAFT" || n.status === "PENDING_APPROVAL") ? <Button size="sm" variant="primary" onClick={() => publish.mutate(n)}>{can(s, "notices.publish") ? "Publish" : "Publish / send for approval"}</Button> : null}{staff && n.status === "PUBLISHED" ? <Button size="sm" onClick={() => archive.mutate(n)}>Archive</Button> : null}</>}>
         <div style={{ whiteSpace: "pre-wrap" }}>{n.body}</div><div className="faint" style={{ marginTop: 8 }}>{n.createdByName} · {fmtDate(n.publishedAt)} {audienceLabel(n)}</div></Card>)}{q.hasMore ? <Button onClick={q.loadMore}>Load more</Button> : null}</div>}
     {creating ? <NewNotice onClose={() => setCreating(false)} /> : null}</>;

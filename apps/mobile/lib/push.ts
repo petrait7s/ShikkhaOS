@@ -17,11 +17,4 @@ export async function registerPush(api: ApiClient, deviceId: string): Promise<"r
   } catch { return "unavailable"; }
 }
 
-/** shikkhaos://results/<id> style deep links -> app routes (same mapping as the web/desktop apps). */
-export function routeFor(deepLink?: string): string {
-  const [head, id] = (deepLink ?? "").replace("shikkhaos://", "").split("/");
-  switch (head) {
-    case "results": return "/(tabs)/results"; case "attendance": return "/(tabs)/attendance"; case "messages": return id ? `/messages/${id}` : "/(tabs)/messages";
-    case "notices": return "/notices"; case "homework": return id ? `/homework/${id}` : "/homework"; case "class-tests": return "/class-tests"; default: return "/notifications";
-  }
-}
+export { routeFor } from "./routes";

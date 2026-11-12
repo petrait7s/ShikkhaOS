@@ -44,14 +44,14 @@ test("official exam workflow end to end through the UI, student sees the publish
   const R = await signIn(browser, "registrar");
   await R.page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Exams" }).click();
   await R.page.getByRole("button", { name: "New exam" }).click();
-  await R.page.getByLabel("Name").fill("UI Annual Exam");
+  await R.page.getByLabel("Name", { exact: true }).fill("UI Annual Exam");
   await R.page.getByLabel("Start date").fill("2026-11-01"); await R.page.getByLabel("End date").fill("2026-11-10");
   await R.page.getByRole("button", { name: "Create" }).click();
   await R.page.getByRole("heading", { name: "UI Annual Exam" }).waitFor();
   const examId = R.page.url().split("/exams/")[1];
   // add a paper in the UI
   await R.page.getByRole("button", { name: "Add paper" }).click();
-  await R.page.getByLabel("Class").selectOption(class6); await R.page.getByLabel("Subject").selectOption(math);
+  await R.page.getByLabel("Class", { exact: true }).selectOption(class6); await R.page.getByLabel("Subject", { exact: true }).selectOption(math);
   await R.page.getByRole("button", { name: "Add", exact: true }).click();
   await R.page.getByRole("cell", { name: "Mathematics" }).first().waitFor();
   // Registrar cannot authorize: no such button
@@ -119,7 +119,7 @@ test("official exam workflow end to end through the UI, student sees the publish
   // Compile in the UI
   await R.page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Results" }).click();
   await R.page.getByRole("button", { name: "Compile results" }).click();
-  await R.page.getByLabel("Exam").selectOption({ label: "UI Annual Exam" });
+  await R.page.getByLabel("Exam", { exact: true }).selectOption({ label: "UI Annual Exam" });
   await R.page.getByLabel("Class", { exact: true }).selectOption({ label: "Class 6" });
   await R.page.getByRole("dialog").getByRole("button", { name: "Compile" }).click();
   await R.page.getByRole("heading", { name: /UI Annual Exam · Class 6/ }).waitFor();

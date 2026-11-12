@@ -17,6 +17,14 @@ pub async fn bootstrap_admin(db: &PgPool, username: &str, name: &str) -> Result<
 pub async fn ensure_school(db: &PgPool) -> ApiResult<()> {
     let scheme = serde_json::to_value(shikkhaos_domain::grading::GradingScheme::default_scheme()).unwrap();
     sqlx::query("INSERT INTO school_profile (id, name, name_bn, grading_scheme, address, phone, email, motto) VALUES (1, 'ShikkhaOS Model School', 'শিক্ষাওএস মডেল স্কুল', $1, 'Sylhet, Bangladesh', '01700000000', 'office@school.example', 'One School. One System. One Connected Community.') ON CONFLICT DO NOTHING").bind(scheme).execute(db).await?;
+    ensure_channels(db).await?;
+    Ok(())
+}
+
+pub async fn ensure_channels(db: &PgPool) -> ApiResult<()> {
+    for (kind, title) in [("ANNOUNCEMENTS", "Announcements"), ("STAFF", "Staff Room")] {
+        sqlx::query("INSERT INTO conversations (type, title, channel_kind, is_read_only_for_students) SELECT 'CHANNEL', $2, $1, true WHERE NOT EXISTS (SELECT 1 FROM conversations WHERE type='CHANNEL' AND channel_kind=$1)").bind(kind).bind(title).execute(db).await?;
+    }
     Ok(())
 }
 

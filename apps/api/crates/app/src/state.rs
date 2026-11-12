@@ -67,6 +67,7 @@ impl Hub {
         let mut g = self.inner.write().unwrap();
         if let Some(v) = g.get_mut(&user) { v.retain(|(i, _)| *i != conn); if v.is_empty() { g.remove(&user); } }
     }
+    pub fn online_users(&self) -> Vec<Uuid> { self.inner.read().unwrap().keys().copied().collect() }
     pub fn connections(&self, user: Uuid) -> usize { self.inner.read().unwrap().get(&user).map(|v| v.len()).unwrap_or(0) }
     pub fn send(&self, user: Uuid, ty: &str, payload: Value) {
         let msg = json!({ "id": Uuid::new_v4(), "type": ty, "ts": chrono::Utc::now().to_rfc3339(), "payload": crate::http::camel(payload) }).to_string();

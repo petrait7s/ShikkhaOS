@@ -98,3 +98,13 @@ impl FromRequestParts<AppState> for Ctx {
         Ok(Ctx { user_id: c.sub, role, session_id: c.sid, device_id: c.did, perms, ip, request_id })
     }
 }
+
+/// Build a request context for a user outside an HTTP request (WebSocket).
+pub async fn ctx_for_user(db: &sqlx::PgPool, user: Uuid) -> ApiResult<Ctx> {
+    let row: Option<(String, String)> = sqlx::query_as("SELECT role, status FROM users WHERE id = $1").bind(user).fetch_optional(db).await?;
+    let (role, status) = row.ok_or_else(|| ApiError::unauthenticated("Unknown user"))?;
+    if status != "ACTIVE" { return Err(ApiError::forbidden_code("ACCOUNT_SUSPENDED", "Account is not active")); }
+    let role = Role::parse(&role).ok_or_else(ApiError::internal)?;
+    let perms = load_permissions(db, user, role).await?;
+    Ok(Ctx { user_id: user, role, session_id: Uuid::nil(), device_id: Uuid::nil(), perms, ip: String::new(), request_id: String::new() })
+}

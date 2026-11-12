@@ -41,3 +41,6 @@ http-body-util = "0.1"
 [dev-dependencies.tower]
 version = "0.5"
 features = ["util"]
+
+[dev-dependencies.tokio-tungstenite]
+version = "0.24"

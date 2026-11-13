@@ -97,6 +97,81 @@ try {
     if (!/Half Yearly/i.test(txt)) throw new Error("exam not visible to student");
   });
   await s.ctx.close();
+
+  // 5. attendance, homework, messages
+  const t2 = await session("teacher.rahim");
+  await step("teacher: take attendance for 6-A", async () => {
+    await openApp(t2.page, "Attendance");
+    await t2.page.locator("select").first().selectOption({ label: "Class 6-A" }).catch(() => {});
+    await t2.page.getByRole("button", { name: /Open roll call/i }).click();
+    await t2.page.waitForSelector("table tbody tr", { timeout: 8000 });
+    await t2.page.getByRole("button", { name: /Mark all present/i }).click();
+    await t2.page.locator('[aria-label$="attendance"]').first().getByRole("button", { name: "A", exact: true }).click();
+    await t2.page.getByRole("button", { name: /^Save$/ }).click();
+    await t2.page.waitForTimeout(1500);
+    await shot(t2.page, "05-attendance-teacher");
+  });
+  await step("teacher: create and publish homework for 6-A", async () => {
+    await openApp(t2.page, "Homework");
+    await t2.page.getByRole("button", { name: /New homework/i }).click();
+    await t2.page.locator("#hw-class").selectOption({ label: (await t2.page.locator("#hw-class option").allTextContents()).find((x) => x.includes("6-A")) });
+    await t2.page.locator("#hw-title").fill("Chapter 1 exercises");
+    await t2.page.locator("#hw-desc").fill("Solve questions 1 to 10.");
+    await t2.page.locator("#hw-due").fill("2030-01-01T10:00");
+    await t2.page.getByRole("button", { name: /Save draft/i }).click();
+    await t2.page.waitForTimeout(1200);
+    await t2.page.getByRole("button", { name: /Chapter 1 exercises/ }).click();
+    await t2.page.getByRole("button", { name: /Publish to students/i }).click();
+    await t2.page.waitForTimeout(1200);
+  });
+  await step("teacher: message the 6-A class group", async () => {
+    await openApp(t2.page, "Messages");
+    await t2.page.locator("aside button", { hasText: /Class 6-A/ }).first().click();
+    await t2.page.getByLabel("Message", { exact: true }).fill("Homework is up. Please check.");
+    await t2.page.getByRole("button", { name: "Send" }).click();
+    await t2.page.waitForTimeout(1200);
+  });
+  const s2 = await session("student.ayesha");
+  await step("student: sees attendance", async () => {
+    await openApp(s2.page, "Attendance");
+    await s2.page.waitForTimeout(1500);
+    await shot(s2.page, "06-attendance-student");
+    if (!/Attendance/.test(await s2.page.locator("body").innerText())) throw new Error("no attendance view");
+  });
+  await step("student: sees and submits homework", async () => {
+    await openApp(s2.page, "Homework");
+    await s2.page.getByRole("button", { name: /Chapter 1 exercises/ }).click();
+    await s2.page.locator("#hw-answer").fill("Done: answers attached in notebook.");
+    await s2.page.getByRole("button", { name: /Submit homework/i }).click();
+    await s2.page.waitForTimeout(1500);
+    await shot(s2.page, "07-homework-student");
+    if (!/Submitted/.test(await s2.page.locator("body").innerText())) throw new Error("not marked submitted");
+  });
+  await step("student: reads the class message, cannot post in group", async () => {
+    await openApp(s2.page, "Messages");
+    await s2.page.locator("aside button", { hasText: /Class 6-A/ }).first().click();
+    await s2.page.waitForTimeout(1500);
+    const txt = await s2.page.locator("body").innerText();
+    if (!/Homework is up/.test(txt)) throw new Error("message not visible");
+    if (await s2.page.getByLabel("Message", { exact: true }).count()) throw new Error("student can post in group");
+    await shot(s2.page, "08-messages-student");
+  });
+  await step("student: starts a chat with a teacher", async () => {
+    await s2.page.getByRole("button", { name: /New message/i }).click();
+    await s2.page.getByRole("button", { name: /Rahim Uddin/ }).click();
+    await s2.page.waitForTimeout(1500);
+    await s2.page.getByLabel("Message", { exact: true }).fill("Sir, is Exercise 4.2 included?");
+    await s2.page.getByRole("button", { name: "Send" }).click();
+    await s2.page.waitForTimeout(1200);
+  });
+  await step("teacher: sees the student's message", async () => {
+    await t2.page.reload();
+    await t2.page.waitForTimeout(1500);
+    await openApp(t2.page, "Messages");
+    await t2.page.waitForTimeout(1500);
+    if (!/Exercise 4.2/.test(await t2.page.locator("body").innerText())) throw new Error("teacher did not receive student message");
+  });
+  await t2.ctx.close(); await s2.ctx.close();
   console.log("\nALL STEPS PASSED");
 } catch {
   console.log("\nE2E FAILED:", JSON.stringify(log.filter((l) => l[0] === "FAIL")));

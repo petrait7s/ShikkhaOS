@@ -3,13 +3,13 @@ import dynamic from "next/dynamic";
 import {
   Activity, Award, Bug, Building2, CalendarDays, ChartNoAxesColumn, CirclePlus, Contact, GraduationCap, Layers3,
   Megaphone, Presentation, School, ScrollText, ShieldCheck, SlidersHorizontal, SquarePen, Table2, UserRound, Users,
-  BookOpenText, Inbox, type LucideIcon,
+  BookOpenText, Inbox, CalendarCheck, MessageSquare, NotebookPen, type LucideIcon,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import type { Role } from "@/api/contracts";
 import { SkeletonRows } from "@/components/ui";
 
-export type AppDef = { id: string; icon: LucideIcon; color: string; roles: Role[]; Component: ComponentType; size?: [number, number]; /** false = reachable from the menu bar / Spotlight / mobile home, but not pinned in the dock. */ inDock?: boolean };
+export type AppDef = { id: string; icon: LucideIcon; color: string; roles: Role[]; Component: ComponentType; size?: [number, number]; /** false = reachable from the menu bar / Spotlight / mobile home, but not pinned in the dock. */ inDock?: boolean; /** Only available against the live API (no mock data behind it). */ liveOnly?: boolean };
 
 const load = (fn: () => Promise<{ default: ComponentType }>) => dynamic(fn, { ssr: false, loading: () => <SkeletonRows /> });
 
@@ -30,6 +30,9 @@ export const APPS: AppDef[] = [
   { id: "marks", icon: SquarePen, color: "#0F172A", roles: ["teacher"], Component: load(() => import("./marks/MarksEntry")), size: [1060, 660] },
   { id: "roster", icon: Users, color: "#0F766E", roles: ["teacher"], Component: load(() => import("./roster/Roster")), size: [860, 580] },
   { id: "faculty", icon: Contact, color: "#14B8A6", roles: ["teacher", "student"], Component: load(() => import("./faculty/Faculty")), size: [900, 580] },
+  { id: "attendance", icon: CalendarCheck, color: "#0F766E", roles: ["teacher", "student", "headmaster", "registrar"], Component: load(() => import("./attendance/Attendance")), size: [900, 600], liveOnly: true },
+  { id: "homework", icon: NotebookPen, color: "#1E3A5F", roles: ["teacher", "student", "headmaster", "registrar"], Component: load(() => import("./homework/Homework")), size: [980, 620], liveOnly: true },
+  { id: "messages", icon: MessageSquare, color: "#14B8A6", roles: ["teacher", "student", "headmaster", "registrar"], Component: load(() => import("./messages/Messages")), size: [960, 620], liveOnly: true },
   { id: "profile", icon: UserRound, color: "#1E3A5F", roles: ["headmaster", "registrar", "teacher", "student"], Component: load(() => import("./profile/Profile")), size: [620, 520] },
 
   { id: "myresults", icon: Award, color: "#0F172A", roles: ["student"], Component: load(() => import("./myresults/MyResults")), size: [980, 640] },
@@ -41,5 +44,6 @@ export const APPS: AppDef[] = [
   { id: "createschool", icon: CirclePlus, color: "#0F766E", roles: ["petra"], Component: load(() => import("./petra/CreateSchool")), size: [640, 600] },
 ];
 
-export const appsFor = (role: Role): AppDef[] => APPS.filter((a) => a.roles.includes(role));
+const LIVE = process.env.NEXT_PUBLIC_API_MODE === "http";
+export const appsFor = (role: Role): AppDef[] => APPS.filter((a) => a.roles.includes(role) && (!a.liveOnly || LIVE));
 export const appById = (id: string): AppDef | undefined => APPS.find((a) => a.id === id);

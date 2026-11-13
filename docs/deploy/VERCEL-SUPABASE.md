@@ -60,6 +60,6 @@ teacher enters and submits marks, registrar verifies, headmaster approves and pu
 Wired to the live API: sign-in/out, school name, students and teachers (lists), exams, marks entry and submit, review (verify / return for correction), result compile + approve + publish, student results, notices (list/create), notifications, audit log, profile (read), change password, Headmaster overview.
 
 Shows "not available in the live system yet" (no matching API feature): unpublish/schedule publishing, question-paper attachments, routine, magazine, sign-up approval and join codes, teacher invites, profile editing, pinning notices.
-Attendance, homework, class tests and messaging exist in the API and in the web/Android/desktop apps in `apps/`, but the OS-style interface has no screens for them yet.
+Attendance (teacher roll call, admin overview, student record), Homework (create/publish/grade, student submit) and Messages (direct chats, class groups, school channels, report a message) are live-mode-only screens in the OS interface and are hidden in mock mode. Messages refresh by polling every 4-8 seconds (the API also has a WebSocket; not used here yet). Class tests and file attachments are not in the OS interface.
 
 For the Electron desktop build in live mode, add the app origin to the API: `CORS_ORIGINS=https://your-app.vercel.app,app://shikkaos`.

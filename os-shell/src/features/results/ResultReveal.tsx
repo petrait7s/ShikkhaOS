@@ -156,7 +156,7 @@ export function ResultReveal({ examId, onClose }: { examId: string; onClose: () 
               </div>
 
               <motion.div {...fade(6)} className="mt-4 grid grid-cols-3 gap-3 text-center">
-                <div className="hair p-3"><div className="text-2xl font-extrabold">{n(r.position)}<span className="faint text-sm">/{n(r.classSize)}</span></div><div className="faint text-[11px]">{t("reveal.position")}</div></div>
+                <div className="hair p-3"><div className="text-2xl font-extrabold">{n(r.position)}{r.classSize > 0 ? <span className="faint text-sm">/{n(r.classSize)}</span> : null}</div><div className="faint text-[11px]">{t("reveal.position")}</div></div>
                 <div className="hair p-3"><div className="text-2xl font-extrabold">{n(r.total)}</div><div className="faint text-[11px]">{t("reveal.total")}</div></div>
                 <div className="hair p-3"><div className="text-2xl font-extrabold">{r.passed ? t("reveal.passed") : t("reveal.failed")}</div><div className="faint text-[11px]">{t("col.status")}</div></div>
               </motion.div>

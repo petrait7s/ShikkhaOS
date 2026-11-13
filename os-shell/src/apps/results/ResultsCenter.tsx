@@ -157,7 +157,7 @@ export default function ResultsCenter() {
                     })}
                     <td className="whitespace-nowrap">
                       <div className="flex items-center gap-1">
-                        {pub?.state === "published" ? <><Badge tone="ok">{t("state.published")}</Badge><Btn size="sm" onClick={() => setUnpubRow(r)}>{t("rc.unpublish")}</Btn></>
+                        {pub?.state === "published" ? <><Badge tone="ok">{t("state.published")}</Badge>{process.env.NEXT_PUBLIC_API_MODE === "http" ? null : <Btn size="sm" onClick={() => setUnpubRow(r)}>{t("rc.unpublish")}</Btn>}</>
                           : pub?.state === "scheduled" ? <><Badge tone="warn">{fmtDateTime(pub.at, lang)}</Badge><Btn size="sm" onClick={() => setUnpubRow(r)}>{t("rc.cancelsched")}</Btn></>
                           : <Btn size="sm" variant={rowReady(r.classNo, r.section) ? "primary" : undefined} disabled={!rowReady(r.classNo, r.section)} onClick={() => setPubRow(r)}>{t("rc.publishclass", { c: r.classNo })}</Btn>}
                         <Btn size="sm" variant="icon" aria-label={t("rc.template.class")} onClick={() => void dlClass(r.classNo, r.section)}><Download size={13} /></Btn>

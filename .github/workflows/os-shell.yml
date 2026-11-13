@@ -1,0 +1,42 @@
+name: OS shell (Vercel UI)
+
+on:
+  pull_request:
+    paths: ["os-shell/**", ".github/workflows/os-shell.yml"]
+  push:
+    branches: [main]
+    paths: ["os-shell/**", ".github/workflows/os-shell.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: os-shell-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: os-shell
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: pnpm install --ignore-workspace --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - name: Build (mock mode)
+        run: pnpm build
+      - name: Build (live API mode)
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_API_MODE: http
+          NEXT_PUBLIC_API_BASE_URL: https://api.example.com/api/v1
+          NEXT_PUBLIC_DEMO_MODE: "false"

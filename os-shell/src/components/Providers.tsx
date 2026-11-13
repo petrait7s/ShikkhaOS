@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import { useUI } from "@/store/ui";
 import { useLang } from "@/lib/i18n";
+import { ReauthHost } from "@/components/ReauthHost";
 
 function LangSync() {
   const lang = useLang();
@@ -24,6 +25,7 @@ export function Providers({ children }: { children: ReactNode }) {
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
       <QueryClientProvider client={qc}>
         <LangSync />
+        <ReauthHost />
         {children}
         <Toaster position="bottom-right" richColors closeButton />
       </QueryClientProvider>

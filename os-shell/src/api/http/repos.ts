@@ -4,6 +4,8 @@
 import type { Exam, School, Session, Student, Teacher } from "../contracts";
 import type { Repos } from "../repositories";
 import { ApiError } from "../mock/db";
+import { dropRefs, liveApproval, liveAudit, liveExam, liveKlass, liveMagazine, liveMarks, liveNotice, liveProfile, liveResult, liveRoutine } from "./live";
+import { forgetReauth } from "./reauth";
 import { API_BASE, call, deviceId, listAll, setTokens, storeSession, storedSession } from "./client";
 
 type ApiUser = { id: string; role: string; displayName: string; mustChangePassword: boolean };
@@ -49,13 +51,14 @@ export const httpRepos: Repos = {
       const r = await call<{ accessToken: string; refreshToken?: string; user: ApiUser }>("POST", "/auth/login", {
         auth: false, body: { identifier: id.trim(), password, deviceId: deviceId(), platform: "desktop" },
       });
+      dropRefs(); forgetReauth();
       setTokens(r.data.accessToken, r.data.refreshToken ?? null);
       const s = await currentSession(r.data.user);
       storeSession(s);
       return s;
     },
     loginPetra: notWired("auth.loginPetra"),
-    async logout() { try { await call("POST", "/auth/logout"); } catch { /* already invalid */ } setTokens(null, null); storeSession(null); },
+    async logout() { try { await call("POST", "/auth/logout"); } catch { /* already invalid */ } setTokens(null, null); storeSession(null); dropRefs(); forgetReauth(); },
     session: () => storedSession<Session>(),
     async verifyPassword(password) { try { await call("POST", "/auth/reauth", { body: { password } }); return true; } catch { return false; } },
     async brand() {
@@ -82,10 +85,10 @@ export const httpRepos: Repos = {
   }),
   klass: wire<Repos["klass"]>("klass", {
     exams: async () => (await listAll<ApiExam>("/exams")).map(toExam),
-    subjects: async () => [],
+    ...liveKlass,
   }),
-  exam: stub("exam"), marks: stub("marks"), result: stub("result"), magazine: stub("magazine"), notice: stub("notice"),
-  approval: stub("approval"), audit: stub("audit"), platform: stub("platform"), routine: stub("routine"), profile: stub("profile"),
+  exam: liveExam, marks: wire<Repos["marks"]>("marks", liveMarks), result: wire<Repos["result"]>("result", liveResult), magazine: liveMagazine, notice: wire<Repos["notice"]>("notice", liveNotice),
+  approval: liveApproval, audit: liveAudit, platform: stub("platform"), routine: liveRoutine, profile: wire<Repos["profile"]>("profile", liveProfile),
 };
 
 export { API_BASE };

@@ -54,6 +54,12 @@ Example (Fly.io): `fly launch --dockerfile infrastructure/docker/api.Dockerfile`
 Variables starting with `NEXT_PUBLIC_` are baked in at build time and are visible in the browser: never put secrets there.
 
 ## What works in `http` mode today
-Wired to the live API: sign-in/out, school name, students (list), teachers (list), exams (list), Headmaster overview counts.
-Not wired yet (these show "not connected to the live API yet"): results workflow, marks entry, attendance, routine, notices, messages, audit, approvals, reports. They are the next steps; the API endpoints already exist (`docs/api/openapi.yaml`).
-Until those are wired, use the Windows/Android/web apps in `apps/` for the complete workflow, or `NEXT_PUBLIC_API_MODE=mock` for the OS-style interface demo.
+Tested end to end in a browser against the real API (`os-shell/scripts/e2e-live.mjs`):
+teacher enters and submits marks, registrar verifies, headmaster approves and publishes (password re-confirmation dialog), student sees the published result.
+
+Wired to the live API: sign-in/out, school name, students and teachers (lists), exams, marks entry and submit, review (verify / return for correction), result compile + approve + publish, student results, notices (list/create), notifications, audit log, profile (read), change password, Headmaster overview.
+
+Shows "not available in the live system yet" (no matching API feature): unpublish/schedule publishing, question-paper attachments, routine, magazine, sign-up approval and join codes, teacher invites, profile editing, pinning notices.
+Attendance, homework, class tests and messaging exist in the API and in the web/Android/desktop apps in `apps/`, but the OS-style interface has no screens for them yet.
+
+For the Electron desktop build in live mode, add the app origin to the API: `CORS_ORIGINS=https://your-app.vercel.app,app://shikkaos`.

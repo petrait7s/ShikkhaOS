@@ -26,7 +26,7 @@ const b64 = (f, mime) => `data:${mime};base64,${readFileSync(path.join(dir, f)).
 const LOGO = b64("logo-mark.png", "image/png"), LOGO_LIGHT = b64("logo-mark-light.png", "image/png"), TILE = b64("logo-tile.jpg", "image/jpeg");
 const ico = { web: '<path d="M12 3a9 9 0 100 18 9 9 0 000-18zM3 12h18M12 3c2.6 2.4 4 5.6 4 9s-1.4 6.6-4 9c-2.6-2.4-4-5.6-4-9s1.4-6.6 4-9z"/>', phone: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A15 15 0 013 6a2 2 0 012-2z"/>', mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>' };
 const svg = (k) => `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#5EEAD4" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex:none">${ico[k]}</svg>`;
-const contactItems = [["web", "https://petrait.site", "petrait.site"], ["phone", "tel:+8801616154320", "016-16154320"], ["mail", "mailto:petraitsol@gmail.com", "petraitsol@gmail.com"]];
+const contactItems = [["web", "https://petrait.site", "petrait.site"], ["phone", "tel:+8801616154320", "016-16154320"], ["mail", "mailto:petraitbd@gmail.com", "petraitbd@gmail.com"]];
 const contact = (dir) => `<div style="display:flex;flex-direction:${dir};gap:${dir === "row" ? "9mm" : "3mm"}">${contactItems.map(([k, h, t]) => `<a href="${h}" style="display:flex;align-items:center;gap:2.4mm;color:#E6EEF7;text-decoration:none;font-size:${dir === "row" ? "9.5pt" : "11pt"}">${svg(k)}<span>${t}</span></a>`).join("")}</div>`;
 const icon = (n) => ({ headmaster: "★", registrar: "✎", teacher: "✐", student: "☺", check: "✓", lock: "🔒" }[n] ?? "•");
 
@@ -328,7 +328,13 @@ ${page("closing", `<div class="glow"></div><div class="glow2"></div><div class="
   <h1>Let’s begin with one class.</h1>
   <div class="tag" style="font-size:14pt;color:var(--mint);max-width:130mm;margin-bottom:10mm">A small pilot lets teachers, the Register and the Headmaster judge ShikkhaOS on real work — with paper as a safety net — before the whole school commits.</div>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6mm;border-top:1px solid rgba(220,239,235,.3);padding-top:6mm;font-size:9.5pt;color:#C7D6E8"><div><b style="color:#fff;display:block">Step 1</b>Committee approves the pilot</div><div><b style="color:#fff;display:block">Step 2</b>We prepare the server, accounts and training</div><div><b style="color:#fff;display:block">Step 3</b>One class, one term, weekly review</div></div>
-  <div style="margin-top:12mm;border-top:1px solid rgba(220,239,235,.3);padding-top:6mm"><div style="font-size:8.5pt;letter-spacing:.14em;text-transform:uppercase;color:#9FB1C9;margin-bottom:4mm">Contact</div>${contact("column")}</div>
+  <div style="margin-top:9mm"><div style="font-size:8.5pt;letter-spacing:.14em;text-transform:uppercase;color:#9FB1C9;margin-bottom:3mm">Payment on the contract</div>
+  <div style="display:grid;grid-template-columns:3fr 3fr 4fr;gap:3mm">
+    <div style="border:1px solid rgba(220,239,235,.3);border-radius:3mm;padding:4mm"><div style="font-size:22pt;font-weight:800;color:#5EEAD4;line-height:1">30%</div><b style="display:block;margin-top:2mm;font-size:10pt">On signing the contract</b><span style="font-size:8.5pt;color:#B8C4D6">Work begins: server setup, accounts, import.</span></div>
+    <div style="border:1px solid rgba(220,239,235,.3);border-radius:3mm;padding:4mm"><div style="font-size:22pt;font-weight:800;color:#5EEAD4;line-height:1">30%</div><b style="display:block;margin-top:2mm;font-size:10pt">At pilot go-live</b><span style="font-size:8.5pt;color:#B8C4D6">System running for the pilot class; staff trained.</span></div>
+    <div style="border:1px solid rgba(220,239,235,.3);border-radius:3mm;padding:4mm;background:rgba(20,184,166,.12)"><div style="font-size:22pt;font-weight:800;color:#5EEAD4;line-height:1">40%</div><b style="display:block;margin-top:2mm;font-size:10pt">On whole-school handover</b><span style="font-size:8.5pt;color:#B8C4D6">All classes live, pilot review accepted by the committee.</span></div></div>
+  <div style="font-size:8pt;color:#9FB1C9;margin-top:2mm">Milestones are proposed and can be adjusted in the contract. The total amount follows the itemized estimate after the hosting decision.</div></div>
+  <div style="margin-top:9mm;border-top:1px solid rgba(220,239,235,.3);padding-top:6mm"><div style="font-size:8.5pt;letter-spacing:.14em;text-transform:uppercase;color:#9FB1C9;margin-bottom:4mm">Contact</div>${contact("column")}</div>
   <div style="margin-top:auto;font-size:9pt;color:#9FB1C9">ShikkhaOS · One School. One System. One Connected Community.</div></div>`, { head: false })}
 </body></html>`;
 

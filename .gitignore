@@ -14,3 +14,4 @@ dist/
 release/
 .files/
 *.tsbuildinfo
+docs/proposal/ShikkaOS-v1.3.0-demo.zip

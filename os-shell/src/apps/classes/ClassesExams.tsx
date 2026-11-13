@@ -7,6 +7,8 @@ import { keys, useExamsQ, useGradingQ, useMut, useStudentsQ, useSubjectsQ } from
 import { Btn, ErrorBox, Field, Modal, SkeletonRows } from "@/components/ui";
 import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { useUI } from "@/store/ui";
+import { authorizeExam } from "@/api/http/setup";
 
 type Tab = "classes" | "exams" | "grading";
 
@@ -62,12 +64,14 @@ function Exams() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [nameBn, setNameBn] = useState("");
+  const role = useUI((s) => s.session?.role);
+  const authorize = useMut((id: string) => authorizeExam(id), [keys.exams, ["matrix"]], "Exam authorized. Teachers can now enter marks.");
   const create = useMut(() => repos.klass.createExam(name.trim(), nameBn.trim()), [keys.exams, ["matrix"]], t("ce.exam.created"));
   if (exams.isLoading) return <SkeletonRows rows={4} />;
   return (
     <div className="p-3">
       <div className="mb-3 flex justify-end"><Btn variant="primary" onClick={() => setOpen(true)}><Plus size={14} />{t("ce.exam.new")}</Btn></div>
-      <ul className="grid gap-2">{(exams.data ?? []).map((e) => <li key={e.id} className="card flex items-center justify-between p-3"><div><div className="font-bold">{lang === "bn" ? e.nameBn : e.name}</div><div className="faint text-[12px]">{e.year}</div></div><span className="chip">{t(e.kind === "term" ? "ce.exam.term" : "ce.exam.test")}</span></li>)}</ul>
+      <ul className="grid gap-2">{(exams.data ?? []).map((e) => <li key={e.id} className="card flex items-center justify-between p-3"><div><div className="font-bold">{lang === "bn" ? e.nameBn : e.name}</div><div className="faint text-[12px]">{e.year}</div></div>{e.status ? <span className={`status ${e.status === "DRAFT" ? "status-warn" : "status-ok"}`}>{e.status === "DRAFT" ? "Draft" : e.status === "AUTHORIZED" ? "Authorized" : e.status === "IN_PROGRESS" ? "In progress" : "Closed"}</span> : null}{role === "headmaster" && e.status === "DRAFT" ? <Btn size="sm" variant="primary" disabled={authorize.isPending} onClick={() => authorize.mutate(e.id)}>Authorize</Btn> : null}<span className="chip">{t(e.kind === "term" ? "ce.exam.term" : "ce.exam.test")}</span></li>)}</ul>
       <Modal open={open} onClose={() => setOpen(false)} title={t("ce.exam.new")} footer={<><Btn onClick={() => setOpen(false)}>{t("cancel")}</Btn><Btn variant="primary" disabled={name.trim().length < 3 || create.isPending} onClick={() => void create.mutateAsync(undefined).then(() => { setOpen(false); setName(""); setNameBn(""); }).catch(() => undefined)}>{t("create")}</Btn></>}>
         <Field label={t("ce.exam.name")}><input className="input" value={name} onChange={(e) => setName(e.target.value)} /></Field>
         <Field label={t("ce.exam.namebn")}><input className="input" value={nameBn} onChange={(e) => setNameBn(e.target.value)} /></Field>

@@ -1,4 +1,5 @@
 "use client";
+const LIVE = process.env.NEXT_PUBLIC_API_MODE === "http";
 import { Check, Copy, KeyRound, Link2, Pencil, Plus, Upload } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -60,9 +61,9 @@ export default function Teachers() {
       </Drawer>
       <NewInvite open={newOpen} onClose={() => setNewOpen(false)} onDone={(c) => { setCreated(c); setNewOpen(false); }} />
       <Modal open={!!created} onClose={() => setCreated(null)} title={t("teachers.invite.ready")} footer={<Btn variant="primary" onClick={() => setCreated(null)}>{t("close")}</Btn>}>
-        {created ? <div className="grid gap-3 text-[13px]"><p className="muted">{t("teachers.invite.share")}</p>
-          <div className="hair flex items-center justify-between gap-2 p-3"><div><div className="faint text-[11px]">{t("signup.invitecode")}</div><code className="text-lg font-extrabold">{created}</code></div><Btn size="sm" onClick={() => copy(created)}><Copy size={13} />{t("copy")}</Btn></div>
-          <div className="hair flex items-center justify-between gap-2 p-3"><code className="min-w-0 truncate text-[12px]">{link(created)}</code><Btn size="sm" onClick={() => copy(link(created))}><Link2 size={13} />{t("copy")}</Btn></div></div> : null}
+        {created ? <div className="grid gap-3 text-[13px]"><p className="muted">{LIVE ? "Give the teacher their sign-in ID (phone number) and this temporary password. They choose a new password at first sign-in. A CSV copy was downloaded. Delete it after handing it over." : t("teachers.invite.share")}</p>
+          <div className="hair flex items-center justify-between gap-2 p-3"><div><div className="faint text-[11px]">{LIVE ? "Temporary password" : t("signup.invitecode")}</div><code className="text-lg font-extrabold">{created}</code></div><Btn size="sm" onClick={() => copy(created)}><Copy size={13} />{t("copy")}</Btn></div>
+          {LIVE ? null : <div className="hair flex items-center justify-between gap-2 p-3"><code className="min-w-0 truncate text-[12px]">{link(created)}</code><Btn size="sm" onClick={() => copy(link(created))}><Link2 size={13} />{t("copy")}</Btn></div>}</div> : null}
       </Modal>
       {wiz ? <ImportWizard open mode="teachers" onClose={() => setWiz(false)} /> : null}
     </div>

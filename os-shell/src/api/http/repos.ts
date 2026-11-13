@@ -5,13 +5,14 @@ import type { Exam, School, Session, Student, Teacher } from "../contracts";
 import type { Repos } from "../repositories";
 import { ApiError } from "../mock/db";
 import { dropRefs, liveApproval, liveAudit, liveExam, liveKlass, liveMagazine, liveMarks, liveNotice, liveProfile, liveResult, liveRoutine } from "./live";
+import { liveKlassSetup, liveSchoolSetup, liveStudent, liveTeacher, examOf, liveSchoolGet } from "./setup";
 import { forgetReauth } from "./reauth";
-import { API_BASE, call, deviceId, listAll, setTokens, storeSession, storedSession } from "./client";
+import { API_BASE, call, deviceId, listAll, mustChange, setTokens, storeSession, storedSession } from "./client";
 
 type ApiUser = { id: string; role: string; displayName: string; mustChangePassword: boolean };
 type ApiStudent = { id: string; studentCode: string; fullName: string; fullNameBn?: string | null; guardianName?: string; guardianPhone?: string; address?: string; status: string; className: string | null; sectionName: string | null; currentRollNo: number | null; createdAt?: string };
 type ApiTeacher = { id: string; fullName: string; designation: string; phone: string; status: string };
-type ApiExam = { id: string; name: string; type: string; startDate: string };
+type ApiExam = { id: string; name: string; type: string; startDate: string; status: string };
 
 const ROLE: Record<string, Session["role"]> = { HEADMASTER: "headmaster", REGISTRAR: "registrar", TEACHER: "teacher", STUDENT: "student" };
 const classNo = (n: string | null) => Number((n ?? "").replace(/\D/g, "")) || 0;
@@ -48,17 +49,18 @@ const stub = <T extends object>(label: string): T => wire<T>(label);
 export const httpRepos: Repos = {
   auth: {
     async login(id, password) {
-      const r = await call<{ accessToken: string; refreshToken?: string; user: ApiUser }>("POST", "/auth/login", {
+      const r = await call<{ accessToken: string; refreshToken?: string; mustChangePassword?: boolean; user: ApiUser }>("POST", "/auth/login", {
         auth: false, body: { identifier: id.trim(), password, deviceId: deviceId(), platform: "desktop" },
       });
       dropRefs(); forgetReauth();
       setTokens(r.data.accessToken, r.data.refreshToken ?? null);
+      mustChange.set(!!(r.data.mustChangePassword ?? r.data.user.mustChangePassword));
       const s = await currentSession(r.data.user);
       storeSession(s);
       return s;
     },
     loginPetra: notWired("auth.loginPetra"),
-    async logout() { try { await call("POST", "/auth/logout"); } catch { /* already invalid */ } setTokens(null, null); storeSession(null); dropRefs(); forgetReauth(); },
+    async logout() { try { await call("POST", "/auth/logout"); } catch { /* already invalid */ } setTokens(null, null); storeSession(null); mustChange.set(false); dropRefs(); forgetReauth(); },
     session: () => storedSession<Session>(),
     async verifyPassword(password) { try { await call("POST", "/auth/reauth", { body: { password } }); return true; } catch { return false; } },
     async brand() {
@@ -69,23 +71,23 @@ export const httpRepos: Repos = {
     signupStudent: notWired("auth.signupStudent"),
   },
   school: wire<Repos["school"]>("school", {
-    async current(): Promise<School> {
-      const s = (await call<{ name: string; nameBn?: string | null; address?: string | null }>("GET", "/school")).data;
-      return { id: SCHOOL, name: s.name, nameBn: s.nameBn ?? s.name, city: s.address ?? "", monogram: s.name.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase(), primary: "#0F172A", joinCode: "", status: "active", autoApprove: false, seasonOverride: null };
-    },
+    current: liveSchoolGet,
+    ...liveSchoolSetup,
   }),
   student: wire<Repos["student"]>("student", {
     list: async () => (await listAll<ApiStudent>("/students")).map(toStudent),
     me: async () => toStudent((await call<ApiStudent>("GET", "/students/me")).data),
+    ...liveStudent,
   }),
   teacher: wire<Repos["teacher"]>("teacher", {
-    list: async () => (await listAll<ApiTeacher>("/teachers")).map(toTeacher),
     me: async () => toTeacher((await call<ApiTeacher>("GET", "/teachers/me")).data),
     invites: async () => [],
+    ...liveTeacher,
   }),
   klass: wire<Repos["klass"]>("klass", {
-    exams: async () => (await listAll<ApiExam>("/exams")).map(toExam),
+    exams: async () => (await listAll<ApiExam>("/exams")).map(examOf),
     ...liveKlass,
+    ...liveKlassSetup,
   }),
   exam: liveExam, marks: wire<Repos["marks"]>("marks", liveMarks), result: wire<Repos["result"]>("result", liveResult), magazine: liveMagazine, notice: wire<Repos["notice"]>("notice", liveNotice),
   approval: liveApproval, audit: liveAudit, platform: stub("platform"), routine: liveRoutine, profile: wire<Repos["profile"]>("profile", liveProfile),

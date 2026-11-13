@@ -201,7 +201,9 @@ function headerIndex(grid: Grid, labels: string[]): { row: number; idx: number[]
   return null;
 }
 
-export const ROSTER_HEADERS = ["Student ID", "Roll", "Name", "Class", "Section", "Guardian", "Guardian Phone"];
+export const ROSTER_HEADERS = ["Student ID", "Roll", "Name", "Class", "Section", "Guardian", "Guardian Phone", "Date of Birth", "Gender"];
+/** The live API needs a date of birth (YYYY-MM-DD) and gender for every student. */
+const LIVE = process.env.NEXT_PUBLIC_API_MODE === "http";
 export const TEACHER_HEADERS = ["Name", "Phone", "Email", "Designation"];
 
 export function validateRoster(grid: Grid, existingIds: Set<string>): RosterValidation<RosterRow> | null {
@@ -226,9 +228,15 @@ export function validateRoster(grid: Grid, existingIds: Set<string>): RosterVali
     if (!/^[A-Da-d]$/.test(g(4))) bad("Section must be a single letter (A-D)");
     if (!/^\d{11}$/.test(g(6).replace(/\D/g, ""))) bad("Guardian phone must have 11 digits");
     if (!g(5)) bad("Guardian name is missing");
+    const dob = g(7), gender = g(8).toUpperCase();
+    const gOk = gender === "MALE" || gender === "M" ? "MALE" : gender === "FEMALE" || gender === "F" ? "FEMALE" : null;
+    if (LIVE) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dob) || Number.isNaN(Date.parse(dob))) bad("Date of Birth must look like 2014-03-25");
+      if (!gOk) bad("Gender must be Male or Female");
+    }
     if (status === "ok" && existingIds.has(sid.toLowerCase())) { status = "warn"; msgs.push("Existing student. Details will be updated."); }
     seen.add(sid.toLowerCase());
-    const data: RosterRow | null = status === "error" ? null : { studentId: sid, roll, name: g(2), classNo: cls, section: g(4).toUpperCase(), guardian: g(5), guardianPhone: g(6).replace(/\D/g, "") };
+    const data: RosterRow | null = status === "error" ? null : { studentId: sid, roll, name: g(2), classNo: cls, section: g(4).toUpperCase(), guardian: g(5), guardianPhone: g(6).replace(/\D/g, ""), ...(dob ? { dob } : {}), ...(gOk ? { gender: gOk } : {}) };
     out.rows.push({ row, data, messages: msgs, status });
     if (data) out.ok.push(data);
   });

@@ -109,6 +109,8 @@ export const ExamSchema = z.object({
   nameBn: z.string(),
   kind: z.enum(["term", "test"]),
   year: z.number(),
+  /** Live API only: DRAFT | AUTHORIZED | IN_PROGRESS | CLOSED. */
+  status: z.string().optional(),
 });
 export type Exam = z.infer<typeof ExamSchema>;
 

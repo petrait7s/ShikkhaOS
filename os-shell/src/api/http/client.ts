@@ -79,3 +79,10 @@ export async function listAll<T>(path: string, query: Record<string, string | nu
   }
   return out;
 }
+
+/** Set after sign-in with a temporary password; the UI blocks until the password is changed. */
+const MC_KEY = "shikkaos:http:mustchange";
+export const mustChange = {
+  get: () => ls.get(MC_KEY) === "1",
+  set: (v: boolean) => { ls.set(MC_KEY, v ? "1" : null); if (typeof window !== "undefined") window.dispatchEvent(new Event("shikkaos:mustchange")); },
+};

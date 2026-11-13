@@ -25,7 +25,7 @@ export interface SchoolRepo {
   resetDemo(): Promise<void>;
 }
 
-export type RosterRow = { studentId: string; roll: number; name: string; classNo: number; section: string; guardian: string; guardianPhone: string };
+export type RosterRow = { studentId: string; roll: number; name: string; classNo: number; section: string; guardian: string; guardianPhone: string; dob?: string; gender?: "MALE" | "FEMALE" };
 export type TeacherRow = { name: string; phone: string; email: string; designation: string };
 
 export interface StudentRepo {

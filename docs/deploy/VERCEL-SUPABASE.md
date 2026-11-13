@@ -57,9 +57,16 @@ Variables starting with `NEXT_PUBLIC_` are baked in at build time and are visibl
 Tested end to end in a browser against the real API (`os-shell/scripts/e2e-live.mjs`):
 teacher enters and submits marks, registrar verifies, headmaster approves and publishes (password re-confirmation dialog), student sees the published result.
 
-Wired to the live API: sign-in/out, school name, students and teachers (lists), exams, marks entry and submit, review (verify / return for correction), result compile + approve + publish, student results, notices (list/create), notifications, audit log, profile (read), change password, Headmaster overview.
+Wired to the live API: school setup (student roster import from Excel, create teachers, teacher assignments (add only), class subjects and pass marks, new exam with papers, headmaster authorization, grading scale, school name), forced new-password screen after a temporary password, password reset for students and teachers (needs re-confirmation), sign-in/out, school name, students and teachers (lists), exams, marks entry and submit, review (verify / return for correction), result compile + approve + publish, student results, notices (list/create), notifications, audit log, profile (read), change password, Headmaster overview.
 
-Shows "not available in the live system yet" (no matching API feature): unpublish/schedule publishing, question-paper attachments, routine, magazine, sign-up approval and join codes, teacher invites, profile editing, pinning notices.
+Shows "not available in the live system yet" (no matching API feature or not mapped yet): unpublish/schedule publishing (use revision requests, not mapped yet), question-paper attachments, routine, magazine, sign-up approval and join codes, profile editing, pinning notices, removing a teacher assignment.
 Attendance (teacher roll call, admin overview, student record), Homework (create/publish/grade, student submit) and Messages (direct chats, class groups, school channels, report a message) are live-mode-only screens in the OS interface and are hidden in mock mode. Messages refresh by polling every 4-8 seconds (the API also has a WebSocket; not used here yet). Class tests and file attachments are not in the OS interface.
 
 For the Electron desktop build in live mode, add the app origin to the API: `CORS_ORIGINS=https://your-app.vercel.app,app://shikkaos`.
+
+## Accounts and passwords (important for day 1)
+The server creates every account with a one-time temporary password and never shows it again. When you import students or create a teacher, the UI downloads a CSV of IDs and temporary passwords. Hand them out in person, then delete the file. Everyone must choose their own password at first sign-in (the UI blocks until they do). Students sign in with their Student ID; teachers with the phone number used when creating them.
+Student import needs a date of birth (YYYY-MM-DD) and gender (Male/Female) for each student; the import template has the columns.
+
+## Tests you can re-run
+`os-shell/scripts/reset-live-db.sh` (throw-away database + demo users + API on :18090), build the UI with `NEXT_PUBLIC_API_MODE=http NEXT_PUBLIC_API_BASE_URL=http://localhost:18090/api/v1`, serve `out/` on :3000, then `node os-shell/scripts/e2e-setup.mjs` and `node os-shell/scripts/e2e-live.mjs` (run the reset script before each).

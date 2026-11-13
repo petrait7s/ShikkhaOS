@@ -132,7 +132,7 @@ export function ImportWizard({ open, onClose, mode, examId, initialFile, preset 
   }
 
   async function downloadTemplate() {
-    if (mode === "roster") downloadBlob(await buildXlsx([{ name: "Roster", rows: [ROSTER_HEADERS, ["GC26-06A-31", 31, "Sample Student", 6, "A", "Sample Guardian", "01712345678"]], widths: [16, 8, 24, 8, 10, 22, 16] }]), "student-roster-template.xlsx");
+    if (mode === "roster") downloadBlob(await buildXlsx([{ name: "Roster", rows: [ROSTER_HEADERS, ["GC26-06A-31", 31, "Sample Student", 6, "A", "Sample Guardian", "01712345678", "2014-03-25", "Female"]], widths: [16, 8, 24, 8, 10, 22, 16, 16, 10] }]), "student-roster-template.xlsx");
     else downloadBlob(await buildXlsx([{ name: "Teachers", rows: [TEACHER_HEADERS, ["Sample Teacher", "01711223344", "sample@school.edu.bd", "Assistant Teacher"]], widths: [24, 16, 28, 22] }]), "teacher-list-template.xlsx");
   }
 

@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import { useUI } from "@/store/ui";
 import { useLang } from "@/lib/i18n";
 import { ReauthHost } from "@/components/ReauthHost";
+import { PasswordGate } from "@/components/PasswordGate";
 
 function LangSync() {
   const lang = useLang();
@@ -26,6 +27,7 @@ export function Providers({ children }: { children: ReactNode }) {
       <QueryClientProvider client={qc}>
         <LangSync />
         <ReauthHost />
+        {process.env.NEXT_PUBLIC_API_MODE === "http" ? <PasswordGate /> : null}
         {children}
         <Toaster position="bottom-right" richColors closeButton />
       </QueryClientProvider>

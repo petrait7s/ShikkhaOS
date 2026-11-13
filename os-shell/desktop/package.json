@@ -1,0 +1,27 @@
+{
+  "name": "shikkaos-desktop",
+  "version": "1.3.0",
+  "description": "ShikkaOS desktop app (Electron wrapper around the static web build)",
+  "author": "Petra",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --publish never"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "dev.petra.shikkaos",
+    "productName": "ShikkaOS",
+    "directories": { "output": "dist" },
+    "files": ["main.js"],
+    "extraResources": [{ "from": "../out", "to": "web" }],
+    "win": { "target": ["nsis", "portable"], "artifactName": "ShikkaOS-${version}-${arch}.${ext}" },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true },
+    "linux": { "target": ["AppImage"], "category": "Education", "artifactName": "ShikkaOS-${version}.${ext}" },
+    "mac": { "target": ["dmg"], "category": "public.app-category.education", "artifactName": "ShikkaOS-${version}.${ext}" }
+  }
+}

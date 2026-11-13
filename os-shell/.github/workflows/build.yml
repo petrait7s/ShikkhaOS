@@ -1,0 +1,88 @@
+name: Build ShikkaOS
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  web:
+    name: Web build (typecheck + static export)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm build
+      - name: Zip static site
+        run: |
+          cd out && zip -qr ../shikkaos-web.zip .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shikkaos-web
+          path: shikkaos-web.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: out
+          path: out
+          retention-days: 3
+
+  desktop:
+    name: Desktop (${{ matrix.os }})
+    needs: web
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: out
+          path: out
+      - name: Build installers
+        working-directory: desktop
+        run: |
+          npm install --no-audit --no-fund
+          npx electron-builder --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shikkaos-desktop-${{ matrix.os }}
+          path: |
+            desktop/dist/*.exe
+            desktop/dist/*.AppImage
+            desktop/dist/*.dmg
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [web, desktop]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            assets/**/*.exe
+            assets/**/*.AppImage
+            assets/**/*.dmg
+            assets/shikkaos-web/shikkaos-web.zip

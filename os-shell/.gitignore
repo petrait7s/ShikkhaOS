@@ -1,0 +1,9 @@
+node_modules
+.next
+out
+.env
+next-env.d.ts
+*.tsbuildinfo
+desktop/dist
+desktop/node_modules
+shikkaos-web.zip

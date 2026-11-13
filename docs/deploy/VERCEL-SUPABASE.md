@@ -1,0 +1,59 @@
+# Deploy: Vercel (UI) + Supabase (database) + API host
+
+```
+Browser ──► Vercel (os-shell, static)  ──fetch──►  API host (Rust, Docker)  ──SQL──►  Supabase Postgres
+```
+
+Vercel serves only the UI. The Rust API is a long-running server (WebSocket, background jobs, file storage), so it cannot run as a Vercel function. Run it on a container host (Fly.io, Render, Railway, or a VPS) and let it use Supabase as its database.
+
+Not tested here: a real Supabase project or a real Vercel/API deploy (no accounts or network access from this build environment). The API, migrations and the UI in `http` mode were tested against a local PostgreSQL 16.
+
+## 1. Supabase (database, trial/free)
+1. Create a project. Pick a region near your users and set a strong database password.
+2. Project → Connect → copy the **Session pooler** string (port **5432**). Use it, not the "Transaction pooler" (port 6543): the API uses prepared statements, which the transaction pooler breaks.
+   - The "Direct connection" is IPv6-only on the free tier; many hosts have no IPv6. The Session pooler works over IPv4.
+3. Add `?sslmode=require` to the URL:
+   `postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require`
+4. Keep the Supabase "Data API" (PostgREST) off for this project, and do not expose the database password anywhere except the API host's secrets. The school data is only reached through the API.
+5. Free-tier projects pause after about a week of inactivity and have small storage; use a paid plan for real school data.
+
+## 2. Create the schema and the first admin (once, from your computer)
+```bash
+export DATABASE_URL='postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require'
+export JWT_SECRET="$(openssl rand -hex 32)"      # keep this; set the same value on the API host
+shikkhaos-api migrate
+shikkhaos-api bootstrap-admin headmaster "Your Name"   # creates the first Headmaster; prints a one-time password
+```
+`shikkhaos-api` comes from the release archive `shikkhaos-api-<version>-x86_64-linux.tar.gz`, from the Docker image, or `cargo run --release --bin shikkhaos-api -- migrate` in `apps/api`.
+The migrations enable the `citext` and `pg_trgm` extensions; Supabase allows both.
+For a demo database only: `ALLOW_DEMO_SEED=true shikkhaos-api seed-demo` (demo users, password `Demo@Pass2026`). Never seed demo data into a real school database.
+
+## 3. API host (Docker image from `infrastructure/docker/api.Dockerfile`)
+Environment variables:
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | the Supabase session-pooler URL above |
+| `JWT_SECRET` | same long random value (at least 32 chars) |
+| `CORS_ORIGINS` | your UI origin(s), e.g. `https://your-app.vercel.app` (comma separated, no trailing slash) |
+| `COOKIE_SECURE` | `true` |
+| `BIND_ADDR` | `0.0.0.0:8080` (default) |
+| `STORAGE_DIR` | `/app/data/files`, on a persistent volume (uploads are files on disk) |
+
+Health check: `GET /api/v1/health`. Put the host behind HTTPS (Fly, Render and Railway do this for you). Keep a single instance until file storage moves to shared object storage.
+Example (Fly.io): `fly launch --dockerfile infrastructure/docker/api.Dockerfile`, then `fly secrets set DATABASE_URL=... JWT_SECRET=... CORS_ORIGINS=...` and `fly volumes create data`.
+
+## 4. Vercel (UI)
+1. Import the GitHub repository. Set **Root Directory** to `os-shell`. `os-shell/vercel.json` sets install/build/output.
+2. Environment variables (Production):
+   - `NEXT_PUBLIC_API_MODE` = `http`
+   - `NEXT_PUBLIC_API_BASE_URL` = `https://<your-api-host>/api/v1`
+   - `NEXT_PUBLIC_DEMO_MODE` = `false`
+   - `NEXT_PUBLIC_SCHOOL_NAME` = your school name (and `NEXT_PUBLIC_SCHOOL_NAME_BN`)
+3. Deploy, then add the Vercel URL to `CORS_ORIGINS` on the API host and restart it.
+Variables starting with `NEXT_PUBLIC_` are baked in at build time and are visible in the browser: never put secrets there.
+
+## What works in `http` mode today
+Wired to the live API: sign-in/out, school name, students (list), teachers (list), exams (list), Headmaster overview counts.
+Not wired yet (these show "not connected to the live API yet"): results workflow, marks entry, attendance, routine, notices, messages, audit, approvals, reports. They are the next steps; the API endpoints already exist (`docs/api/openapi.yaml`).
+Until those are wired, use the Windows/Android/web apps in `apps/` for the complete workflow, or `NEXT_PUBLIC_API_MODE=mock` for the OS-style interface demo.

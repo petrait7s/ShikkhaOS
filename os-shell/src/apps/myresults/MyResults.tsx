@@ -26,10 +26,10 @@ export default function MyResults() {
           const h = (hist.data ?? []).find((x) => x.exam.id === exam.id);
           return (
             <section key={exam.id} className="card p-4">
-              <div className="flex items-center gap-2"><Award size={18} style={{ color: "var(--accent)" }} /><h3 className="font-bold">{lang === "bn" ? exam.nameBn : exam.name}</h3></div>
+              <div className="flex items-center gap-2"><Award size={18} style={{ color: "var(--link)" }} /><h3 className="font-bold">{lang === "bn" ? exam.nameBn : exam.name}</h3></div>
               {state === "published" ? (
                 <div className="mt-3 flex items-end justify-between gap-2">
-                  <div><div className="text-3xl font-extrabold" style={{ color: "var(--accent)" }}>{h ? n(h.result.gpa.toFixed(2)) : "—"}</div><div className="faint text-[12px]">{h ? `${h.result.passed ? h.result.grade : t("reveal.failed")} · ${t("reveal.position")} ${n(h.result.position)}/${n(h.result.classSize)}` : ""}</div></div>
+                  <div><div className="text-3xl font-extrabold" style={{ color: "var(--link)" }}>{h ? n(h.result.gpa.toFixed(2)) : "—"}</div><div className="faint text-[12px]">{h ? `${h.result.passed ? h.result.grade : t("reveal.failed")} · ${t("reveal.position")} ${n(h.result.position)}/${n(h.result.classSize)}` : ""}</div></div>
                   <Btn variant="primary" onClick={() => setOpen(exam.id)}><Trophy size={14} />{t("mr.open")}</Btn>
                 </div>
               ) : state === "scheduled" && at ? (

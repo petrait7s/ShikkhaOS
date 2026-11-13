@@ -51,7 +51,7 @@ export default function LoginPage() {
         <Btn variant="primary" className="w-full" type="submit" disabled={busy}><LogIn size={15} />{busy ? t("auth.signing") : t("auth.signin")}</Btn>
         <div className="mt-4 flex justify-between text-[13px]">
           <Link href="/forgot" className="muted underline">{t("auth.forgot")}</Link>
-          <Link href="/signup" className="underline" style={{ color: "var(--accent)" }}>{t("auth.signup")}</Link>
+          <Link href="/signup" className="underline" style={{ color: "var(--link)" }}>{t("auth.signup")}</Link>
         </div>
       </form>
       {DEMO ? (

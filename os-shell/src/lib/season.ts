@@ -12,8 +12,8 @@ export function seasonFromCalendar(d: Date = new Date()): Season {
 }
 
 export const SEASON_ACCENT: Record<Season, string> = {
-  admission: "#4f7cac",
-  exam: "#c27a1a",
-  result: "#2f855a",
-  event: "#b8486b",
+  admission: "#0F766E",
+  exam: "#0F172A",
+  result: "#14B8A6",
+  event: "#0F766E",
 };

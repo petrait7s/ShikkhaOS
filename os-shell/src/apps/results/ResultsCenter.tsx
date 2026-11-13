@@ -204,7 +204,7 @@ export default function ResultsCenter() {
       {drag ? (
         <div className="absolute inset-0 z-10 grid place-items-center border-2 border-dashed" style={{ background: "color-mix(in srgb, var(--accent) 12%, var(--card))", borderColor: "var(--accent)" }}
           onDragOver={(e) => e.preventDefault()} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if (f) setWiz({ file: f }); }}>
-          <div className="flex flex-col items-center gap-2 font-bold"><Upload size={32} style={{ color: "var(--accent)" }} />{t("rc.drophere")}</div>
+          <div className="flex flex-col items-center gap-2 font-bold"><Upload size={32} style={{ color: "var(--link)" }} />{t("rc.drophere")}</div>
         </div>
       ) : null}
 

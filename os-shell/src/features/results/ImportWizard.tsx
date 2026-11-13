@@ -173,7 +173,7 @@ export function ImportWizard({ open, onClose, mode, examId, initialFile, preset 
       ) : step === 0 ? (
         <div>
           <label className="hair flex cursor-pointer flex-col items-center gap-2 border-dashed p-10 text-center" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) void load(f); }}>
-            <UploadCloud size={30} style={{ color: "var(--accent)" }} />
+            <UploadCloud size={30} style={{ color: "var(--link)" }} />
             <span className="font-bold">{t("wiz.drop")}</span>
             <span className="muted text-[12px]">{t("wiz.drop.sub")}</span>
             <input type="file" accept=".xlsx" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) void load(f); e.target.value = ""; }} />

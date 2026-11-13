@@ -105,8 +105,4 @@ The Electron app is only built in CI (`desktop/`), so no Electron binary is need
 - **Marks Entry:** explicit Unsaved / Saving / Saved / Couldn't save + Retry states, flush on close, Shift+Enter, leave-page warning.
 - **Import wizard:** goes straight to problem rows when the file has errors; text + icon row status.
 - Full list and known limits: `CHANGELOG.md`. Checks that were run: `docs/VERIFICATION.md`.
-
-## v1.4 changes
-- Headmaster role (approves/publishes; superset of Registrar in the demo), login: headmaster@gcms.edu.bd / headmaster123
-- Headmaster desktop: School overview + Your decision widgets
-- New look: navy/teal palette, Inter font, ShikkhaOS logo, calmer glass
+- v1.5: strict palette (Deep Navy #0F172A, Teal #14B8A6, Soft Mint #DCEFEB, Pearl #F7F9FC); Montserrat (English) + Tiro Bangla (Bangla)

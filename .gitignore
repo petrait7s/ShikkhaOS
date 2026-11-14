@@ -17,3 +17,8 @@ release/
 docs/proposal/ShikkaOS-v1.3.0-demo.zip
 docs/proposal/ShikkaOS-v1.4-demo.zip
 docs/proposal/ShikkaOS-v1.5-demo.zip
+
+# os-shell source folder named "data" (the generic data/ rule above must not hide it)
+!os-shell/src/data/
+!os-shell/src/data/**
+os-shell/tsconfig.tsbuildinfo

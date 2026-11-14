@@ -86,7 +86,7 @@ jobs:
           workspaces: apps/api
       - name: Cache sqlx-cli
         id: sqlx-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cargo/bin/sqlx
           key: sqlx-cli-${{ runner.os }}-${{ env.SQLX_CLI_VERSION }}

@@ -56,7 +56,7 @@ jobs:
         if: steps.d.outputs.present == 'true'
       - name: Cache Next.js build cache
         if: steps.d.outputs.present == 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: apps/web/.next/cache
           key: next-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/web/**/*.[jt]s', 'apps/web/**/*.[jt]sx') }}

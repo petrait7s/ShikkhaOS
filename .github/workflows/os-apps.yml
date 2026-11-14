@@ -1,7 +1,7 @@
 name: OS apps (demo installers)
 
 # Builds the full OS-style interface with built-in DEMO data (no server needed):
-# Windows installer + portable .exe, Linux AppImage and Fedora/RHEL .rpm, Android .apk (debug-signed, for sideloading).
+# Windows installer + portable .exe, Linux AppImage (runs on Fedora and other distros), Android .apk (debug-signed, for sideloading).
 # Run it by hand: Actions -> "OS apps (demo installers)" -> Run workflow, then download the artifacts of the run.
 
 on:
@@ -26,7 +26,7 @@ jobs:
       matrix:
         include:
           - { name: Windows (.exe), os: windows-latest, artifact: os-desktop-windows, files: "os-shell/desktop/dist/*.exe" }
-          - { name: Linux (AppImage + rpm), os: ubuntu-latest, artifact: os-desktop-linux, files: "os-shell/desktop/dist/*.AppImage\nos-shell/desktop/dist/*.rpm" }
+          - { name: Linux (AppImage), os: ubuntu-latest, artifact: os-desktop-linux, files: "os-shell/desktop/dist/*.AppImage" }
     defaults:
       run:
         shell: bash
@@ -37,9 +37,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Install rpm tooling (Linux)
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y rpm
       - name: Build the web app (demo data, no API)
         run: |
           pnpm install --ignore-workspace --frozen-lockfile
@@ -51,7 +48,7 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
           RELEASE_VERSION: ${{ inputs.version }}
         run: |
-          # rpm versions cannot contain "-", so installers carry the core version (1.2.0 for 1.2.0-rc.1)
+          # installers carry the core version (1.2.0 for 1.2.0-rc.1)
           if [ -n "$RELEASE_VERSION" ]; then npm pkg set version="${RELEASE_VERSION%%-*}"; fi
           pnpm install --ignore-workspace
           pnpm dist

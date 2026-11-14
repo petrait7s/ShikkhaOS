@@ -42,8 +42,7 @@
     },
     "linux": {
       "target": [
-        "AppImage",
-        "rpm"
+        "AppImage"
       ],
       "category": "Education",
       "artifactName": "ShikkaOS-${version}.${ext}",
@@ -55,13 +54,6 @@
       ],
       "category": "public.app-category.education",
       "artifactName": "ShikkaOS-${version}.${ext}"
-    },
-    "rpm": {
-      "packageName": "shikkaos",
-      "fpm": [
-        "--rpm-rpmbuild-define=_build_id_links none",
-        "--rpm-compression=gzip"
-      ]
     },
     "publish": [
       {

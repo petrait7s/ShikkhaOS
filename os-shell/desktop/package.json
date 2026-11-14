@@ -16,12 +16,48 @@
   "build": {
     "appId": "dev.petra.shikkaos",
     "productName": "ShikkaOS",
-    "directories": { "output": "dist" },
-    "files": ["main.js"],
-    "extraResources": [{ "from": "../out", "to": "web" }],
-    "win": { "target": ["nsis", "portable"], "artifactName": "ShikkaOS-${version}-${arch}.${ext}" },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true },
-    "linux": { "target": ["AppImage"], "category": "Education", "artifactName": "ShikkaOS-${version}.${ext}" },
-    "mac": { "target": ["dmg"], "category": "public.app-category.education", "artifactName": "ShikkaOS-${version}.${ext}" }
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js"
+    ],
+    "extraResources": [
+      {
+        "from": "../out",
+        "to": "web"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "artifactName": "ShikkaOS-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Education",
+      "artifactName": "ShikkaOS-${version}.${ext}"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.education",
+      "artifactName": "ShikkaOS-${version}.${ext}"
+    }
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron",
+      "esbuild"
+    ]
   }
 }

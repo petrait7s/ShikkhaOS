@@ -18,6 +18,7 @@ import { WindowFrame } from "./WindowFrame";
 import { Widgets } from "./Widgets";
 import { launch } from "./launch";
 import { useMedia } from "./useMedia";
+import { MobileShell, isNativeApp } from "./MobileShell";
 
 const IDLE_MS = 15 * 60 * 1000;
 
@@ -172,7 +173,8 @@ function MobileHome() {
 export function Shell() {
   const router = useRouter();
   const hydrated = useHydrated();
-  const desktop = useMedia("(min-width: 1024px)");
+  const wide = useMedia("(min-width: 1024px)");
+  const desktop = wide && !isNativeApp();
   const { t } = useT();
   const { session, locked, windows, mobileApp, lastActive, setSession, setLocked, setSpotlight, touch, setMobileApp } = useUI();
   const [booted, setBooted] = useState(false);
@@ -204,6 +206,16 @@ export function Shell() {
 
   void lastActive;
   if (!hydrated || !booted || !session) return <div className="grid h-dvh place-items-center"><Skeleton w={220} h={12} /></div>;
+
+  if (!desktop) {
+    return (
+      <>
+        <MobileShell />
+        <Spotlight />
+        {locked ? <LockScreen /> : null}
+      </>
+    );
+  }
 
   return (
     <div className="wallpaper flex h-dvh flex-col overflow-hidden">

@@ -1,7 +1,7 @@
 // Live-API repositories (NEXT_PUBLIC_API_MODE=http).
 // Wired so far: sign-in/out + session, school profile, students (list/me), teachers (list/me), exams (list).
 // Everything else answers "not connected yet" until it is mapped (see docs/PHASE2-BACKEND-MAP.md).
-import type { Exam, School, Session, Student, Teacher } from "../contracts";
+import type { Session, Student, Teacher } from "../contracts";
 import type { Repos } from "../repositories";
 import { ApiError } from "../mock/db";
 import { dropRefs, liveApproval, liveAudit, liveExam, liveKlass, liveMagazine, liveMarks, liveNotice, liveProfile, liveResult, liveRoutine } from "./live";
@@ -25,9 +25,6 @@ const toStudent = (s: ApiStudent): Student => ({
 });
 const toTeacher = (t: ApiTeacher): Teacher => ({
   id: t.id, schoolId: SCHOOL, name: t.fullName, nameBn: t.fullName, phone: t.phone, email: "", designation: t.designation, assignments: [], status: t.status === "ACTIVE" ? "active" : "invited",
-});
-const toExam = (e: ApiExam): Exam => ({
-  id: e.id, schoolId: SCHOOL, name: e.name, nameBn: e.name, kind: /test/i.test(e.type) ? "test" : "term", year: Number(e.startDate?.slice(0, 4)) || new Date().getFullYear(),
 });
 
 async function currentSession(user: ApiUser): Promise<Session> {

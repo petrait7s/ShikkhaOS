@@ -37,7 +37,8 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "ShikkaOS-Setup-${version}.${ext}"
     },
     "linux": {
       "target": [
@@ -64,7 +65,10 @@
         "owner": "petrait7s",
         "repo": "ShikkhaOS"
       }
-    ]
+    ],
+    "portable": {
+      "artifactName": "ShikkaOS-Portable-${version}.${ext}"
+    }
   },
   "pnpm": {
     "onlyBuiltDependencies": [

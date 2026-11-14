@@ -6,6 +6,12 @@ name: OS apps (demo installers)
 
 on:
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      version:
+        description: "Release version, e.g. 1.2.0 or 1.2.0-rc.1 (empty = dev build)"
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -45,7 +51,11 @@ jobs:
         working-directory: os-shell/desktop
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
+          RELEASE_VERSION: ${{ inputs.version }}
         run: |
+          # rpm versions cannot contain "-", so installers carry the core version (1.2.0 for 1.2.0-rc.1)
+          V="${RELEASE_VERSION:-0.0.0}"; V="${V%%-*}"
+          npm pkg set version="$V"
           pnpm install --ignore-workspace
           pnpm dist
           ls -l dist
@@ -80,7 +90,10 @@ jobs:
           test -f out/login/index.html
       - name: Create the Android project and build a debug APK
         working-directory: os-shell/mobile
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
         run: |
+          V="${RELEASE_VERSION:-dev}"
           pnpm install --ignore-workspace
           pnpm exec cap add android
           pnpm exec cap sync android
@@ -88,10 +101,10 @@ jobs:
           chmod +x gradlew
           ./gradlew --no-daemon assembleDebug
           mkdir -p ../../apk
-          cp app/build/outputs/apk/debug/app-debug.apk ../../apk/ShikkaOS-demo.apk
+          cp app/build/outputs/apk/debug/app-debug.apk "../../apk/ShikkaOS-demo-$V.apk"
       - uses: actions/upload-artifact@v4
         with:
           name: os-android
-          path: os-shell/apk/ShikkaOS-demo.apk
+          path: os-shell/apk/*.apk
           if-no-files-found: error
           retention-days: 30

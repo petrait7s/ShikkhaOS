@@ -48,7 +48,7 @@ export function PaperModal({ k, readOnly, onClose }: { k: CellKey; readOnly?: bo
               <div className="overflow-hidden rounded-xl" style={{ boxShadow: "0 0 0 0.5px rgba(0,0,0,.2)", background: "var(--card-solid)" }}>
                 {p.mime === "application/pdf"
                   ? <iframe title={p.name} src={p.dataUrl} className="h-[52vh] w-full" />
-                  // eslint-disable-next-line @next/next/no-img-element
+                   
                   : <img src={p.dataUrl} alt={p.name} className="mx-auto max-h-[52vh] object-contain" />}
               </div>
             </>

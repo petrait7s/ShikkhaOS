@@ -139,7 +139,7 @@ button { font-family: inherit; }
 
 .seg { display: inline-flex; padding: 2px; gap: 2px; border-radius: 9px; background: var(--hover); box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.06); }
 .seg button { height: 30px; padding: 0 14px; border: 0; border-radius: 7px; background: transparent; color: var(--ink-2); font: inherit; font-size: 13px; font-weight: 600; cursor: default; transition: background 0.18s, color 0.18s, box-shadow 0.18s; }
-.seg button[aria-selected="true"] { background: var(--card-solid); color: var(--ink); box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.14); }
+.seg button[aria-selected="true"], .seg button[aria-pressed="true"] { background: var(--card-solid); color: var(--ink); box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.14); }
 
 .input, .select, .textarea {
   width: 100%; height: var(--h-control); padding: 0 12px; border-radius: 10px; border: 0;
@@ -351,7 +351,7 @@ a, .underline { --c: var(--link); }
 .dark .table th { color: var(--ink); background: color-mix(in srgb, var(--teal) 12%, var(--card-solid)); }
 .table tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--mint) 28%, transparent); }
 .table tr:hover td { background: color-mix(in srgb, var(--mint) 70%, transparent); }
-.seg button[aria-selected="true"] { color: var(--navy); box-shadow: 0 0 0 .5px rgba(15,23,42,.1), 0 1px 3px rgba(15,23,42,.12), inset 0 -2px 0 var(--glow); }
+.seg button[aria-selected="true"], .seg button[aria-pressed="true"] { color: var(--navy); box-shadow: 0 0 0 .5px rgba(15,23,42,.1), 0 1px 3px rgba(15,23,42,.12), inset 0 -2px 0 var(--glow); }
 .status-ok { color: #0F766E; background: color-mix(in srgb, var(--teal) 16%, transparent); }
 .status { font-weight: 650; }
 .sheet { border-radius: 20px; box-shadow: 0 0 0 .5px rgba(15, 23, 42, .12), 0 30px 80px rgba(15, 23, 42, .22); }

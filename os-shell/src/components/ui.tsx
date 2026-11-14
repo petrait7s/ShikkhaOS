@@ -127,7 +127,7 @@ export function Ring({ value, size = 84, stroke = 9, label }: { value: number; s
 const HUES = [150, 215, 20, 330, 190, 40, 270, 100];
 export function Avatar({ name, size = 32, photo }: { name: string; size?: number; photo?: string | null }) {
   if (photo) {
-    // eslint-disable-next-line @next/next/no-img-element
+     
     return <img src={photo} alt={name} width={size} height={size} className="shrink-0 rounded-full object-cover" style={{ width: size, height: size, boxShadow: "0 0 0 0.5px rgba(0,0,0,.2)" }} />;
   }
   const init = name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("");

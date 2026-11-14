@@ -83,9 +83,15 @@ jobs:
       release: true
     secrets: inherit
 
+  os_apps:
+    needs: [prepare, ci]
+    uses: ./.github/workflows/os-apps.yml
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+
   publish:
     name: Publish GitHub Release
-    needs: [prepare, backend, desktop, android, web]   # all must succeed; no `always()` on purpose
+    needs: [prepare, backend, desktop, android, web, os_apps]   # all must succeed; no `always()` on purpose
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -113,6 +119,10 @@ jobs:
           ls ShikkhaOS-Student-*.apk
           ls ShikkhaOS-Student-*.aab
           ls shikkhaos-web-*.tar.gz
+          ls ShikkaOS-Setup-*.exe ShikkaOS-Portable-*.exe
+          ls ShikkaOS-*.AppImage
+          ls ShikkaOS-*.rpm
+          ls ShikkaOS-demo-*.apk
           if ls ./*NOT-FOR-DISTRIBUTION* 2>/dev/null; then echo "::error::CI-only artifact in release set"; exit 1; fi
       - name: Checksums
         working-directory: dist
@@ -134,6 +144,7 @@ jobs:
           | Android (students) | \`ShikkhaOS-Student-${VERSION}.apk\` (sideload) / \`.aab\` (Play) |
           | Backend (Linux x86_64) | \`shikkhaos-api-${VERSION}-x86_64-linux.tar.gz\` or \`docker pull ${IMAGE}\` |
           | Web | \`shikkhaos-web-${VERSION}.tar.gz\` (or the deployed site) |
+          | OS-style demo apps (built-in demo data, unsigned) | \`ShikkaOS-Setup-*.exe\`, \`ShikkaOS-Portable-*.exe\`, \`ShikkaOS-*.AppImage\`, \`ShikkaOS-*.rpm\`, \`ShikkaOS-demo-*.apk\` |
 
           Verify downloads with \`SHA256SUMS.txt\`. Full instructions: docs/releases/RELEASING.md
           NOTES

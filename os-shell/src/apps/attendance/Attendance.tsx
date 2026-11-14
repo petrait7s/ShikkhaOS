@@ -58,7 +58,7 @@ function TeacherView() {
             <tbody>{session.records.map((r) => (
               <tr key={r.studentId}><td className="num">{r.rollNo}</td><td className="font-semibold">{r.fullName}</td>
                 <td><div className="seg" role="group" aria-label={`${r.fullName} attendance`}>{OPTS.map((o) => (
-                  <button key={o.v} type="button" aria-pressed={marks[r.studentId] === o.v} aria-selected={marks[r.studentId] === o.v} onClick={() => setMarks((m) => ({ ...m, [r.studentId]: o.v }))} title={o.label}>{o.key}</button>))}</div></td></tr>))}</tbody></table>
+                  <button key={o.v} type="button" aria-pressed={marks[r.studentId] === o.v} onClick={() => setMarks((m) => ({ ...m, [r.studentId]: o.v }))} title={o.label}>{o.key}</button>))}</div></td></tr>))}</tbody></table>
           <div className="faint mt-2 text-[12px]">{unmarked ? `${unmarked} not marked yet. P present · A absent · L late · E excused.` : "Everyone is marked. Save to finish."}</div>
         </div>
       )}

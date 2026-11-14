@@ -1,0 +1,17 @@
+{
+  "name": "shikkaos-mobile",
+  "version": "1.3.0",
+  "private": true,
+  "description": "Android wrapper (Capacitor) around the static ShikkhaOS web build in ../out",
+  "scripts": {
+    "add": "cap add android",
+    "sync": "cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/core": "^6.2.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0"
+  }
+}

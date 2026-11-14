@@ -58,7 +58,7 @@
     },
     "rpm": {
       "packageName": "shikkaos",
-      "compression": "gzip"
+      "compression": "gz"
     },
     "publish": [
       {

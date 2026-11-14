@@ -57,7 +57,8 @@
       "artifactName": "ShikkaOS-${version}.${ext}"
     },
     "rpm": {
-      "packageName": "shikkaos"
+      "packageName": "shikkaos",
+      "compression": "gzip"
     },
     "publish": [
       {

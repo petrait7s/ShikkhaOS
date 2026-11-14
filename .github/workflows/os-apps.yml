@@ -52,8 +52,7 @@ jobs:
           RELEASE_VERSION: ${{ inputs.version }}
         run: |
           # rpm versions cannot contain "-", so installers carry the core version (1.2.0 for 1.2.0-rc.1)
-          V="${RELEASE_VERSION:-0.0.0}"; V="${V%%-*}"
-          npm pkg set version="$V"
+          if [ -n "$RELEASE_VERSION" ]; then npm pkg set version="${RELEASE_VERSION%%-*}"; fi
           pnpm install --ignore-workspace
           pnpm dist
           ls -l dist

@@ -268,7 +268,7 @@ function HeadmasterWidgets() {
 export function Widgets() {
   const role = useUI((s) => s.session?.role);
   return (
-    <div className="grid gap-4 p-5" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(260px, 100%), 1fr))", maxWidth: 1240 }}>
+    <div className="widgets-grid grid gap-4 p-5" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(260px, 100%), 1fr))", maxWidth: 1240 }}>
       <SeasonBanner />
       {role && role !== "petra" ? <ActionsWidget /> : null}
       {role === "headmaster" ? <HeadmasterWidgets /> : role === "registrar" ? <RegistrarWidgets /> : role === "teacher" ? <TeacherWidgets /> : role === "student" ? <StudentWidgets /> : role === "petra" ? <PetraWidgets /> : null}

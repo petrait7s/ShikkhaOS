@@ -8,7 +8,7 @@ const logo = `data:image/png;base64,${readFileSync(path.join(dir, "logo-mark-lig
 const shots = [
   ["01-login.jpg", "Sign in", "লগইন", "Demo build: one tap per role."],
   ["02-home-teacher.jpg", "Home (Teacher)", "হোম", "Quick-app chips on top, then today’s work cards."],
-  ["03-apps.jpg", "Apps", "অ্যাপ", "Big touch tiles. Only the apps this role may use."],
+  ["03-apps.jpg", "Menu", "মেনু", "Big 3D tiles tinted by each app’s colour. Only what this role may use."],
   ["04-marks-entry.jpg", "App page", "অ্যাপের পাতা", "Full screen with a back arrow. Bottom tabs hide."],
   ["05-alerts.jpg", "Alerts", "অ্যালার্ট", "Everything that needs attention, with a count badge."],
   ["06-me.jpg", "Me", "আমি", "Profile, language, dark mode, lock, sign out."],
@@ -41,9 +41,11 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:0 20px 40px}
 <main><div class="wrap">
 <h2 id="changes">What changed</h2>
 <div class="cards">
-<div class="card"><b>Not a desktop on a phone</b>No floating windows or dock. Four bottom tabs: Home, Apps, Alerts, Me.</div>
+<div class="card"><b>Not a desktop on a phone</b>No floating windows or dock. Four bottom tabs: Home, Menu, Alerts, Me.</div>
 <div class="card"><b>Pages, not windows</b>Open an app and it fills the screen with a back arrow at the top. The tabs hide while you work.</div>
 <div class="card"><b>Made for thumbs</b>Large buttons (44 px), big app tiles, safe space for the status bar and gesture bar.</div>
+<div class="card"><b>Depth and motion</b>Raised 3D buttons that press down, cards that lift on hover, tiles that tilt, a sliding tab highlight and staggered entrance.</div>
+<div class="card"><b>Live colour</b>One teal accent follows the school season (admission, exam, result, event). Each app tints its own tiles, buttons and highlights.</div>
 <div class="card mint"><b>Same rules, same data</b>Each role sees only its own apps. Bangla, dark mode and the brand colours carry over.</div>
 </div>
 <h2 id="back">Back button</h2>

@@ -19,8 +19,11 @@ import { Widgets } from "./Widgets";
 import { launch } from "./launch";
 import { useMedia } from "./useMedia";
 import { MobileShell, isNativeApp } from "./MobileShell";
+import { useSeason } from "./useSeason";
 
 const IDLE_MS = 15 * 60 * 1000;
+/** Dynamic accent: a teal tone that follows the school season (all inside the brand palette). */
+const LIVE_BY_SEASON: Record<string, string> = { admission: "#0F766E", exam: "#14B8A6", result: "#2DD4BF", event: "#0E9F8E" };
 
 function ActionButton() {
   const { t, n } = useT();
@@ -180,6 +183,8 @@ export function Shell() {
   const [booted, setBooted] = useState(false);
   const lastTouch = useRef(0);
   const { data: school } = useSchoolQ();
+  const season = useSeason();
+  useEffect(() => { document.documentElement.style.setProperty("--live", LIVE_BY_SEASON[season]); }, [season]);
 
   useEffect(() => {
     const s = repos.auth.session();

@@ -20,7 +20,7 @@ async function phone(role, { dark = false, bn = false } = {}) {
 const shot = (p, name) => p.screenshot({ path: path.join(out, `${name}.jpg`), type: "jpeg", quality: 82 });
 const enter = async (p, role) => { await p.getByRole("button", { name: new RegExp(role, "i") }).first().click(); await p.waitForURL(/desktop/); await p.waitForTimeout(2200); };
 const tab = (p, name) => p.getByRole("button", { name, exact: true }).click().then(() => p.waitForTimeout(700));
-const openApp = async (p, label) => { await tab(p, "Apps"); await p.locator(".m-tile", { hasText: label }).click(); await p.waitForTimeout(1500); };
+const openApp = async (p, label) => { await tab(p, "Menu"); await p.locator(".m-tile", { hasText: label }).click(); await p.waitForTimeout(1500); };
 
 { // login
   const { ctx, p } = await phone("Teacher"); await p.waitForTimeout(800); await shot(p, "01-login"); await ctx.close();
@@ -28,7 +28,7 @@ const openApp = async (p, label) => { await tab(p, "Apps"); await p.locator(".m-
 { // teacher flow
   const { ctx, p } = await phone("Teacher"); await enter(p, "Teacher");
   await shot(p, "02-home-teacher");
-  await tab(p, "Apps"); await shot(p, "03-apps");
+  await tab(p, "Menu"); await shot(p, "03-apps");
   await openApp(p, "Marks Entry"); await shot(p, "04-marks-entry");
   await p.getByRole("button", { name: /Back/i }).first().click(); await p.waitForTimeout(500);
   await tab(p, "Alerts"); await shot(p, "05-alerts");

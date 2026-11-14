@@ -47,6 +47,7 @@ export const dict: Record<string, [string, string]> = {
   "pc.title": ["Petra Console", "পেট্রা কনসোল"],
   "pc.sub": ["Authorised Petra staff only.", "শুধু অনুমোদিত পেট্রা কর্মীদের জন্য।"],
   "app.attendance": ["Attendance", "উপস্থিতি"], "app.homework": ["Homework", "বাড়ির কাজ"], "app.messages": ["Messages", "বার্তা"],
+  "m.home": ["Home", "হোম"], "m.menu": ["Menu", "মেনু"], "m.alerts": ["Alerts", "অ্যালার্ট"], "m.me": ["Me", "প্রোফাইল"],
   "app.actions": ["Action Center", "অ্যাকশন সেন্টার"],
   "ac.unread": ["Unread", "অপঠিত"],
   "ac.signup": ["Sign-up waiting: {name}", "সাইন-আপ অপেক্ষায়: {name}"],

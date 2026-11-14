@@ -16,7 +16,8 @@ import { AppIcon } from "./AppIcon";
 import { Widgets } from "./Widgets";
 import { launch } from "./launch";
 
-type Tab = "home" | "apps" | "alerts" | "me";
+type Tab = "home" | "menu" | "alerts" | "me";
+const TABS: Tab[] = ["home", "menu", "alerts", "me"];
 type CapWindow = { Capacitor?: { isNativePlatform?: () => boolean } };
 export const isNativeApp = (): boolean => typeof window !== "undefined" && !!(window as unknown as CapWindow).Capacitor?.isNativePlatform?.();
 
@@ -39,7 +40,7 @@ function TabButton({ id, tab, set, icon: Icon, label, badge }: { id: Tab; tab: T
   const on = tab === id;
   return (
     <button type="button" className="m-tab" data-on={on} aria-current={on ? "page" : undefined} onClick={() => set(id)}>
-      <span className="relative"><Icon size={22} strokeWidth={on ? 2.2 : 1.7} />{badge ? <span className="count-badge" aria-hidden>{badge > 99 ? "99+" : badge}</span> : null}</span>
+      <span className="m-ico relative"><Icon size={22} strokeWidth={on ? 2.2 : 1.7} />{badge ? <span className="count-badge" aria-hidden>{badge > 99 ? "99+" : badge}</span> : null}</span>
       <span>{label}</span>
     </button>
   );
@@ -51,8 +52,8 @@ function AppGrid({ cols = 3 }: { cols?: number }) {
   if (!role) return null;
   return (
     <div className="grid gap-3 p-4" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
-      {appsFor(role).map((a) => (
-        <button key={a.id} type="button" className="m-tile" onClick={() => launch(a.id)}>
+      {appsFor(role).map((a, i) => (
+        <button key={a.id} type="button" className="m-tile" style={{ ["--i" as string]: i, ["--tile" as string]: a.color }} onClick={() => launch(a.id)}>
           <AppIcon icon={a.icon} color={a.color} size={52} />
           <span>{t(`app.${a.id}`)}</span>
         </button>
@@ -112,7 +113,7 @@ export function MobileShell() {
   });
 
   if (!role) return null;
-  const title = app ? t(`app.${app.id}`) : tab === "home" ? (school?.name ?? "ShikkhaOS") : tab === "apps" ? t("dock.label") : tab === "alerts" ? t("app.actions") : t("app.profile");
+  const title = app ? t(`app.${app.id}`) : tab === "home" ? (school?.name ?? "ShikkhaOS") : tab === "menu" ? t("m.menu") : tab === "alerts" ? t("m.alerts") : t("m.me");
 
   return (
     <div className="m-root">
@@ -132,23 +133,24 @@ export function MobileShell() {
         </main>
       ) : (
         <>
-          <main className="m-page">
+          <main className="m-page m-fade" key={tab}>
             {tab === "home" ? (
               <>
                 <div className="m-quick scroll-thin">
                   {appsFor(role).filter((a) => a.id !== "actions").slice(0, 8).map((a) => (
-                    <button key={a.id} type="button" className="m-chip" onClick={() => launch(a.id)}><AppIcon icon={a.icon} color={a.color} size={28} />{t(`app.${a.id}`)}</button>
+                    <button key={a.id} type="button" className="m-chip" style={{ ["--tile" as string]: a.color }} onClick={() => launch(a.id)}><AppIcon icon={a.icon} color={a.color} size={28} />{t(`app.${a.id}`)}</button>
                   ))}
                 </div>
                 <Widgets />
               </>
-            ) : tab === "apps" ? <AppGrid /> : tab === "alerts" ? (Actions ? <Actions /> : null) : <Me onOpenProfile={() => launch("profile")} />}
+            ) : tab === "menu" ? <AppGrid /> : tab === "alerts" ? (Actions ? <Actions /> : null) : <Me onOpenProfile={() => launch("profile")} />}
           </main>
-          <nav className="m-nav" aria-label={t("dock.label")}>
-            <TabButton id="home" tab={tab} set={setTab} icon={House} label="Home" />
-            <TabButton id="apps" tab={tab} set={setTab} icon={LayoutGrid} label="Apps" />
-            <TabButton id="alerts" tab={tab} set={setTab} icon={Bell} label="Alerts" badge={items.length} />
-            <TabButton id="me" tab={tab} set={setTab} icon={UserRound} label="Me" />
+          <nav className="m-nav" aria-label={t("dock.label")} style={{ ["--i" as string]: TABS.indexOf(tab) }}>
+            <span className="m-ind" aria-hidden />
+            <TabButton id="home" tab={tab} set={setTab} icon={House} label={t("m.home")} />
+            <TabButton id="menu" tab={tab} set={setTab} icon={LayoutGrid} label={t("m.menu")} />
+            <TabButton id="alerts" tab={tab} set={setTab} icon={Bell} label={t("m.alerts")} badge={items.length} />
+            <TabButton id="me" tab={tab} set={setTab} icon={UserRound} label={t("m.me")} />
           </nav>
         </>
       )}

@@ -7,6 +7,8 @@ const { pathToFileURL } = require("node:url");
 
 const webRoot = app.isPackaged ? path.join(process.resourcesPath, "web") : path.join(__dirname, "..", "out");
 
+if (process.env.SHIKKHAOS_DISABLE_GPU === "1") app.disableHardwareAcceleration(); // blank window on some Linux GPU/Wayland setups
+
 protocol.registerSchemesAsPrivileged([{ scheme: "app", privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true } }]);
 
 function resolveFile(urlPath) {
@@ -25,6 +27,11 @@ function createWindow() {
     webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:/.test(url)) void shell.openExternal(url); return { action: "deny" }; });
+  if (!fs.existsSync(path.join(webRoot, "login", "index.html"))) {
+    const msg = `<body style="font:16px system-ui;padding:32px"><h2>ShikkhaOS: web build not found</h2><p>Expected <code>${webRoot}</code>.</p><p>Run <code>pnpm build</code> in the <code>os-shell</code> folder, then start again.</p></body>`;
+    void win.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(msg));
+    return;
+  }
   void win.loadURL("app://shikkaos/login/");
 }
 

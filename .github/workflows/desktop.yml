@@ -132,7 +132,7 @@ jobs:
           "Installed: $($exe.FullName)"
           $unin = Get-ChildItem (Split-Path $exe.FullName) -Filter 'Uninstall*.exe' | Select-Object -First 1
           if ($unin) { Start-Process -FilePath $unin.FullName -ArgumentList '/S' -Wait }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: steps.d.outputs.present == 'true'
         with:
           name: desktop-windows

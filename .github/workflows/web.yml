@@ -82,7 +82,7 @@ jobs:
               -C apps/web --exclude=.next/cache .next public package.json next.config.* 2>/dev/null || \
           tar --sort=name --owner=0 --group=0 --numeric-owner -czf "dist/shikkhaos-web-${{ inputs.version }}.tar.gz" \
               -C apps/web --exclude=.next/cache .next package.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: steps.d.outputs.present == 'true' && inputs.release
         with:
           name: web-build

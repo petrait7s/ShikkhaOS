@@ -25,7 +25,7 @@ export function ReauthHost() {
       footer={<><Btn onClick={() => close(null)}>Cancel</Btn><Btn variant="primary" disabled={!pw} onClick={() => close(pw)}>Confirm</Btn></>}
     >
       <form onSubmit={(e) => { e.preventDefault(); if (pw) close(pw); }}>
-        <p className="muted mb-3 text-[13px]">{reason}</p>
+        <p className="muted mb-3 text-[14.5px]">{reason}</p>
         <label className="label" htmlFor="reauth-pw">Password</label>
         <input id="reauth-pw" className="input" type="password" autoFocus autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} />
       </form>

@@ -11,7 +11,7 @@ import { useT } from "@/lib/i18n";
 import { useUI } from "@/store/ui";
 
 function Row({ l, v }: { l: string; v: string }) {
-  return <div className="flex justify-between gap-4 border-b py-2 text-[13px]" style={{ borderColor: "var(--line)" }}><span className="muted">{l}</span><span className="text-right font-semibold">{v}</span></div>;
+  return <div className="flex justify-between gap-4 border-b py-2 text-[14.5px]" style={{ borderColor: "var(--line)" }}><span className="muted">{l}</span><span className="text-right font-semibold">{v}</span></div>;
 }
 
 export default function Profile() {
@@ -40,7 +40,7 @@ export default function Profile() {
       <div>
         <PhotoField name={p.name} photo={f.photo} onChange={(v) => set("photo", v)} />
         <div className="serif-bn mt-3 text-xl font-bold">{lang === "bn" ? f.nameBn || p.name : p.name}</div>
-        <div className="muted text-[13px]">{t(`role.${p.role}`)}{te.data ? ` · ${te.data.designation}` : ""}</div>
+        <div className="muted text-[14.5px]">{t(`role.${p.role}`)}{te.data ? ` · ${te.data.designation}` : ""}</div>
       </div>
 
       {!isAdmin(role) ? (
@@ -63,7 +63,7 @@ export default function Profile() {
         <div className="label">{t("pf.locked")}</div>
         {st.data ? <><Row l={t("col.studentid")} v={st.data.studentId} /><Row l={t("col.class")} v={`${st.data.classNo}-${st.data.section}`} /><Row l={t("col.roll")} v={String(st.data.roll)} /><Row l={t("col.guardian")} v={st.data.guardian} /><Row l={t("students.admission")} v={fmtDate(st.data.admission, lang)} /></> : null}
         {te.data ? <><Row l={t("teachers.phone")} v={te.data.phone} /><Row l={t("teachers.assign")} v={String(te.data.assignments.length)} /></> : null}
-        <p className="muted mt-2 text-[12px]">{t("profile.note")}</p>
+        <p className="muted mt-2 text-[13.5px]">{t("profile.note")}</p>
       </div> : null}
 
       <div className="grid gap-3">

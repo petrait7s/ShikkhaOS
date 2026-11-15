@@ -11,7 +11,7 @@ import { SUBJECT_MASTER, subjectsForClass } from "@/data/names";
 
 const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 const code = (n: number) => Math.random().toString(36).slice(2, 2 + n).toUpperCase();
-const brandOf = (s: School): SchoolBrand => ({ id: s.id, name: s.name, nameBn: s.nameBn, city: s.city, monogram: s.monogram, primary: s.primary });
+const brandOf = (s: School): SchoolBrand => ({ id: s.id, name: s.name, nameBn: s.nameBn, city: s.city, monogram: s.monogram, primary: s.primary, motto: "One School. One System. One Connected Community." });
 const mySchool = (s: Session): School => {
   const sc = getDb().schools.find((x) => x.id === s.schoolId);
   if (!sc) throw new ApiError("School not found.", "not_found");

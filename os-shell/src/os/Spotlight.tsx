@@ -49,7 +49,7 @@ export function Spotlight() {
           <Command.Group heading={t("spot.attention")}>
             {actions.map((i) => (
               <Command.Item key={i.id} value={`action ${i.title} ${i.detail ?? ""}`} onSelect={() => run(() => openAction(i))}>
-                <span className={`prio prio-${i.priority}`} aria-hidden /><span className="min-w-0 flex-1 truncate">{i.title}</span><span className="faint text-[11.5px]">{i.openLabel}</span>
+                <span className={`prio prio-${i.priority}`} aria-hidden /><span className="min-w-0 flex-1 truncate">{i.title}</span><span className="faint text-[13px]">{i.openLabel}</span>
               </Command.Item>
             ))}
           </Command.Group>
@@ -74,7 +74,7 @@ export function Spotlight() {
           <Command.Group heading={t("spot.students")}>
             {students.data.slice(0, 600).map((s) => (
               <Command.Item key={s.id} value={`student ${s.name} ${s.studentId} class ${s.classNo}`} onSelect={() => run(() => { if (reg) { setIntent({ kind: "search", app: "students", q: s.studentId }); launch("students"); } else launch("roster"); })}>
-                <Search size={15} />{s.name}<span className="faint ml-auto text-[12px]">{s.studentId}</span>
+                <Search size={15} />{s.name}<span className="faint ml-auto text-[13.5px]">{s.studentId}</span>
               </Command.Item>
             ))}
           </Command.Group>
@@ -82,7 +82,7 @@ export function Spotlight() {
         {teachers.data ? (
           <Command.Group heading={t("spot.teachers")}>
             {teachers.data.map((x) => (
-              <Command.Item key={x.id} value={`teacher ${x.name} ${x.phone}`} onSelect={() => run(() => launch(reg ? "teachers" : "faculty"))}><Search size={15} />{x.name}<span className="faint ml-auto text-[12px]">{x.designation}</span></Command.Item>
+              <Command.Item key={x.id} value={`teacher ${x.name} ${x.phone}`} onSelect={() => run(() => launch(reg ? "teachers" : "faculty"))}><Search size={15} />{x.name}<span className="faint ml-auto text-[13.5px]">{x.designation}</span></Command.Item>
             ))}
           </Command.Group>
         ) : null}
@@ -94,7 +94,7 @@ export function Spotlight() {
           </Command.Group>
         ) : null}
       </Command.List>
-      <div className="faint flex gap-4 border-t px-4 py-2 text-[11.5px]" style={{ borderColor: "var(--line)" }} aria-hidden><span><kbd>↑</kbd> <kbd>↓</kbd> {t("spot.k.move")}</span><span><kbd>Enter</kbd> {t("spot.k.open")}</span><span><kbd>Esc</kbd> {t("spot.k.close")}</span></div>
+      <div className="faint flex gap-4 border-t px-4 py-2 text-[13px]" style={{ borderColor: "var(--line)" }} aria-hidden><span><kbd>↑</kbd> <kbd>↓</kbd> {t("spot.k.move")}</span><span><kbd>Enter</kbd> {t("spot.k.open")}</span><span><kbd>Esc</kbd> {t("spot.k.close")}</span></div>
     </Command.Dialog>
   );
 }

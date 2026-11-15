@@ -94,17 +94,17 @@ export function ResultReveal({ examId, onClose }: { examId: string; onClose: () 
                 {school.data ? <Monogram text={school.data.monogram} color={school.data.primary} size={46} /> : null}
                 <div className="min-w-0 flex-1">
                   <div className="serif-bn truncate text-lg font-bold">{school.data ? (lang === "bn" ? school.data.nameBn : school.data.name) : ""}</div>
-                  <div className="muted text-[12px]">{examName ? (lang === "bn" ? examName.nameBn : examName.name) : ""} · {t("reveal.card")}</div>
+                  <div className="muted text-[13.5px]">{examName ? (lang === "bn" ? examName.nameBn : examName.name) : ""} · {t("reveal.card")}</div>
                 </div>
               </header>
               <div className="mt-4">
                 <div className="serif-bn text-2xl font-bold">{me.data ? (lang === "bn" ? me.data.nameBn : me.data.name) : ""}</div>
-                <div className="muted text-[13px]">{me.data ? `${t("rc.class", { c: me.data.classNo, s: me.data.section })} · ${t("col.roll")} ${n(me.data.roll)} · ${me.data.studentId}` : ""}</div>
+                <div className="muted text-[14.5px]">{me.data ? `${t("rc.class", { c: me.data.classNo, s: me.data.section })} · ${t("col.roll")} ${n(me.data.roll)} · ${me.data.studentId}` : ""}</div>
               </div>
 
               <div className="my-6 flex items-end justify-center gap-6 text-center">
                 <div>
-                  <div className="faint text-[11px] font-bold uppercase tracking-wider">GPA</div>
+                  <div className="faint text-[12.5px] font-bold uppercase tracking-wider">GPA</div>
                   <div className="text-6xl font-extrabold tabular-nums" style={{ color: r.passed ? "var(--accent)" : "var(--danger)" }} aria-label={`GPA ${r.gpa.toFixed(2)}`}>{n(gpa.toFixed(2))}</div>
                 </div>
                 <motion.div {...fade(2)} className="mb-2 grid size-16 place-items-center rounded-2xl text-2xl font-extrabold text-white" style={{ background: r.passed ? "var(--accent)" : "var(--danger)" }}>
@@ -116,7 +116,7 @@ export function ResultReveal({ examId, onClose }: { examId: string; onClose: () 
                 {r.subjects.map((s, i) => {
                   const p = typeof s.mark === "number" ? (s.mark / s.full) * 100 : 0;
                   return (
-                    <div key={s.subject} className="grid grid-cols-[130px_1fr_70px] items-center gap-2 text-[13px] sm:grid-cols-[190px_1fr_90px]">
+                    <div key={s.subject} className="grid grid-cols-[130px_1fr_70px] items-center gap-2 text-[14.5px] sm:grid-cols-[190px_1fr_90px]">
                       <span className="truncate font-semibold">{lang === "bn" ? s.subjectBn : s.subject}</span>
                       <span className="h-2.5 overflow-hidden rounded-full" style={{ background: "var(--paper-2)" }}>
                         <motion.span className="block h-full rounded-full" style={{ background: s.passed ? "var(--accent)" : "var(--danger)" }} initial={reduce ? false : { width: 0 }} animate={{ width: show(3) ? `${p}%` : 0 }} transition={{ duration: 0.7, delay: reduce ? 0 : i * 0.06 }} />
@@ -129,7 +129,7 @@ export function ResultReveal({ examId, onClose }: { examId: string; onClose: () 
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <motion.div {...fade(4)}>
-                  <div className="faint mb-1 text-[11px] font-bold uppercase tracking-wider">{t("reveal.strengths")}</div>
+                  <div className="faint mb-1 text-[12.5px] font-bold uppercase tracking-wider">{t("reveal.strengths")}</div>
                   <div style={{ width: "100%", height: 230 }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <RadarChart data={radar} outerRadius="68%">
@@ -141,7 +141,7 @@ export function ResultReveal({ examId, onClose }: { examId: string; onClose: () 
                   </div>
                 </motion.div>
                 <motion.div {...fade(5)}>
-                  <div className="faint mb-1 text-[11px] font-bold uppercase tracking-wider">{t("reveal.growth")}</div>
+                  <div className="faint mb-1 text-[12.5px] font-bold uppercase tracking-wider">{t("reveal.growth")}</div>
                   <div style={{ width: "100%", height: 230 }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={growth} margin={{ left: -18, right: 10, top: 10 }}>
@@ -156,9 +156,9 @@ export function ResultReveal({ examId, onClose }: { examId: string; onClose: () 
               </div>
 
               <motion.div {...fade(6)} className="mt-4 grid grid-cols-3 gap-3 text-center">
-                <div className="hair p-3"><div className="text-2xl font-extrabold">{n(r.position)}{r.classSize > 0 ? <span className="faint text-sm">/{n(r.classSize)}</span> : null}</div><div className="faint text-[11px]">{t("reveal.position")}</div></div>
-                <div className="hair p-3"><div className="text-2xl font-extrabold">{n(r.total)}</div><div className="faint text-[11px]">{t("reveal.total")}</div></div>
-                <div className="hair p-3"><div className="text-2xl font-extrabold">{r.passed ? t("reveal.passed") : t("reveal.failed")}</div><div className="faint text-[11px]">{t("col.status")}</div></div>
+                <div className="hair p-3"><div className="text-2xl font-extrabold">{n(r.position)}{r.classSize > 0 ? <span className="faint text-sm">/{n(r.classSize)}</span> : null}</div><div className="faint text-[12.5px]">{t("reveal.position")}</div></div>
+                <div className="hair p-3"><div className="text-2xl font-extrabold">{n(r.total)}</div><div className="faint text-[12.5px]">{t("reveal.total")}</div></div>
+                <div className="hair p-3"><div className="text-2xl font-extrabold">{r.passed ? t("reveal.passed") : t("reveal.failed")}</div><div className="faint text-[12.5px]">{t("col.status")}</div></div>
               </motion.div>
             </motion.div>
           </AnimatePresence>

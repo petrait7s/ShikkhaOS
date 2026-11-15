@@ -59,7 +59,7 @@ function TeacherView() {
               <tr key={r.studentId}><td className="num">{r.rollNo}</td><td className="font-semibold">{r.fullName}</td>
                 <td><div className="seg" role="group" aria-label={`${r.fullName} attendance`}>{OPTS.map((o) => (
                   <button key={o.v} type="button" aria-pressed={marks[r.studentId] === o.v} onClick={() => setMarks((m) => ({ ...m, [r.studentId]: o.v }))} title={o.label}>{o.key}</button>))}</div></td></tr>))}</tbody></table>
-          <div className="faint mt-2 text-[12px]">{unmarked ? `${unmarked} not marked yet. P present · A absent · L late · E excused.` : "Everyone is marked. Save to finish."}</div>
+          <div className="faint mt-2 text-[13.5px]">{unmarked ? `${unmarked} not marked yet. P present · A absent · L late · E excused.` : "Everyone is marked. Save to finish."}</div>
         </div>
       )}
     </div>
@@ -90,7 +90,7 @@ function StudentView() {
     <div className="scroll-thin h-full overflow-auto p-4">
       <div className="grid gap-3 sm:grid-cols-4">
         {[["Attendance", `${Math.round(s.percentage)}%`], ["Present", s.present], ["Absent", s.absent], ["Late", s.late]].map(([k, v]) => (
-          <div key={String(k)} className="hair p-3"><div className="faint text-[11px] font-bold uppercase tracking-wider">{k}</div><div className="mt-1 text-2xl font-extrabold">{v}</div></div>))}
+          <div key={String(k)} className="hair p-3"><div className="faint text-[12.5px] font-bold uppercase tracking-wider">{k}</div><div className="mt-1 text-2xl font-extrabold">{v}</div></div>))}
       </div>
       {q.data!.records.length === 0 ? <div className="mt-4"><Empty title="No records yet" hint="Your attendance will appear here once your teacher takes it." /></div> : (
         <table className="table mt-4"><thead><tr><th>Date</th><th>Status</th></tr></thead>

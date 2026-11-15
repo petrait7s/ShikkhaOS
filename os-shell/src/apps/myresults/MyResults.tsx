@@ -29,19 +29,19 @@ export default function MyResults() {
               <div className="flex items-center gap-2"><Award size={18} style={{ color: "var(--link)" }} /><h3 className="font-bold">{lang === "bn" ? exam.nameBn : exam.name}</h3></div>
               {state === "published" ? (
                 <div className="mt-3 flex items-end justify-between gap-2">
-                  <div><div className="text-3xl font-extrabold" style={{ color: "var(--link)" }}>{h ? n(h.result.gpa.toFixed(2)) : "—"}</div><div className="faint text-[12px]">{h ? `${h.result.passed ? h.result.grade : t("reveal.failed")} · ${t("reveal.position")} ${n(h.result.position)}${h.result.classSize > 0 ? `/${n(h.result.classSize)}` : ""}` : ""}</div></div>
+                  <div><div className="text-3xl font-extrabold" style={{ color: "var(--link)" }}>{h ? n(h.result.gpa.toFixed(2)) : "—"}</div><div className="faint text-[13.5px]">{h ? `${h.result.passed ? h.result.grade : t("reveal.failed")} · ${t("reveal.position")} ${n(h.result.position)}${h.result.classSize > 0 ? `/${n(h.result.classSize)}` : ""}` : ""}</div></div>
                   <Btn variant="primary" onClick={() => setOpen(exam.id)}><Trophy size={14} />{t("mr.open")}</Btn>
                 </div>
               ) : state === "scheduled" && at ? (
-                <div className="mt-3"><div className="muted flex items-center gap-1.5 text-[13px]"><Clock size={13} />{t("widget.result.coming", { time: fmtDateTime(at, lang) })}</div><div className="mt-1 font-mono text-2xl font-extrabold tabular-nums">{countdown(at, now)}</div></div>
-              ) : <div className="muted mt-3 flex items-center gap-1.5 text-[13px]"><Lock size={13} />{t("mr.notpublished")}</div>}
+                <div className="mt-3"><div className="muted flex items-center gap-1.5 text-[14.5px]"><Clock size={13} />{t("widget.result.coming", { time: fmtDateTime(at, lang) })}</div><div className="mt-1 font-mono text-2xl font-extrabold tabular-nums">{countdown(at, now)}</div></div>
+              ) : <div className="muted mt-3 flex items-center gap-1.5 text-[14.5px]"><Lock size={13} />{t("mr.notpublished")}</div>}
             </section>
           );
         })}
       </div>
       {growth.length > 1 ? (
         <section className="card p-4">
-          <h3 className="faint mb-2 text-[11px] font-bold uppercase tracking-wider">{t("reveal.growth")}</h3>
+          <h3 className="faint mb-2 text-[12.5px] font-bold uppercase tracking-wider">{t("reveal.growth")}</h3>
           <div style={{ height: 200 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={growth} margin={{ left: -18, right: 10, top: 10 }}>

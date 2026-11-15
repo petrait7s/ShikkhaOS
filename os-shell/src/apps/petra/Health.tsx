@@ -15,9 +15,9 @@ export default function Health() {
   const tiles: [string, string][] = [[t("health.uptime"), `${n(avg("uptime").toFixed(2))}%`], [t("health.errorrate"), `${n(avg("errorRate").toFixed(2))}%`], [t("health.latency"), `${n(Math.round(avg("latency")))} ms`], [t("health.today"), last ? `${n(last.latency)} ms` : "—"]];
   return (
     <div className="grid gap-4 p-4">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{tiles.map(([l, v]) => <div key={l} className="card p-4"><div className="faint text-[11px] font-bold uppercase tracking-wider">{l}</div><div className="mt-1 text-2xl font-extrabold">{v}</div></div>)}</div>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{tiles.map(([l, v]) => <div key={l} className="card p-4"><div className="faint text-[12.5px] font-bold uppercase tracking-wider">{l}</div><div className="mt-1 text-2xl font-extrabold">{v}</div></div>)}</div>
       <section className="card p-4">
-        <h3 className="faint mb-2 text-[11px] font-bold uppercase tracking-wider">{t("health.latency")} · 30d</h3>
+        <h3 className="faint mb-2 text-[12.5px] font-bold uppercase tracking-wider">{t("health.latency")} · 30d</h3>
         <div style={{ height: 220 }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={d} margin={{ left: -10, right: 8, top: 6 }}>

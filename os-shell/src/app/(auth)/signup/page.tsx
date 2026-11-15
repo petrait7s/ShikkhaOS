@@ -24,7 +24,7 @@ function TeacherSignup({ code }: { code: string }) {
   if (!teacher) return <div className="skeleton h-24" />;
   return (
     <form onSubmit={(e) => { e.preventDefault(); setErr(null); repos.auth.signupTeacher(code, pw).then(() => setDone(true)).catch((x: unknown) => setErr(x instanceof Error ? x.message : t("error.generic"))); }}>
-      <div className="hair mb-4 p-3 text-[13px]">
+      <div className="hair mb-4 p-3 text-[14.5px]">
         <div className="font-bold">{teacher.name}</div>
         <div className="muted">{teacher.designation} · {teacher.phone}</div>
         <div className="muted">{teacher.email}</div>
@@ -60,7 +60,7 @@ function Done({ text }: { text: string }) {
   return (
     <div className="flex flex-col items-center gap-3 py-4 text-center">
       <CheckCircle2 size={36} style={{ color: "var(--ok)" }} />
-      <p className="text-[13px]">{text}</p>
+      <p className="text-[14.5px]">{text}</p>
       <Link href="/login" className="btn btn-primary">{t("auth.signin")}</Link>
     </div>
   );
@@ -78,7 +78,7 @@ function SignupInner() {
     <AuthFrame brand={brand} title={t("auth.signup")}>
       <div className="mb-4 grid grid-cols-2 gap-1 rounded-xl p-1" style={{ background: "var(--paper-2)" }} role="tablist">
         {(["student", "teacher"] as const).map((k) => (
-          <button key={k} role="tab" aria-selected={tab === k} type="button" onClick={() => setTab(k)} className={cn("h-8 rounded-lg text-[13px] font-semibold", tab === k && "shadow-sm")} style={{ background: tab === k ? "var(--card)" : "transparent" }}>{t(`role.${k}`)}</button>
+          <button key={k} role="tab" aria-selected={tab === k} type="button" onClick={() => setTab(k)} className={cn("h-8 rounded-lg text-[14.5px] font-semibold", tab === k && "shadow-sm")} style={{ background: tab === k ? "var(--card)" : "transparent" }}>{t(`role.${k}`)}</button>
         ))}
       </div>
       {tab === "student" ? <StudentSignup /> : go && code ? <TeacherSignup code={code} /> : (
@@ -87,8 +87,8 @@ function SignupInner() {
           <Btn variant="primary" className="w-full" type="submit">{t("signup.continue")}</Btn>
         </form>
       )}
-      <p className="muted mt-4 text-center text-[12px]">{t("signup.registrar.note")}</p>
-      <div className="mt-3 text-center text-[13px]"><Link href="/login" className="underline">{t("auth.back")}</Link></div>
+      <p className="muted mt-4 text-center text-[13.5px]">{t("signup.registrar.note")}</p>
+      <div className="mt-3 text-center text-[14.5px]"><Link href="/login" className="underline">{t("auth.back")}</Link></div>
     </AuthFrame>
   );
 }

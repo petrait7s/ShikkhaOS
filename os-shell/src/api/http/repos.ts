@@ -61,7 +61,7 @@ export const httpRepos: Repos = {
     session: () => storedSession<Session>(),
     async verifyPassword(password) { try { await call("POST", "/auth/reauth", { body: { password } }); return true; } catch { return false; } },
     async brand() {
-      return { id: SCHOOL, name: process.env.NEXT_PUBLIC_SCHOOL_NAME ?? "ShikkhaOS", nameBn: process.env.NEXT_PUBLIC_SCHOOL_NAME_BN ?? "শিক্ষাOS", city: "", monogram: "SO", primary: "#0F172A" };
+      return { id: SCHOOL, name: process.env.NEXT_PUBLIC_SCHOOL_NAME ?? "ShikkhaOS", nameBn: process.env.NEXT_PUBLIC_SCHOOL_NAME_BN ?? "শিক্ষাOS", city: "", monogram: (process.env.NEXT_PUBLIC_SCHOOL_MONOGRAM ?? "SO"), primary: "#0F172A", motto: process.env.NEXT_PUBLIC_SCHOOL_MOTTO ?? "One School. One System. One Connected Community." };
     },
     previewInvite: notWired("auth.previewInvite"),
     signupTeacher: notWired("auth.signupTeacher"),

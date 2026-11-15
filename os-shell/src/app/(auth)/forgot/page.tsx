@@ -11,7 +11,7 @@ export default function ForgotPage() {
     <AuthFrame brand={brand} title={t("auth.forgot")}>
       <div className="flex flex-col items-center gap-3 text-center">
         <KeyRound size={30} style={{ color: "var(--link)" }} />
-        <p className="text-[13px]">{t("forgot.body")}</p>
+        <p className="text-[14.5px]">{t("forgot.body")}</p>
         <Link href="/login" className="btn">{t("auth.back")}</Link>
       </div>
     </AuthFrame>

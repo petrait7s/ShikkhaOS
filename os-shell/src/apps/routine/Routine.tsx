@@ -49,24 +49,24 @@ function Weekly({ classNo, section }: { classNo: number; section: string }) {
   return (
     <>
       <div className="print-area overflow-auto">
-        <table className="w-full border-separate text-[12.5px]" style={{ borderSpacing: 6 }}>
+        <table className="w-full border-separate text-[14px]" style={{ borderSpacing: 6 }}>
           <thead>
             <tr>
-              <th className="faint w-[92px] text-left text-[11px] uppercase">{t("rt.period")}</th>
-              {DAYS.map((d, i) => <th key={d.en} className="rounded-lg px-2 py-1.5 text-left text-[12px]" style={{ background: i === today ? "color-mix(in srgb, var(--accent) 18%, transparent)" : "var(--paper-2)" }}>{lang === "bn" ? d.bn : d.en}</th>)}
+              <th className="faint w-[92px] text-left text-[12.5px] uppercase">{t("rt.period")}</th>
+              {DAYS.map((d, i) => <th key={d.en} className="rounded-lg px-2 py-1.5 text-left text-[13.5px]" style={{ background: i === today ? "color-mix(in srgb, var(--accent) 18%, transparent)" : "var(--paper-2)" }}>{lang === "bn" ? d.bn : d.en}</th>)}
             </tr>
           </thead>
           <tbody>
             {PERIODS.map((p) => (
               <>
                 <tr key={p.n}>
-                  <td className="align-top"><div className="font-bold">{n(p.n)}</div><div className="faint text-[11px]">{p.start}–{p.end}</div></td>
+                  <td className="align-top"><div className="font-bold">{n(p.n)}</div><div className="faint text-[12.5px]">{p.start}–{p.end}</div></td>
                   {DAYS.map((d, di) => {
                     const c = cell(di, p.n);
                     const inner = c ? (
                       <>
                         <div className="font-bold leading-tight">{lang === "bn" ? subjBn(c.subject) : c.subject}</div>
-                        <div className="faint truncate text-[11px]">{role === "teacher" ? t("rc.class", { c: c.classNo, s: c.section }) : teacherName(c.teacherId)}</div>
+                        <div className="faint truncate text-[12.5px]">{role === "teacher" ? t("rc.class", { c: c.classNo, s: c.section }) : teacherName(c.teacherId)}</div>
                       </>
                     ) : <span className="faint">{t("rt.free")}</span>;
                     const style = { background: c ? "color-mix(in srgb, var(--accent) 12%, var(--card))" : "transparent", border: c ? "1px solid color-mix(in srgb, var(--accent) 30%, transparent)" : "1px dashed var(--line)" };
@@ -79,13 +79,13 @@ function Weekly({ classNo, section }: { classNo: number; section: string }) {
                     );
                   })}
                 </tr>
-                {p.n === BREAK_AFTER ? <tr key={`b${p.n}`}><td colSpan={6} className="faint rounded-lg py-1 text-center text-[11px] uppercase tracking-widest" style={{ background: "var(--paper-2)" }}>{t("rt.break")}</td></tr> : null}
+                {p.n === BREAK_AFTER ? <tr key={`b${p.n}`}><td colSpan={6} className="faint rounded-lg py-1 text-center text-[12.5px] uppercase tracking-widest" style={{ background: "var(--paper-2)" }}>{t("rt.break")}</td></tr> : null}
               </>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="faint no-print px-1 pt-1 text-[11px]">{canEdit ? t("rt.conflictTip") : ""}</p>
+      <p className="faint no-print px-1 pt-1 text-[12.5px]">{canEdit ? t("rt.conflictTip") : ""}</p>
       <Modal open={!!edit} onClose={() => setEdit(null)} title={t("rt.edit")} width={420}
         footer={edit ? (
           <>
@@ -95,7 +95,7 @@ function Weekly({ classNo, section }: { classNo: number; section: string }) {
         ) : null}>
         {edit ? (
           <div className="grid gap-3">
-            <div className="muted text-[13px]">{lang === "bn" ? DAYS[edit.day]?.bn : DAYS[edit.day]?.en} · {t("rt.period")} {n(edit.period)} / {n(PERIOD_COUNT)}</div>
+            <div className="muted text-[14.5px]">{lang === "bn" ? DAYS[edit.day]?.bn : DAYS[edit.day]?.en} · {t("rt.period")} {n(edit.period)} / {n(PERIOD_COUNT)}</div>
             <Field label={t("rt.subject")}>
               <select className="select" value={edit.subject} onChange={(e) => { const sub = e.target.value; setEdit({ ...edit, subject: sub, teacherId: teachersFor(sub)[0]?.id ?? "" }); }}>
                 {classSubjects.map((s) => <option key={s.subject} value={s.subject}>{lang === "bn" ? s.subjectBn : s.subject}</option>)}

@@ -62,18 +62,18 @@ export default function Students() {
     <div className="flex h-full min-h-[420px] flex-col">
       <div className="flex flex-wrap items-center gap-2 border-b p-3" style={{ borderColor: "var(--line)" }}>
         <Ring value={claimed} size={52} stroke={6} label={t("widget.onboarding")} />
-        <div className="mr-2 text-[12px]"><div className="font-bold">{n(all.filter((x) => x.status === "active").length)}/{n(all.length)}</div><div className="faint">{t("st.claimed")}</div></div>
+        <div className="mr-2 text-[13.5px]"><div className="font-bold">{n(all.filter((x) => x.status === "active").length)}/{n(all.length)}</div><div className="faint">{t("st.claimed")}</div></div>
         <input className="input !w-[200px]" placeholder={t("search")} aria-label={t("search")} value={search} onChange={(e) => setSearch(e.target.value)} />
         <select className="select !w-auto" aria-label={t("col.class")} value={cls} onChange={(e) => setCls(e.target.value)}><option value="">{t("col.class")}</option>{Array.from({ length: 10 }, (_, i) => i + 1).map((c) => <option key={c} value={c}>{c}</option>)}</select>
         <select className="select !w-auto" aria-label={t("col.section")} value={sec} onChange={(e) => setSec(e.target.value)}><option value="">{t("col.section")}</option><option>A</option><option>B</option></select>
         <select className="select !w-auto" aria-label={t("col.status")} value={status} onChange={(e) => setStatus(e.target.value)}><option value="">{t("col.status")}</option><option value="active">{t("st.claimed")}</option><option value="pending">{t("st.pending")}</option><option value="unclaimed">{t("st.unclaimed")}</option></select>
         <div className="flex-1" />
-        <span className="faint text-[12px]">{n(rows.length)} {t("students.shown")}</span>
+        <span className="faint text-[13.5px]">{n(rows.length)} {t("students.shown")}</span>
         <Btn onClick={() => setWiz(true)}><Upload size={14} />{t("students.import")}</Btn>
       </div>
       {rows.length === 0 ? <Empty title={t("students.empty")} hint={t("students.empty.hint")} /> : (
-        <div className="min-h-0 flex-1 overflow-hidden text-[13px]">
-          <div className="grid items-center gap-2 border-b px-3 py-2 text-[11px] font-bold uppercase tracking-wider" style={{ gridTemplateColumns: GRID, borderColor: "var(--line)", color: "var(--ink-3)" }} role="row">
+        <div className="min-h-0 flex-1 overflow-hidden text-[14.5px]">
+          <div className="grid items-center gap-2 border-b px-3 py-2 text-[12.5px] font-bold uppercase tracking-wider" style={{ gridTemplateColumns: GRID, borderColor: "var(--line)", color: "var(--ink-3)" }} role="row">
             {table.getHeaderGroups()[0]?.headers.map((h) => (
               <button key={h.id} type="button" className="flex items-center gap-1 text-left uppercase" onClick={h.column.getToggleSortingHandler()}>{flexRender(h.column.columnDef.header, h.getContext())}<ArrowUpDown size={11} /></button>
             ))}
@@ -97,14 +97,14 @@ export default function Students() {
       {editing && open ? <PersonEdit kind="student" person={open} onClose={() => { setEditing(false); setOpen(null); }} /> : null}
       <Drawer open={!!open} onClose={() => { setOpen(null); setPw(null); }} title={t("students.profile")}>
         {open ? (
-          <div className="grid gap-3 text-[13px]">
+          <div className="grid gap-3 text-[14.5px]">
             <div className="flex items-center gap-3"><Avatar name={open.name} size={52} photo={open.photo} /><div><div className="serif-bn text-lg font-bold">{lang === "bn" ? open.nameBn : open.name}</div><div className="muted">{open.studentId}</div></div></div>
             {[[t("col.class"), `${open.classNo}-${open.section}`], [t("col.roll"), String(open.roll)], [t("col.guardian"), open.guardian], [t("students.phone"), open.guardianPhone], [t("students.admission"), fmtDate(open.admission, lang)], [t("col.status"), stLabel(open.status)]].map(([l, v]) => (
               <div key={l} className="flex justify-between border-b py-1.5" style={{ borderColor: "var(--line)" }}><span className="muted">{l}</span><span className="font-semibold">{v}</span></div>
             ))}
             <Btn onClick={() => setEditing(true)}><Pencil size={14} />{t("pf.edit")}</Btn>
             <Btn disabled={open.status === "unclaimed"} onClick={() => { repos.student.resetPassword(open.id).then((p) => { setPw(p); toast.success(t("students.reset.ok")); }).catch((e: unknown) => toast.error(e instanceof Error ? e.message : t("error.generic"))); }}><KeyRound size={14} />{t("students.reset")}</Btn>
-            {pw ? <div className="hair p-3"><div className="faint text-[11px]">{t("students.reset.temp")}</div><code className="text-base font-bold">{pw}</code></div> : null}
+            {pw ? <div className="hair p-3"><div className="faint text-[12.5px]">{t("students.reset.temp")}</div><code className="text-base font-bold">{pw}</code></div> : null}
           </div>
         ) : null}
       </Drawer>

@@ -28,7 +28,7 @@ export function LockScreen() {
       >
         <Avatar name={session?.name ?? "?"} size={84} photo={me.data?.photo} />
         <div className="font-bold">{session?.name}</div>
-        <div className="muted flex items-center gap-1 text-[13px]"><Lock size={13} />{t("lock.title")}</div>
+        <div className="muted flex items-center gap-1 text-[14.5px]"><Lock size={13} />{t("lock.title")}</div>
         <div className="w-full"><Field label={t("auth.password")} error={err ?? undefined}><input className="input" type="password" autoFocus value={pw} onChange={(e) => setPw(e.target.value)} /></Field></div>
         <Btn variant="primary" className="w-full" type="submit">{t("lock.unlock")}</Btn>
       </form>

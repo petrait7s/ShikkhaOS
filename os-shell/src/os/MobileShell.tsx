@@ -77,7 +77,7 @@ function Me({ onOpenProfile }: { onOpenProfile: () => void }) {
     <div className="grid gap-3 p-4">
       <div className="card flex items-center gap-3 p-4">
         <Avatar name={session.name} size={52} photo={me.data?.photo} />
-        <div className="min-w-0"><div className="truncate text-[16px] font-bold">{session.name}</div><div className="muted text-[13px]">{t(`role.${session.role}`)}</div></div>
+        <div className="min-w-0"><div className="truncate text-[17.5px] font-bold">{session.name}</div><div className="muted text-[14.5px]">{t(`role.${session.role}`)}</div></div>
       </div>
       <div className="card overflow-hidden p-0">
         <button type="button" className={row} onClick={onOpenProfile}><UserRound size={18} />{t("app.profile")}<ChevronRight size={16} className="ml-auto faint" /></button>
@@ -128,7 +128,7 @@ export function MobileShell() {
       </header>
 
       {app ? (
-        <main className="m-page m-push" style={{ ["--accent" as string]: app.color }} key={app.id}>
+        <main className="m-page m-push" style={{ ["--tile" as string]: app.color }} key={app.id}>
           {(() => { const C = app.Component; return <C />; })()}
         </main>
       ) : (

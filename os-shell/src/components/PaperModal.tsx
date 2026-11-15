@@ -38,7 +38,7 @@ export function PaperModal({ k, readOnly, onClose }: { k: CellKey; readOnly?: bo
         <div className="grid gap-3">
           {p ? (
             <>
-              <div className="flex flex-wrap items-center gap-2 text-[13px]">
+              <div className="flex flex-wrap items-center gap-2 text-[14.5px]">
                 <FileText size={16} /><span className="font-semibold">{p.name}</span><span className="faint">{fmtBytes(p.size)} · {fmtDateTime(p.at, lang)}</span>
                 <div className="flex-1" />
                 <a className="btn btn-sm" href={p.dataUrl} download={p.name}><Download size={13} />{t("paper.download")}</a>
@@ -56,9 +56,9 @@ export function PaperModal({ k, readOnly, onClose }: { k: CellKey; readOnly?: bo
             <div className="grid place-items-center gap-3 rounded-xl border border-dashed px-6 py-10 text-center" style={{ borderColor: "var(--line)" }}>
               <FileText size={28} className="faint" />
               <div className="font-semibold">{t("paper.none")}</div>
-              {readOnly ? <div className="muted text-[13px]">{t("paper.none.reg")}</div> : (
+              {readOnly ? <div className="muted text-[14.5px]">{t("paper.none.reg")}</div> : (
                 <>
-                  <div className="muted max-w-sm text-[13px]">{t("paper.none.hint")}</div>
+                  <div className="muted max-w-sm text-[14.5px]">{t("paper.none.hint")}</div>
                   <Btn variant="primary" disabled={save.isPending} onClick={() => input.current?.click()}><Upload size={14} />{t("paper.upload")}</Btn>
                 </>
               )}

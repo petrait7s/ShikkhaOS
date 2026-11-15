@@ -21,7 +21,7 @@ export function PhotoField({ name, photo, onChange, disabled }: { name: string; 
           <Btn size="sm" disabled={disabled} onClick={() => input.current?.click()}><Camera size={13} />{photo ? t("photo.change") : t("photo.add")}</Btn>
           {photo ? <Btn size="sm" disabled={disabled} onClick={() => onChange(null)}><Trash2 size={13} />{t("photo.remove")}</Btn> : null}
         </div>
-        <span className="faint text-[11px]">{t("photo.hint")}</span>
+        <span className="faint text-[12.5px]">{t("photo.hint")}</span>
         <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => { void pick(e.target.files?.[0]); e.target.value = ""; }} />
       </div>
     </div>

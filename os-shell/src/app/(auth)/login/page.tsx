@@ -10,10 +10,16 @@ import { repos } from "@/api/factory";
 import { AuthFrame, useBrand } from "@/components/AuthFrame";
 import { Btn, Field } from "@/components/ui";
 import { DEMO_ACCOUNTS } from "@/data/seed";
+import { AppIcon } from "@/os/AppIcon";
+import { GraduationCap, Presentation, ShieldCheck, Table2, type LucideIcon } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { useUI } from "@/store/ui";
 
 const DEMO = process.env.NEXT_PUBLIC_DEMO_MODE !== "false";
+const ROLE_ICON: Record<string, { icon: LucideIcon; color: string }> = {
+  headmaster: { icon: ShieldCheck, color: "#22A752" }, registrar: { icon: Table2, color: "#FF8A1F" },
+  teacher: { icon: Presentation, color: "#14B8A6" }, student: { icon: GraduationCap, color: "#4F6BFF" },
+};
 
 export default function LoginPage() {
   const { t } = useT();
@@ -48,19 +54,25 @@ export default function LoginPage() {
           <input className="input" type="password" autoComplete="current-password" aria-invalid={!!errors.password} {...register("password")} />
         </Field>
         {err ? <div className="field-error mb-3" role="alert">{err}</div> : null}
-        <Btn variant="primary" className="w-full" type="submit" disabled={busy}><LogIn size={15} />{busy ? t("auth.signing") : t("auth.signin")}</Btn>
-        <div className="mt-4 flex justify-between text-[13px]">
+        <Btn variant="primary" className="w-full !h-[56px] !text-[17px]" type="submit" disabled={busy}><LogIn size={15} />{busy ? t("auth.signing") : t("auth.signin")}</Btn>
+        <div className="mt-4 flex justify-between text-[14.5px]">
           <Link href="/forgot" className="muted underline">{t("auth.forgot")}</Link>
           <Link href="/signup" className="underline" style={{ color: "var(--link)" }}>{t("auth.signup")}</Link>
         </div>
       </form>
       {DEMO ? (
         <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--line)" }}>
-          <div className="faint mb-2 text-[11px] font-bold uppercase tracking-wider">{t("auth.enteras")}</div>
-          <div className="grid grid-cols-2 gap-2">
-            {DEMO_ACCOUNTS.map((a) => (
-              <Btn key={a.role} size="sm" disabled={busy} onClick={() => void go(a.id, a.password)} title={`${a.id} / ${a.password}`}>{t(`role.${a.role}`)}</Btn>
-            ))}
+          <div className="faint mb-2 text-[12.5px] font-bold uppercase tracking-wider">{t("auth.enteras")}</div>
+          <div className="role-chips">
+            {DEMO_ACCOUNTS.map((a) => {
+              const ic = ROLE_ICON[a.role];
+              return (
+                <button key={a.role} type="button" className="role-chip" disabled={busy} onClick={() => void go(a.id, a.password)} title={`${a.id} / ${a.password}`}>
+                  <AppIcon icon={ic.icon} color={ic.color} size={44} />
+                  <span>{t(`role.${a.role}`)}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       ) : null}

@@ -1,5 +1,5 @@
 "use client";
-import { CalendarClock, ChevronRight, Flag, GraduationCap, Megaphone, Pin, PencilLine, Plus, Trophy, Upload, UserPlus } from "lucide-react";
+import { CalendarClock, ChevronRight, Megaphone, Pin, PencilLine, Plus, Upload, UserPlus } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useTeachersQ, useExamsQ, useRoutineQ, useSubjectsQ, useMatrixQ, useMyCellsQ, useMyExamsQ, useNoticesQ, usePlatformQ, useSignupsQ, useStudentsQ } from "@/api/hooks";
@@ -7,7 +7,6 @@ import type { Exam } from "@/api/contracts";
 import { Btn, Ring, Skeleton } from "@/components/ui";
 import { countdown, fmtDateTime } from "@/lib/dates";
 import { useT } from "@/lib/i18n";
-import { SEASON_ACCENT } from "@/lib/season";
 import { useUI } from "@/store/ui";
 import { launch } from "./launch";
 import { useActionItems } from "@/features/actions/useActionItems";
@@ -23,7 +22,7 @@ function Widget({ title, children, onClick, span }: { title: string; children: R
   return (
     <section className={`card min-w-0 p-4 ${span === 2 ? "wspan-2" : ""}`}>
       <header className="mb-2 flex items-center justify-between">
-        <h3 className="text-[11.5px] font-bold uppercase tracking-wider" style={{ color: "var(--ink-2)" }}>{title}</h3>
+        <h3 className="text-[13px] font-bold uppercase tracking-wider" style={{ color: "var(--ink-2)" }}>{title}</h3>
         {onClick ? <Btn variant="icon" size="sm" onClick={onClick} aria-label={title}><ChevronRight size={14} /></Btn> : null}
       </header>
       {children}
@@ -31,19 +30,37 @@ function Widget({ title, children, onClick, span }: { title: string; children: R
   );
 }
 
+function AdminStats() {
+  const { n } = useT();
+  const students = useStudentsQ();
+  const teachers = useTeachersQ();
+  const exams = useExamsQ();
+  const exam = pickExam(exams.data);
+  const matrix = useMatrixQ(exam?.id ?? "");
+  const cells = matrix.data?.cells ?? [];
+  const pct = cells.length ? cells.filter((c) => c.state === "verified" || c.state === "published").length / cells.length : 0;
+  const published = (matrix.data?.publications ?? []).filter((p) => p.state === "published").length;
+  const items: [string, string][] = [
+    [students.isLoading ? "…" : n(students.data?.length ?? 0), "Students"], [teachers.isLoading ? "…" : n(teachers.data?.length ?? 0), "Teachers"],
+    [matrix.isLoading ? "…" : `${Math.round(pct * 100)}%`, "Marks verified"], [matrix.isLoading ? "…" : n(published), "Published"],
+  ];
+  return <div className="hero-stats">{items.map(([v, l]) => <div key={l} className="hero-stat"><b>{v}</b><span>{l}</span></div>)}</div>;
+}
+
 function SeasonBanner() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const season = useSeason();
   const session = useUI((s) => s.session);
+  const role = session?.role;
+  const today = new Intl.DateTimeFormat(lang === "bn" ? "bn-BD" : "en-GB", { timeZone: "Asia/Dhaka", weekday: "long", day: "numeric", month: "long" }).format(new Date());
   return (
-    <section className="card relative overflow-hidden p-5" style={{ gridColumn: "1 / -1" }}>
-            <div className="flex items-center gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-xl text-white" style={{ background: SEASON_ACCENT[season] }}>{season === "admission" ? <GraduationCap size={20} /> : season === "exam" ? <PencilLine size={20} /> : season === "result" ? <Trophy size={20} /> : <Flag size={20} />}</span>
-        <div>
-          <div className="serif-bn text-lg font-bold">{t(`season.${season}.greet`)}{session ? `, ${session.name.split(",")[0]}` : ""}</div>
-          <div className="muted text-[13px]">{t(`season.${season}.hint`)}</div>
-        </div>
+    <section className="hero-card" style={{ gridColumn: "1 / -1" }}>
+      <div className="min-w-0">
+        <div className="hero-kicker">{t(`season.${season}`)} · {today}</div>
+        <h2 className="hero-title">{t(`season.${season}.greet`)}{session ? `, ${session.name.split(",")[0]}` : ""}</h2>
+        <p className="hero-hint">{t(`season.${season}.hint`)}</p>
       </div>
+      {role === "headmaster" || role === "registrar" ? <AdminStats /> : null}
     </section>
   );
 }
@@ -56,7 +73,7 @@ function NoticesWidget() {
       {isLoading ? <Skeleton h={60} /> : (
         <ul className="grid gap-2">
           {(data ?? []).slice(0, 3).map((n) => (
-            <li key={n.id} className="text-[13px]"><div className="font-semibold">{n.pinned ? <Pin size={12} className="mr-1 inline -translate-y-px" /> : null}{n.title}</div><div className="faint text-[11px]">{fmtDateTime(n.publishAt, lang)}</div></li>
+            <li key={n.id} className="text-[14.5px]"><div className="font-semibold">{n.pinned ? <Pin size={12} className="mr-1 inline -translate-y-px" /> : null}{n.title}</div><div className="faint text-[12.5px]">{fmtDateTime(n.publishAt, lang)}</div></li>
           ))}
         </ul>
       )}
@@ -86,17 +103,17 @@ function RoutineWidget() {
   const { current, next, day } = currentAndNext(q.data ?? [], now);
   const line = (label: string, s: NonNullable<typeof current>) => (
     <div className="flex items-center justify-between gap-2 rounded-xl px-3 py-2" style={{ background: "var(--paper-2)" }}>
-      <div className="min-w-0"><div className="faint text-[11px] font-bold uppercase">{label}</div><div className="truncate font-bold">{lang === "bn" ? bn(s.subject) : s.subject}{role === "teacher" ? ` · ${s.classNo}-${s.section}` : ""}</div></div>
-      <div className="faint shrink-0 text-[12px]">{periodTime(s.period)}</div>
+      <div className="min-w-0"><div className="faint text-[12.5px] font-bold uppercase">{label}</div><div className="truncate font-bold">{lang === "bn" ? bn(s.subject) : s.subject}{role === "teacher" ? ` · ${s.classNo}-${s.section}` : ""}</div></div>
+      <div className="faint shrink-0 text-[13.5px]">{periodTime(s.period)}</div>
     </div>
   );
   return (
     <Widget title={t("widget.routine")} onClick={() => launch("routine")}>
-      {q.isLoading ? <Skeleton h={60} /> : day < 0 ? <p className="muted text-[13px]">{t("rt.weekend")}</p> : (
+      {q.isLoading ? <Skeleton h={60} /> : day < 0 ? <p className="muted text-[14.5px]">{t("rt.weekend")}</p> : (
         <div className="grid gap-2">
           {current ? line(t("rt.now"), current) : null}
           {next ? line(t("rt.next"), next) : null}
-          {!current && !next ? <p className="muted text-[13px]">{t("rt.noclass")}</p> : null}
+          {!current && !next ? <p className="muted text-[14.5px]">{t("rt.noclass")}</p> : null}
         </div>
       )}
     </Widget>
@@ -125,19 +142,19 @@ function RegistrarWidgets() {
   return (
     <>
       <Widget title={t("widget.approvals")} onClick={() => launch("approvals")}>
-        {signups.isLoading ? <Skeleton h={40} /> : <div className="flex items-baseline gap-2"><span className="text-3xl font-extrabold">{n(signups.data?.length ?? 0)}</span><span className="muted text-[13px]">{t("widget.approvals.sub")}</span></div>}
+        {signups.isLoading ? <Skeleton h={40} /> : <div className="flex items-baseline gap-2"><span className="text-3xl font-extrabold">{n(signups.data?.length ?? 0)}</span><span className="muted text-[14.5px]">{t("widget.approvals.sub")}</span></div>}
       </Widget>
       <Widget title={t("widget.publish")} onClick={() => launch("results")}>
         {matrix.isLoading ? <Skeleton h={40} /> : (
           <div className="grid grid-cols-3 gap-2 text-center">
-            <div><div className="text-2xl font-extrabold" style={{ color: "var(--ok)" }}>{n(ready)}</div><div className="faint text-[11px]">{t("widget.ready")}</div></div>
-            <div><div className="text-2xl font-extrabold">{n(scheduled)}</div><div className="faint text-[11px]">{t("widget.scheduled")}</div></div>
-            <div><div className="text-2xl font-extrabold">{n(published)}</div><div className="faint text-[11px]">{t("widget.published")}</div></div>
+            <div><div className="text-2xl font-extrabold" style={{ color: "var(--ok)" }}>{n(ready)}</div><div className="faint text-[12.5px]">{t("widget.ready")}</div></div>
+            <div><div className="text-2xl font-extrabold">{n(scheduled)}</div><div className="faint text-[12.5px]">{t("widget.scheduled")}</div></div>
+            <div><div className="text-2xl font-extrabold">{n(published)}</div><div className="faint text-[12.5px]">{t("widget.published")}</div></div>
           </div>
         )}
       </Widget>
       <Widget title={t("widget.onboarding")} onClick={() => launch("students")}>
-        <div className="flex items-center gap-3"><Ring value={claimed} label={t("widget.onboarding")} /><div className="muted text-[13px]">{t("widget.onboarding.sub")}</div></div>
+        <div className="flex items-center gap-3"><Ring value={claimed} label={t("widget.onboarding")} /><div className="muted text-[14.5px]">{t("widget.onboarding.sub")}</div></div>
       </Widget>
       <NoticesWidget />
       <Quick items={[
@@ -159,8 +176,8 @@ function TeacherWidgets() {
   return (
     <>
       <Widget title={t("widget.marksdue")} onClick={() => launch("marks")}>
-        {cells.isLoading ? <Skeleton h={40} /> : <div className="flex items-baseline gap-2"><span className="text-3xl font-extrabold">{n(todo)}</span><span className="muted text-[13px]">{t("widget.marksdue.sub")}</span></div>}
-        {returned ? <div className="mt-1 text-[12px]" style={{ color: "var(--warn)" }}>{t("widget.returned", { n: returned })}</div> : null}
+        {cells.isLoading ? <Skeleton h={40} /> : <div className="flex items-baseline gap-2"><span className="text-3xl font-extrabold">{n(todo)}</span><span className="muted text-[14.5px]">{t("widget.marksdue.sub")}</span></div>}
+        {returned ? <div className="mt-1 text-[13.5px]" style={{ color: "var(--warn)" }}>{t("widget.returned", { n: returned })}</div> : null}
       </Widget>
       <RoutineWidget />
       <NoticesWidget />
@@ -184,10 +201,10 @@ function StudentWidgets() {
     <>
       <Widget title={t("widget.result")} span={2}>
         {q.isLoading ? <Skeleton h={70} /> : sch ? (
-          <div><div className="muted text-[13px]">{t("widget.result.coming", { time: fmtDateTime(sch.at ?? "", lang) })}</div><div className="mt-1 font-mono text-3xl font-extrabold tabular-nums" aria-live="off">{countdown(sch.at ?? "", now)}</div></div>
+          <div><div className="muted text-[14.5px]">{t("widget.result.coming", { time: fmtDateTime(sch.at ?? "", lang) })}</div><div className="mt-1 font-mono text-3xl font-extrabold tabular-nums" aria-live="off">{countdown(sch.at ?? "", now)}</div></div>
         ) : latest ? (
-          <div className="flex items-center justify-between gap-3"><div><div className="font-bold">{lang === "bn" ? latest.exam.nameBn : latest.exam.name}</div><div className="muted text-[13px]">{t("widget.result.ready")}</div></div><Btn variant="primary" onClick={() => launch("myresults")}>{t("widget.result.open")}</Btn></div>
-        ) : <div className="muted text-[13px]">{t("widget.result.none")}</div>}
+          <div className="flex items-center justify-between gap-3"><div><div className="font-bold">{lang === "bn" ? latest.exam.nameBn : latest.exam.name}</div><div className="muted text-[14.5px]">{t("widget.result.ready")}</div></div><Btn variant="primary" onClick={() => launch("myresults")}>{t("widget.result.open")}</Btn></div>
+        ) : <div className="muted text-[14.5px]">{t("widget.result.none")}</div>}
       </Widget>
       <RoutineWidget />
       <NoticesWidget />
@@ -216,11 +233,11 @@ function ActionsWidget() {
   const top = items.slice(0, 3);
   return (
     <Widget title={`${t("app.actions")} · ${n(items.length)}`} onClick={() => launch("actions")} span={2}>
-      {isLoading ? <Skeleton h={60} /> : top.length === 0 ? <p className="muted text-[13px]">{t("ac.clear")}</p> : (
+      {isLoading ? <Skeleton h={60} /> : top.length === 0 ? <p className="muted text-[14.5px]">{t("ac.clear")}</p> : (
         <ul className="grid gap-1">
           {top.map((i) => (
             <li key={i.id}>
-              <button type="button" className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-[13.5px] hover:bg-[var(--hover)]" onClick={() => launch("actions")}>
+              <button type="button" className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-[15px] hover:bg-[var(--hover)]" onClick={() => launch("actions")}>
                 <span className={`prio prio-${i.priority}`} aria-hidden /><span className="sr-only">{t(`ac.prio.${i.priority}`)}</span>
                 <span className="min-w-0 flex-1 truncate">{i.title}</span>
                 <ChevronRight size={14} className="faint shrink-0" />
@@ -234,31 +251,10 @@ function ActionsWidget() {
 }
 
 function HeadmasterWidgets() {
-  const { n } = useT();
-  const students = useStudentsQ();
-  const teachers = useTeachersQ();
-  const exams = useExamsQ();
-  const exam = pickExam(exams.data);
-  const matrix = useMatrixQ(exam?.id ?? "");
-  const cells = matrix.data?.cells ?? [];
-  const verified = cells.filter((c) => c.state === "verified" || c.state === "published").length;
-  const pct = cells.length ? verified / cells.length : 0;
-  const published = (matrix.data?.publications ?? []).filter((p) => p.state === "published").length;
-  const kpi = (label: string, value: string, sub: string) => (
-    <div className="min-w-0"><div className="faint text-[11px] font-bold uppercase tracking-wider">{label}</div><div className="mt-1 text-3xl font-extrabold leading-none">{value}</div><div className="muted mt-1 truncate text-[12px]">{sub}</div></div>
-  );
   return (
     <>
-      <Widget title="School overview" span={2} onClick={() => launch("students")}>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {kpi("Students", students.isLoading ? "…" : n(students.data?.length ?? 0), "on the roll")}
-          {kpi("Teachers", teachers.isLoading ? "…" : n(teachers.data?.length ?? 0), "teaching staff")}
-          {kpi("Marks verified", matrix.isLoading ? "…" : `${Math.round(pct * 100)}%`, exam ? exam.name : "—")}
-          {kpi("Published", matrix.isLoading ? "…" : n(published), "classes this exam")}
-        </div>
-      </Widget>
       <Widget title="Your decision" onClick={() => launch("results")}>
-        <div className="text-[13px]"><div className="muted">Verified results wait for approval and publishing.</div><button type="button" className="btn btn-primary mt-3" onClick={(e) => { e.stopPropagation(); launch("results"); }}>Open Results Center</button></div>
+        <div className="text-[14.5px]"><div className="muted">Verified results wait for approval and publishing.</div><button type="button" className="btn btn-primary mt-3" onClick={(e) => { e.stopPropagation(); launch("results"); }}>Open Results Center</button></div>
       </Widget>
       <RegistrarWidgets />
     </>
@@ -268,7 +264,7 @@ function HeadmasterWidgets() {
 export function Widgets() {
   const role = useUI((s) => s.session?.role);
   return (
-    <div className="widgets-grid grid gap-4 p-5" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(260px, 100%), 1fr))", maxWidth: 1240 }}>
+    <div className="widgets-grid grid gap-5 p-6" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(300px, 100%), 1fr))" }}>
       <SeasonBanner />
       {role && role !== "petra" ? <ActionsWidget /> : null}
       {role === "headmaster" ? <HeadmasterWidgets /> : role === "registrar" ? <RegistrarWidgets /> : role === "teacher" ? <TeacherWidgets /> : role === "student" ? <StudentWidgets /> : role === "petra" ? <PetraWidgets /> : null}

@@ -37,7 +37,7 @@ export default function PetraConsoleLogin() {
 
   return (
     <AuthFrame brand={BRAND} title={t("pc.title")}>
-      <p className="muted mb-4 text-[13px]">{t("pc.sub")}</p>
+      <p className="muted mb-4 text-[14.5px]">{t("pc.sub")}</p>
       <form onSubmit={handleSubmit(go)} noValidate>
         <Field label={t("auth.id")} error={errors.id?.message}><input className="input" autoComplete="username" aria-invalid={!!errors.id} {...register("id")} /></Field>
         <Field label={t("auth.password")} error={errors.password?.message}><input className="input" type="password" autoComplete="current-password" aria-invalid={!!errors.password} {...register("password")} /></Field>

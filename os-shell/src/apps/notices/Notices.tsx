@@ -50,8 +50,8 @@ export default function Notices() {
                 <div className="flex items-start gap-2">
                   <button type="button" className="min-w-0 flex-1 text-left" onClick={() => openNotice(x)}>
                     <div className="flex flex-wrap items-center gap-1.5">{!reg && userId && !(x.readBy ?? []).includes(userId) ? <span className="prio prio-medium" aria-label={t("ac.unread")} /> : null}<span className="font-bold">{x.pinned ? <Pin size={12} className="mr-1 inline -translate-y-px" /> : null}{x.title}</span><Badge>{x.audience === "all" ? t("nt.aud.all") : x.audience === "teachers" ? t("nt.aud.teachers") : t("nt.aud.class", { c: x.classNo ?? "" })}</Badge>{future ? <Badge tone="warn">{t("nt.scheduled")}</Badge> : null}</div>
-                    <div className="muted mt-1 line-clamp-2 text-[13px]">{x.body}</div>
-                    <div className="faint mt-1 flex items-center gap-3 text-[11px]"><span>{fmtDateTime(x.publishAt, lang)}</span>{reg ? <span className="flex items-center gap-1"><Eye size={11} />{n(x.reads)}</span> : null}</div>
+                    <div className="muted mt-1 line-clamp-2 text-[14.5px]">{x.body}</div>
+                    <div className="faint mt-1 flex items-center gap-3 text-[12.5px]"><span>{fmtDateTime(x.publishAt, lang)}</span>{reg ? <span className="flex items-center gap-1"><Eye size={11} />{n(x.reads)}</span> : null}</div>
                   </button>
                   {reg ? <Btn variant="icon" size="sm" aria-label={x.pinned ? t("nt.unpin") : t("nt.pin")} onClick={() => pin.mutate(x.id)}>{x.pinned ? <PinOff size={14} /> : <Pin size={14} />}</Btn> : null}
                 </div>
@@ -60,7 +60,7 @@ export default function Notices() {
           })}
         </ul>
       )}
-      <Modal open={!!sel} onClose={() => setSel(null)} title={sel?.title ?? ""} footer={<Btn onClick={() => setSel(null)}>{t("close")}</Btn>}>{sel ? <><p className="whitespace-pre-wrap text-[14px]">{sel.body}</p><div className="faint mt-3 text-[12px]">{fmtDateTime(sel.publishAt, lang)} · {sel.author}</div></> : null}</Modal>
+      <Modal open={!!sel} onClose={() => setSel(null)} title={sel?.title ?? ""} footer={<Btn onClick={() => setSel(null)}>{t("close")}</Btn>}>{sel ? <><p className="whitespace-pre-wrap text-[15.5px]">{sel.body}</p><div className="faint mt-3 text-[13.5px]">{fmtDateTime(sel.publishAt, lang)} · {sel.author}</div></> : null}</Modal>
       {open ? <Compose onClose={() => setOpen(false)} /> : null}
     </div>
   );
@@ -87,7 +87,7 @@ function Compose({ onClose }: { onClose: () => void }) {
         {f.audience === "class" ? <Field label={t("col.class")}><select className="select" value={f.classNo} onChange={(e) => setF({ ...f, classNo: Number(e.target.value) })}>{Array.from({ length: 10 }, (_, i) => i + 1).map((c) => <option key={c} value={c}>{c}</option>)}</select></Field> : <div />}
       </div>
       <Field label={t("nt.schedule")}><input className="input" type="datetime-local" value={f.at} onChange={(e) => setF({ ...f, at: e.target.value })} /></Field>
-      <label className="flex items-center gap-2 text-[13px]"><input type="checkbox" checked={f.pinned} onChange={(e) => setF({ ...f, pinned: e.target.checked })} />{t("nt.pin")}</label>
+      <label className="flex items-center gap-2 text-[14.5px]"><input type="checkbox" checked={f.pinned} onChange={(e) => setF({ ...f, pinned: e.target.checked })} />{t("nt.pin")}</label>
     </Modal>
   );
 }

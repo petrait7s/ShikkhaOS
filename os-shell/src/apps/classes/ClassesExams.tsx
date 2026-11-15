@@ -20,7 +20,7 @@ export default function ClassesExams() {
       <div className="flex items-center gap-2 border-b p-3" style={{ borderColor: "var(--line)" }}>
         <span className="chip">{t("ce.year")} 2026</span>
         <div className="flex rounded-lg p-0.5" style={{ background: "var(--paper-2)" }} role="tablist">
-          {(["classes", "exams", "grading"] as Tab[]).map((k) => <button key={k} role="tab" aria-selected={tab === k} type="button" onClick={() => setTab(k)} className={cn("h-7 rounded-md px-3 text-[12px] font-semibold")} style={{ background: tab === k ? "var(--card)" : "transparent" }}>{t(`ce.tab.${k}`)}</button>)}
+          {(["classes", "exams", "grading"] as Tab[]).map((k) => <button key={k} role="tab" aria-selected={tab === k} type="button" onClick={() => setTab(k)} className={cn("h-7 rounded-md px-3 text-[13.5px] font-semibold")} style={{ background: tab === k ? "var(--card)" : "transparent" }}>{t(`ce.tab.${k}`)}</button>)}
         </div>
       </div>
       <div className="scroll-thin min-h-0 flex-1 overflow-auto">{tab === "classes" ? <Classes /> : tab === "exams" ? <Exams /> : <GradingEditor />}</div>
@@ -42,7 +42,7 @@ function Classes() {
   return (
     <div className="p-3">
       <div className="mb-3 flex flex-wrap gap-1.5">{Array.from({ length: 10 }, (_, i) => i + 1).map((c) => <button key={c} type="button" onClick={() => setCls(c)} aria-pressed={cls === c} className="btn btn-sm" style={cls === c ? { background: "var(--accent)", color: "#fff" } : undefined}>{t("rc.class", { c, s: "" }).replace(/-$/, "")}</button>)}</div>
-      <div className="muted mb-2 text-[13px]">{t("ce.sections")}: {["A", "B"].filter((s) => count(cls, s) > 0).map((s) => `${s} (${n(count(cls, s))})`).join(", ")}</div>
+      <div className="muted mb-2 text-[14.5px]">{t("ce.sections")}: {["A", "B"].filter((s) => count(cls, s) > 0).map((s) => `${s} (${n(count(cls, s))})`).join(", ")}</div>
       <table className="table"><thead><tr><th>{t("col.subject")}</th><th>{t("ce.components")}</th><th style={{ width: 110 }}>{t("ce.full")}</th><th style={{ width: 110 }}>{t("ce.pass")}</th><th /></tr></thead>
         <tbody>{defs.map((d) => {
           const e = edit[d.subject] ?? { full: d.full, pass: d.pass };
@@ -71,7 +71,7 @@ function Exams() {
   return (
     <div className="p-3">
       <div className="mb-3 flex justify-end"><Btn variant="primary" onClick={() => setOpen(true)}><Plus size={14} />{t("ce.exam.new")}</Btn></div>
-      <ul className="grid gap-2">{(exams.data ?? []).map((e) => <li key={e.id} className="card flex items-center justify-between p-3"><div><div className="font-bold">{lang === "bn" ? e.nameBn : e.name}</div><div className="faint text-[12px]">{e.year}</div></div>{e.status ? <span className={`status ${e.status === "DRAFT" ? "status-warn" : "status-ok"}`}>{e.status === "DRAFT" ? "Draft" : e.status === "AUTHORIZED" ? "Authorized" : e.status === "IN_PROGRESS" ? "In progress" : "Closed"}</span> : null}{role === "headmaster" && e.status === "DRAFT" ? <Btn size="sm" variant="primary" disabled={authorize.isPending} onClick={() => authorize.mutate(e.id)}>Authorize</Btn> : null}<span className="chip">{t(e.kind === "term" ? "ce.exam.term" : "ce.exam.test")}</span></li>)}</ul>
+      <ul className="grid gap-2">{(exams.data ?? []).map((e) => <li key={e.id} className="card flex items-center justify-between p-3"><div><div className="font-bold">{lang === "bn" ? e.nameBn : e.name}</div><div className="faint text-[13.5px]">{e.year}</div></div>{e.status ? <span className={`status ${e.status === "DRAFT" ? "status-warn" : "status-ok"}`}>{e.status === "DRAFT" ? "Draft" : e.status === "AUTHORIZED" ? "Authorized" : e.status === "IN_PROGRESS" ? "In progress" : "Closed"}</span> : null}{role === "headmaster" && e.status === "DRAFT" ? <Btn size="sm" variant="primary" disabled={authorize.isPending} onClick={() => authorize.mutate(e.id)}>Authorize</Btn> : null}<span className="chip">{t(e.kind === "term" ? "ce.exam.term" : "ce.exam.test")}</span></li>)}</ul>
       <Modal open={open} onClose={() => setOpen(false)} title={t("ce.exam.new")} footer={<><Btn onClick={() => setOpen(false)}>{t("cancel")}</Btn><Btn variant="primary" disabled={name.trim().length < 3 || create.isPending} onClick={() => void create.mutateAsync(undefined).then(() => { setOpen(false); setName(""); setNameBn(""); }).catch(() => undefined)}>{t("create")}</Btn></>}>
         <Field label={t("ce.exam.name")}><input className="input" value={name} onChange={(e) => setName(e.target.value)} /></Field>
         <Field label={t("ce.exam.namebn")}><input className="input" value={nameBn} onChange={(e) => setNameBn(e.target.value)} /></Field>
@@ -101,7 +101,7 @@ function GradingEditor() {
           <td><input className="input !h-8 !w-24" type="number" step="0.25" value={b.point} aria-label={t("ce.point")} onChange={(e) => setBand(i, "point", e.target.value)} /></td></tr>)}</tbody></table>
       {!valid ? <div className="field-error mt-2" role="alert">{t("ce.grading.invalid")}</div> : null}
       <div className="mt-3 flex gap-2"><Btn variant="primary" disabled={!draft || !valid || save.isPending} onClick={() => draft && save.mutate(draft)}><Save size={14} />{t("save")}</Btn><Btn disabled={!draft} onClick={() => setDraft(null)}>{t("ce.reset")}</Btn></div>
-      <p className="muted mt-3 text-[12px]">{t("ce.grading.note")}</p>
+      <p className="muted mt-3 text-[13.5px]">{t("ce.grading.note")}</p>
     </div>
   );
 }

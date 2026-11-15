@@ -20,30 +20,34 @@ export function useBrand(): SchoolBrand | null {
   return b;
 }
 
+/** Login / sign-up shell: school badge, name and motto on top, the card, and "Powered by Petra" at the bottom. */
 export function AuthFrame({ children, brand, title }: { children: ReactNode; brand: SchoolBrand | null; title?: string }) {
   const { t, lang } = useT();
   const { resolvedTheme, setTheme } = useTheme();
   const setLang = useUI((s) => s.setLang);
   const season = seasonFromCalendar();
   return (
-    <main className="wallpaper relative grid min-h-dvh place-items-center px-4 py-10">
+    <main className="wallpaper auth-main relative flex min-h-dvh flex-col items-center px-4 pb-5 pt-8">
       <div className="no-print absolute right-4 top-4 flex gap-2">
         <Btn size="sm" onClick={() => setLang(lang === "en" ? "bn" : "en")} aria-label={t("toggle.lang")}><Languages size={14} />{lang === "en" ? "বাংলা" : "English"}</Btn>
         <Btn size="sm" variant="icon" onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")} aria-label={t("toggle.theme")}>{resolvedTheme === "dark" ? <Sun size={15} /> : <Moon size={15} />}</Btn>
       </div>
-      <div className="w-full max-w-[420px]">
-        <div className="mb-5 flex flex-col items-center text-center">
-          <div className="brand-lockup"><img src="/logo-tile.jpg" alt="ShikkhaOS" /></div>
-          <h1 className="mt-3 text-[22px] font-extrabold leading-tight tracking-tight">ShikkhaOS</h1>
-          {brand ? <p className="muted mt-0.5 text-[13px] font-semibold">{lang === "bn" ? brand.nameBn : brand.name}</p> : null}
-          {brand?.id !== "petra" ? <p className="muted mt-1 text-[13px]">{t(`season.${season}.greet`)}</p> : null}
+      <div className="my-auto w-full max-w-[520px] py-4">
+        <div className="auth-head">
+          {brand ? <div className="school-badge" aria-hidden>{brand.monogram}</div> : <div className="school-badge skeleton" />}
+          <h1 className="auth-name">{brand ? (lang === "bn" ? brand.nameBn : brand.name) : "ShikkhaOS"}</h1>
+          {brand && lang !== "bn" && brand.nameBn ? <p className="auth-bn">{brand.nameBn}</p> : null}
+          {brand?.motto ? <p className="auth-motto">&ldquo;{brand.motto}&rdquo;</p> : brand?.id !== "petra" ? <p className="muted text-[14.5px]">{t(`season.${season}.greet`)}</p> : null}
         </div>
-        <div className="sheet p-6">
-          {title ? <h2 className="mb-4 text-base font-bold">{title}</h2> : null}
+        <div className="sheet auth-card">
+          {title ? <h2 className="auth-title">{title}</h2> : null}
           {children}
         </div>
-        <p className="faint mt-4 text-center text-xs">{t("auth.private")}</p>
+        <p className="faint mt-4 text-center text-[13px]">{t("auth.private")}</p>
       </div>
+      <footer className="auth-foot">
+        <img src="/logo-mark.png" alt="" /><span>Powered by <b>Petra</b></span><span className="faint">· ShikkhaOS</span>
+      </footer>
     </main>
   );
 }

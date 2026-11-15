@@ -60,8 +60,8 @@ export default function MarksEntry() {
             return (
               <li key={`${c.classNo}${c.section}${c.subject}`}>
                 <button type="button" onClick={() => setSelKey(c)} className={cn("hair w-full p-2 text-left")} style={active ? { borderColor: "var(--accent)", outline: "2px solid var(--accent)" } : undefined}>
-                  <div className="text-[13px] font-bold">{t("rc.class", { c: c.classNo, s: c.section })} · {c.subject}</div>
-                  <div className="faint text-[11px]">{t(`state.${c.state}`)}{c.returnComment ? ` · ${t("rc.returned")}` : ""}</div>
+                  <div className="text-[14.5px] font-bold">{t("rc.class", { c: c.classNo, s: c.section })} · {c.subject}</div>
+                  <div className="faint text-[12.5px]">{t(`state.${c.state}`)}{c.returnComment ? ` · ${t("rc.returned")}` : ""}</div>
                 </button>
               </li>
             );
@@ -154,7 +154,7 @@ function Grid({ cell, examId, roster, full }: { cell: Cell; examId: string; rost
         {locked ? <span className="chip" style={{ color: "var(--warn)" }}><Lock size={11} />{t("me.locked")}</span> : null}
         <div className="flex-1" />
         <Btn size="sm" onClick={() => setPaperOpen(true)}><FileText size={13} />{hasPaper ? t("paper.attached") : paperLocked ? t("paper.none.short") : t("paper.add")}</Btn>
-        <span role="status" aria-live="polite" className="text-[12.5px]">
+        <span role="status" aria-live="polite" className="text-[14px]">
           {saveState === "saving" ? <span className="status status-info"><Loader2 size={12} className="animate-spin" />{t("me.saving")}</span>
             : saveState === "dirty" ? <span className="status status-muted"><CircleDot size={12} />{t("me.unsaved")}</span>
             : saveState === "failed" ? <span className="status status-danger"><AlertTriangle size={12} />{t("me.savefail")}<button type="button" className="ml-1 inline-flex items-center gap-1 underline" onClick={saveNow}><RotateCw size={11} />{t("retry")}</button></span>
@@ -162,8 +162,8 @@ function Grid({ cell, examId, roster, full }: { cell: Cell; examId: string; rost
         </span>
         <Btn variant="primary" disabled={locked || bad > 0 || filled !== roster.length || submit.isPending} onClick={() => setConfirm(true)}><Send size={14} />{t("me.submit")}</Btn>
       </div>
-      {cell.returnComment ? <div className="mx-3 mt-3 rounded-lg border p-2 text-[13px]" style={{ borderColor: "var(--warn)", color: "var(--warn)" }}>{t("rc.returned")}: {cell.returnComment}</div> : null}
-      <div className="faint px-3 pt-2 text-[12px]">{t("me.tip", { full })}</div>
+      {cell.returnComment ? <div className="mx-3 mt-3 rounded-lg border p-2 text-[14.5px]" style={{ borderColor: "var(--warn)", color: "var(--warn)" }}>{t("rc.returned")}: {cell.returnComment}</div> : null}
+      <div className="faint px-3 pt-2 text-[13.5px]">{t("me.tip", { full })}</div>
       <div className="scroll-thin min-h-0 flex-1 overflow-auto p-3">
         <table className="table cell-grid" role="grid" aria-label={t("app.marks")}>
           <thead><tr><th style={{ width: 64 }}>{t("col.roll")}</th><th>{t("col.name")}</th><th style={{ width: 140 }} className="text-right">{t("col.marks")} /{full}</th></tr></thead>
@@ -188,15 +188,15 @@ function Grid({ cell, examId, roster, full }: { cell: Cell; examId: string; rost
           </tbody>
         </table>
       </div>
-      <div className="flex items-center gap-3 border-t px-3 py-2 text-[12px]" style={{ borderColor: "var(--line)" }}>
+      <div className="flex items-center gap-3 border-t px-3 py-2 text-[13.5px]" style={{ borderColor: "var(--line)" }}>
         <span>{t("me.filled", { a: filled, b: roster.length })}</span>
         {bad ? <span style={{ color: "var(--danger)" }}>{t("me.invalid", { n: bad, full })}</span> : null}
       </div>
       {paperOpen ? <PaperModal k={k} readOnly={paperLocked} onClose={() => setPaperOpen(false)} /> : null}
       <Modal open={confirm} onClose={() => setConfirm(false)} title={t("me.confirm.title")}
         footer={<><Btn onClick={() => setConfirm(false)}>{t("cancel")}</Btn><Btn variant="primary" disabled={submit.isPending} onClick={() => void submit.mutateAsync(undefined).then(() => { setConfirm(false); void qc.invalidateQueries({ queryKey: ["myCells"] }); }).catch(() => undefined)}>{t("me.submit")}</Btn></>}>
-        <p className="text-[13px]">{t("me.confirm.body", { n: roster.length, c: cell.classNo, s: cell.section, sub: cell.subject })}</p>
-        {!hasPaper ? <p className="mt-2 text-[12px]" style={{ color: "var(--warn)" }}>{t("paper.warn")}</p> : null}
+        <p className="text-[14.5px]">{t("me.confirm.body", { n: roster.length, c: cell.classNo, s: cell.section, sub: cell.subject })}</p>
+        {!hasPaper ? <p className="mt-2 text-[13.5px]" style={{ color: "var(--warn)" }}>{t("paper.warn")}</p> : null}
       </Modal>
     </div>
   );

@@ -88,7 +88,7 @@ export function WindowFrame({ app, win, children }: { app: AppDef; win: WinState
           exit={{ opacity: 0, scale: 0.96 }}
           transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.8 }}
           className={`win absolute flex flex-col overflow-hidden ${win.z >= topZ ? "win-focus" : ""}`}
-          style={{ ...style, transformOrigin: "50% 100%", display: win.min ? "none" : "flex", ["--accent" as string]: app.color }}
+          style={{ ...style, transformOrigin: "50% 100%", display: win.min ? "none" : "flex", ["--tile" as string]: app.color }}
           onPointerDown={() => focusApp(app.id)}
           aria-label={t(`app.${app.id}`)}
           role="dialog"
@@ -100,7 +100,7 @@ export function WindowFrame({ app, win, children }: { app: AppDef; win: WinState
               <button type="button" className="traffic min" aria-label={t("win.minimize")} onClick={() => toggleMin(app.id)}><Minus /></button>
               <button type="button" className="traffic max" aria-label={t("win.maximize")} onClick={() => toggleMax(app.id)}>{win.max ? <Maximize2 /> : <Plus />}</button>
             </div>
-            <span className="pointer-events-none absolute inset-x-24 truncate text-center text-[13px] font-semibold" style={{ color: win.z >= topZ ? "var(--ink)" : "var(--ink-3)" }}>{t(`app.${app.id}`)}</span>
+            <span className="pointer-events-none absolute inset-x-24 truncate text-center text-[14.5px] font-semibold" style={{ color: win.z >= topZ ? "var(--ink)" : "var(--ink-3)" }}>{t(`app.${app.id}`)}</span>
           </div>
           <div className="scroll-thin min-h-0 flex-1 overflow-auto">{children}</div>
           {!win.max ? (

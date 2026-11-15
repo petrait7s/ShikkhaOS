@@ -19,16 +19,16 @@ export default function Schools() {
   };
   return (
     <div className="p-4">
-      <p className="muted mb-3 text-[13px]">{t("petra.note")}</p>
+      <p className="muted mb-3 text-[14.5px]">{t("petra.note")}</p>
       <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
         {(schools.data ?? []).map(({ school, students, teachers, lastActive }) => (
           <section key={school.id} className="card p-4">
             <div className="flex items-center gap-3">
               <Monogram text={school.monogram} color={school.primary} size={44} />
-              <div className="min-w-0"><div className="serif-bn truncate font-bold">{lang === "bn" ? school.nameBn : school.name}</div><div className="faint text-[12px]">{school.city}</div></div>
+              <div className="min-w-0"><div className="serif-bn truncate font-bold">{lang === "bn" ? school.nameBn : school.name}</div><div className="faint text-[13.5px]">{school.city}</div></div>
             </div>
-            <div className="mt-3 flex items-center justify-between"><Badge tone={school.status === "active" ? "ok" : school.status === "trial" ? "warn" : "danger"}>{t(`petra.status.${school.status}`)}</Badge><span className="faint text-[11px]">{t("petra.lastactive")}: {fmtDateTime(lastActive, lang)}</span></div>
-            <div className="mt-3 grid grid-cols-2 gap-2 text-center"><div className="hair p-2"><div className="text-xl font-extrabold">{n(students)}</div><div className="faint text-[11px]">{t("petra.users.students")}</div></div><div className="hair p-2"><div className="text-xl font-extrabold">{n(teachers)}</div><div className="faint text-[11px]">{t("petra.users.teachers")}</div></div></div>
+            <div className="mt-3 flex items-center justify-between"><Badge tone={school.status === "active" ? "ok" : school.status === "trial" ? "warn" : "danger"}>{t(`petra.status.${school.status}`)}</Badge><span className="faint text-[12.5px]">{t("petra.lastactive")}: {fmtDateTime(lastActive, lang)}</span></div>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-center"><div className="hair p-2"><div className="text-xl font-extrabold">{n(students)}</div><div className="faint text-[12.5px]">{t("petra.users.students")}</div></div><div className="hair p-2"><div className="text-xl font-extrabold">{n(teachers)}</div><div className="faint text-[12.5px]">{t("petra.users.teachers")}</div></div></div>
             <div className="mt-3 flex gap-2">
               <Btn size="sm" onClick={() => { document.documentElement.style.setProperty("--school-primary", school.primary); toast.success(t("petra.theme.ok", { n: school.name })); }}><Palette size={13} />{t("petra.theme")}</Btn>
               {school.status === "suspended" ? <Btn size="sm" onClick={() => setStatus(school.id, "active")}>{t("petra.activate")}</Btn> : <Btn size="sm" onClick={() => setStatus(school.id, "suspended")}>{t("petra.suspend")}</Btn>}

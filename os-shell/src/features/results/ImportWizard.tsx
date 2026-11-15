@@ -28,7 +28,7 @@ function RowStatus({ status }: { status: "ok" | "warn" | "error" }) {
 function StepBar({ step }: { step: number }) {
   const { t } = useT();
   return (
-    <ol className="mb-4 flex flex-wrap gap-1.5 text-[12px]">
+    <ol className="mb-4 flex flex-wrap gap-1.5 text-[13.5px]">
       {STEPS.map((s, i) => (
         <li key={s} className={cn("chip", i === step && "font-extrabold")} style={i === step ? { background: "var(--accent)", color: "#fff", borderColor: "transparent" } : i < step ? { color: "var(--ok)" } : undefined}>{i + 1}. {t(s)}</li>
       ))}
@@ -169,43 +169,43 @@ export function ImportWizard({ open, onClose, mode, examId, initialFile, preset 
       {err ? <div className="field-error mb-3" role="alert">{err}</div> : null}
 
       {done ? (
-        <div className="flex flex-col items-center gap-2 py-8 text-center"><CheckCircle2 size={40} style={{ color: "var(--ok)" }} /><div className="font-bold">{done}</div><div className="muted text-[13px]">{t("wiz.done.sub")}</div></div>
+        <div className="flex flex-col items-center gap-2 py-8 text-center"><CheckCircle2 size={40} style={{ color: "var(--ok)" }} /><div className="font-bold">{done}</div><div className="muted text-[14.5px]">{t("wiz.done.sub")}</div></div>
       ) : step === 0 ? (
         <div>
           <label className="hair flex cursor-pointer flex-col items-center gap-2 border-dashed p-10 text-center" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) void load(f); }}>
             <UploadCloud size={30} style={{ color: "var(--link)" }} />
             <span className="font-bold">{t("wiz.drop")}</span>
-            <span className="muted text-[12px]">{t("wiz.drop.sub")}</span>
+            <span className="muted text-[13.5px]">{t("wiz.drop.sub")}</span>
             <input type="file" accept=".xlsx" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) void load(f); e.target.value = ""; }} />
           </label>
           {mode !== "marks" ? <Btn className="mt-3" onClick={() => void downloadTemplate()}><Download size={14} />{t("wiz.template")}</Btn> : null}
         </div>
       ) : step === 1 ? (
         <div>
-          <div className="hair mb-4 flex items-center gap-3 p-3"><FileSpreadsheet size={20} /><div className="min-w-0 flex-1"><div className="truncate font-bold">{file?.name}</div><div className="muted text-[12px]">{sheets.length} {t("wiz.sheets")}{mode === "marks" && layout ? ` · ${t(layout.format === "A" ? "wiz.formatA" : "wiz.formatB")}` : ""}</div></div></div>
+          <div className="hair mb-4 flex items-center gap-3 p-3"><FileSpreadsheet size={20} /><div className="min-w-0 flex-1"><div className="truncate font-bold">{file?.name}</div><div className="muted text-[13.5px]">{sheets.length} {t("wiz.sheets")}{mode === "marks" && layout ? ` · ${t(layout.format === "A" ? "wiz.formatA" : "wiz.formatB")}` : ""}</div></div></div>
           {mode === "marks" && layout ? (
             <div className="grid gap-3 sm:grid-cols-3">
               <Field label={t("col.class")}><select className="select" value={hints.classNo ?? ""} onChange={(e) => setHints({ ...hints, classNo: e.target.value ? Number(e.target.value) : null })}><option value="">—</option>{Array.from({ length: 10 }, (_, i) => i + 1).map((c) => <option key={c} value={c}>{c}</option>)}</select></Field>
               <Field label={t("col.section")}><select className="select" value={hints.section ?? ""} onChange={(e) => setHints({ ...hints, section: e.target.value || null })}><option value="">—</option>{["A", "B"].map((c) => <option key={c} value={c}>{c}</option>)}</select></Field>
               {layout.format === "A" ? (
                 <Field label={t("col.subject")}><select className="select" value={hints.subject ?? ""} onChange={(e) => setHints({ ...hints, subject: e.target.value || null })}><option value="">—</option>{classDefs.map((d) => <option key={d.subject} value={d.subject}>{d.subject}</option>)}</select></Field>
-              ) : <div className="muted self-end pb-2 text-[12px]">{layout.subjectCols.map((c) => c.subject).join(", ")}</div>}
+              ) : <div className="muted self-end pb-2 text-[13.5px]">{layout.subjectCols.map((c) => c.subject).join(", ")}</div>}
             </div>
-          ) : <p className="muted text-[13px]">{t("wiz.detect.generic")}</p>}
+          ) : <p className="muted text-[14.5px]">{t("wiz.detect.generic")}</p>}
         </div>
       ) : step === 2 ? (
         <div className="grid gap-3">
           <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="hair p-3"><div className="text-2xl font-extrabold" style={{ color: "var(--ok)" }}>{good}</div><div className="faint text-[12px]">{t("wiz.valid")}</div></div>
-            <div className="hair p-3"><div className="text-2xl font-extrabold" style={{ color: "var(--danger)" }}>{bad}</div><div className="faint text-[12px]">{t("wiz.errors")}</div></div>
-            <div className="hair p-3"><div className="text-2xl font-extrabold">{total}</div><div className="faint text-[12px]">{t("wiz.rows")}</div></div>
+            <div className="hair p-3"><div className="text-2xl font-extrabold" style={{ color: "var(--ok)" }}>{good}</div><div className="faint text-[13.5px]">{t("wiz.valid")}</div></div>
+            <div className="hair p-3"><div className="text-2xl font-extrabold" style={{ color: "var(--danger)" }}>{bad}</div><div className="faint text-[13.5px]">{t("wiz.errors")}</div></div>
+            <div className="hair p-3"><div className="text-2xl font-extrabold">{total}</div><div className="faint text-[13.5px]">{t("wiz.rows")}</div></div>
           </div>
-          {mode === "marks" && val ? <div className="muted text-[13px]">{t("wiz.warnings", { w: val.counts.warn, a: val.counts.absent, m: val.counts.missing })}</div> : null}
-          {bad ? <Btn onClick={() => void downloadErrors()}><Download size={14} />{t("wiz.errreport")}</Btn> : <div className="flex items-center gap-2 text-[13px]" style={{ color: "var(--ok)" }}><CheckCircle2 size={16} />{t("wiz.clean")}</div>}
+          {mode === "marks" && val ? <div className="muted text-[14.5px]">{t("wiz.warnings", { w: val.counts.warn, a: val.counts.absent, m: val.counts.missing })}</div> : null}
+          {bad ? <Btn onClick={() => void downloadErrors()}><Download size={14} />{t("wiz.errreport")}</Btn> : <div className="flex items-center gap-2 text-[14.5px]" style={{ color: "var(--ok)" }}><CheckCircle2 size={16} />{t("wiz.clean")}</div>}
         </div>
       ) : step === 3 ? (
         <div>
-          <label className="mb-2 flex items-center gap-2 text-[13px]"><input type="checkbox" checked={onlyBad} onChange={(e) => setOnlyBad(e.target.checked)} />{t("wiz.onlybad")}</label>
+          <label className="mb-2 flex items-center gap-2 text-[14.5px]"><input type="checkbox" checked={onlyBad} onChange={(e) => setOnlyBad(e.target.checked)} />{t("wiz.onlybad")}</label>
           <div className="scroll-thin max-h-[360px] overflow-auto rounded-xl border" style={{ borderColor: "var(--line)" }}>
             <table className="table">
               <thead><tr><th>#</th>{mode === "marks" ? <><th>{t("col.roll")}</th><th>{t("col.name")}</th>{previewCols.map((c) => <th key={c}>{c}</th>)}</> : <th>{t("wiz.data")}</th>}<th>{t("col.status")}</th></tr></thead>
@@ -214,18 +214,18 @@ export function ImportWizard({ open, onClose, mode, examId, initialFile, preset 
                   ? (val?.rows ?? []).filter((r) => !onlyBad || r.status !== "ok").map((r) => (
                     <tr key={r.row} style={{ background: r.status === "error" ? "color-mix(in srgb, var(--danger) 10%, transparent)" : r.status === "warn" ? "color-mix(in srgb, var(--warn) 12%, transparent)" : undefined }}>
                       <td>{r.row}</td><td>{r.roll}</td><td>{r.name}</td>{r.cells.map((c, i) => <td key={i}>{c}</td>)}
-                      <td className="text-[12px]"><RowStatus status={r.status} />{r.status !== "ok" ? <div className="mt-1">{r.messages.join("; ")}</div> : null}</td>
+                      <td className="text-[13.5px]"><RowStatus status={r.status} />{r.status !== "ok" ? <div className="mt-1">{r.messages.join("; ")}</div> : null}</td>
                     </tr>))
                   : (genVal?.rows ?? []).filter((r) => !onlyBad || r.status !== "ok").map((r) => (
                     <tr key={r.row} style={{ background: r.status === "error" ? "color-mix(in srgb, var(--danger) 10%, transparent)" : r.status === "warn" ? "color-mix(in srgb, var(--warn) 12%, transparent)" : undefined }}>
-                      <td>{r.row}</td><td>{r.data ? ("studentId" in r.data ? `${r.data.studentId} · ${r.data.name}` : `${r.data.name} · ${r.data.phone}`) : "—"}</td><td className="text-[12px]"><RowStatus status={r.status} />{r.status !== "ok" ? <div className="mt-1">{r.messages.join("; ")}</div> : null}</td>
+                      <td>{r.row}</td><td>{r.data ? ("studentId" in r.data ? `${r.data.studentId} · ${r.data.name}` : `${r.data.name} · ${r.data.phone}`) : "—"}</td><td className="text-[13.5px]"><RowStatus status={r.status} />{r.status !== "ok" ? <div className="mt-1">{r.messages.join("; ")}</div> : null}</td>
                     </tr>))}
               </tbody>
             </table>
           </div>
         </div>
       ) : (
-        <div className="grid gap-2 text-[13px]">
+        <div className="grid gap-2 text-[14.5px]">
           <div className="hair p-3">{t("wiz.confirm.body", { good, bad })}</div>
           {mode === "marks" ? <div className="muted">{t("wiz.confirm.marks")}</div> : null}
         </div>

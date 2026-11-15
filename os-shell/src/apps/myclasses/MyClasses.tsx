@@ -25,7 +25,7 @@ export default function MyClasses() {
         return (
           <section key={`${a.classNo}${a.section}${a.subject}`} className="card p-4">
             <div className="text-lg font-extrabold">{t("rc.class", { c: a.classNo, s: a.section })}</div>
-            <div className="muted text-[13px]">{a.subject} · {n(count)} {t("mc.students")}</div>
+            <div className="muted text-[14.5px]">{a.subject} · {n(count)} {t("mc.students")}</div>
             <div className="mt-2"><span className="chip">{cell ? t(`state.${cell.state}`) : "—"}</span></div>
             <div className="mt-3 flex gap-2"><button type="button" className="btn btn-sm btn-primary" onClick={() => launch("marks")}>{t("app.marks")}</button><button type="button" className="btn btn-sm" onClick={() => launch("roster")}>{t("app.roster")}</button></div>
           </section>

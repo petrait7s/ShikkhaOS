@@ -33,7 +33,7 @@ export default function AuditLog() {
       {rows.length === 0 ? <Empty title={t("audit.empty")} /> : (
         <div className="scroll-thin min-h-0 flex-1 overflow-auto p-3">
           <table className="table"><thead><tr><th>{t("audit.time")}</th><th>{t("audit.actor")}</th><th>{t("audit.action")}</th><th>{t("audit.summary")}</th></tr></thead>
-            <tbody>{rows.map((a) => <tr key={a.id}><td className="whitespace-nowrap">{fmtDateTime(a.at, lang)}</td><td>{a.actor}<div className="faint text-[11px]">{t(`role.${a.role}`)}</div></td><td><code className="text-[12px]">{a.action}</code></td><td>{a.summary}</td></tr>)}</tbody></table>
+            <tbody>{rows.map((a) => <tr key={a.id}><td className="whitespace-nowrap">{fmtDateTime(a.at, lang)}</td><td>{a.actor}<div className="faint text-[12.5px]">{t(`role.${a.role}`)}</div></td><td><code className="text-[13.5px]">{a.action}</code></td><td>{a.summary}</td></tr>)}</tbody></table>
         </div>
       )}
     </div>

@@ -39,7 +39,7 @@ export default function Magazine() {
     <div className="flex h-full min-h-[420px] flex-col">
       <div className="border-b p-3" style={{ borderColor: "var(--line)" }}>
         <div className="inline-flex rounded-lg p-0.5" style={{ background: "var(--paper-2)" }} role="tablist">
-          {tabs.map((k) => <button key={k} role="tab" aria-selected={tab === k} type="button" onClick={() => setTab(k)} className={cn("h-7 rounded-md px-3 text-[12px] font-semibold")} style={{ background: tab === k ? "var(--card)" : "transparent" }}>{t(`mag.tab.${k}`)}</button>)}
+          {tabs.map((k) => <button key={k} role="tab" aria-selected={tab === k} type="button" onClick={() => setTab(k)} className={cn("h-7 rounded-md px-3 text-[13.5px] font-semibold")} style={{ background: tab === k ? "var(--card)" : "transparent" }}>{t(`mag.tab.${k}`)}</button>)}
         </div>
       </div>
       <div className="scroll-thin min-h-0 flex-1 overflow-auto">{tab === "read" ? <Read /> : tab === "submit" ? <Submit /> : tab === "review" ? <Review /> : <Issues />}</div>
@@ -65,14 +65,14 @@ function Read() {
             <h3 className="serif-bn mb-2 text-xl font-bold">{i.title}</h3>
             <ul className="grid gap-2">
               {(articles.data ?? []).filter((a) => a.issueId === i.id && a.status === "published").map((a) => (
-                <li key={a.id}><button type="button" className="hair w-full p-3 text-left" onClick={() => setOpen(a)}><div className={cn("font-bold", a.lang === "bn" && "serif-bn")}>{a.title}</div><div className="faint text-[12px]">{a.author}</div></button></li>
+                <li key={a.id}><button type="button" className="hair w-full p-3 text-left" onClick={() => setOpen(a)}><div className={cn("font-bold", a.lang === "bn" && "serif-bn")}>{a.title}</div><div className="faint text-[13.5px]">{a.author}</div></button></li>
               ))}
             </ul>
           </div>
         </section>
       ))}
       <Modal open={!!open} onClose={() => setOpen(null)} title={open?.title ?? ""} width={640} footer={<Btn onClick={() => setOpen(null)}>{t("close")}</Btn>}>
-        {open ? <article className={cn("text-[15px] leading-7 [&_li]:ml-5 [&_li]:list-disc [&_p]:mb-3", open.lang === "bn" && "serif-bn")}><div className="faint mb-3 text-[12px]">{open.author}</div><ReactMarkdown>{open.body}</ReactMarkdown></article> : null}
+        {open ? <article className={cn("text-[16.5px] leading-7 [&_li]:ml-5 [&_li]:list-disc [&_p]:mb-3", open.lang === "bn" && "serif-bn")}><div className="faint mb-3 text-[13.5px]">{open.author}</div><ReactMarkdown>{open.body}</ReactMarkdown></article> : null}
       </Modal>
     </div>
   );
@@ -85,11 +85,11 @@ function Submit() {
   const bad = f.title.trim().length < 3 || f.body.trim().length < 20;
   return (
     <div className="mx-auto max-w-[640px] p-4">
-      <p className="muted mb-3 text-[13px]">{t("mag.submit.note")}</p>
+      <p className="muted mb-3 text-[14.5px]">{t("mag.submit.note")}</p>
       <Field label={t("nt.title")}><input className="input" value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></Field>
       <Field label={t("mag.lang")}><select className="select" value={f.lang} onChange={(e) => setF({ ...f, lang: e.target.value as "en" | "bn" })}><option value="en">English</option><option value="bn">বাংলা</option></select></Field>
       <Field label={t("mag.body")}><textarea className="textarea !min-h-[200px]" value={f.body} onChange={(e) => setF({ ...f, body: e.target.value })} /></Field>
-      <div className="faint mb-3 text-[12px]">{t("mag.markdown.tip")}</div>
+      <div className="faint mb-3 text-[13.5px]">{t("mag.markdown.tip")}</div>
       <Btn variant="primary" disabled={bad || m.isPending} onClick={() => void m.mutateAsync(undefined).then(() => setF({ title: "", lang: "en", body: "" })).catch(() => undefined)}><Send size={14} />{t("mag.submit")}</Btn>
     </div>
   );
@@ -111,7 +111,7 @@ function Review() {
       {pending.length === 0 ? <Empty title={t("mag.review.none")} icon={<Check size={22} />} /> : (
         <ul className="grid gap-2">{pending.map((a) => (
           <li key={a.id} className="card flex flex-wrap items-center gap-3 p-3">
-            <div className="min-w-0 flex-1"><div className={cn("font-bold", a.lang === "bn" && "serif-bn")}>{a.title}</div><div className="faint text-[12px]">{a.author} · {a.lang === "bn" ? "বাংলা" : "English"}</div></div>
+            <div className="min-w-0 flex-1"><div className={cn("font-bold", a.lang === "bn" && "serif-bn")}>{a.title}</div><div className="faint text-[13.5px]">{a.author} · {a.lang === "bn" ? "বাংলা" : "English"}</div></div>
             <Btn size="sm" onClick={() => setEdit(a)}><PenLine size={13} />{t("mag.edit")}</Btn>
             <select className="select !h-8 !w-auto" aria-label={t("mag.issue")} value={pickIssue(a.id)} onChange={(e) => setIssueFor({ ...issueFor, [a.id]: e.target.value })}>{(issues.data ?? []).map((i) => <option key={i.id} value={i.id}>{i.title}</option>)}</select>
             <Btn variant="primary" size="sm" disabled={review.isPending || !pickIssue(a.id)} onClick={() => review.mutate({ id: a.id, d: "approve", issueId: pickIssue(a.id) })}><Check size={13} />{t("ap.approve")}</Btn>
@@ -133,7 +133,7 @@ function Editor({ article, onClose }: { article: Article; onClose: () => void })
       <Field label={t("nt.title")}><input className="input" value={title} onChange={(e) => setTitle(e.target.value)} /></Field>
       <div className="grid gap-3 md:grid-cols-2">
         <Field label={t("mag.body")}><textarea className="textarea !min-h-[260px] font-mono" value={body} onChange={(e) => setBody(e.target.value)} /></Field>
-        <div><span className="label">{t("mag.preview")}</span><article className={cn("hair min-h-[260px] p-3 text-[14px] leading-6 [&_li]:ml-5 [&_li]:list-disc [&_p]:mb-2", article.lang === "bn" && "serif-bn")}><ReactMarkdown>{body}</ReactMarkdown></article></div>
+        <div><span className="label">{t("mag.preview")}</span><article className={cn("hair min-h-[260px] p-3 text-[15.5px] leading-6 [&_li]:ml-5 [&_li]:list-disc [&_p]:mb-2", article.lang === "bn" && "serif-bn")}><ReactMarkdown>{body}</ReactMarkdown></article></div>
       </div>
     </Modal>
   );
@@ -153,7 +153,7 @@ function Issues() {
       <div className="mb-3 flex justify-end"><Btn variant="primary" onClick={() => setOpen(true)}><Plus size={14} />{t("mag.issue.new")}</Btn></div>
       <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))" }}>
         {(issues.data ?? []).map((i) => (
-          <div key={i.id} className="flex flex-col items-start gap-2"><Cover issue={i} /><div className="text-[13px] font-bold">{i.title}</div>{i.status === "published" ? <Badge tone="ok">{t("state.published")}</Badge> : <Btn size="sm" variant="primary" disabled={publish.isPending} onClick={() => publish.mutate(i.id)}>{t("mag.issue.publish")}</Btn>}</div>
+          <div key={i.id} className="flex flex-col items-start gap-2"><Cover issue={i} /><div className="text-[14.5px] font-bold">{i.title}</div>{i.status === "published" ? <Badge tone="ok">{t("state.published")}</Badge> : <Btn size="sm" variant="primary" disabled={publish.isPending} onClick={() => publish.mutate(i.id)}>{t("mag.issue.publish")}</Btn>}</div>
         ))}
       </div>
       <Modal open={open} onClose={() => setOpen(false)} title={t("mag.issue.new")} footer={<><Btn onClick={() => setOpen(false)}>{t("cancel")}</Btn><Btn variant="primary" disabled={title.trim().length < 3 || create.isPending} onClick={() => void create.mutateAsync(undefined).then(() => { setOpen(false); setTitle(""); setTitleBn(""); }).catch(() => undefined)}>{t("create")}</Btn></>}>

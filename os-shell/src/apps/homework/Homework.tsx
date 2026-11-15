@@ -35,7 +35,7 @@ export default function Homework() {
                 {h.status === "DRAFT" ? <span className="chip">Draft</span> : null}
                 {role === "student" && h.mySubmission ? <span className={`status ${h.mySubmission.grade ? "status-ok" : "status-info"}`}>{h.mySubmission.grade ? `Grade ${h.mySubmission.grade}` : "Submitted"}</span> : null}
               </div>
-              <div className="faint text-[12px]">{h.subjectName ?? "—"} · {nm.data?.secLabel(h.sectionId)} · due {fmt(h.dueAt)}</div></button></li>))}</ul>
+              <div className="faint text-[13.5px]">{h.subjectName ?? "—"} · {nm.data?.secLabel(h.sectionId)} · due {fmt(h.dueAt)}</div></button></li>))}</ul>
         )}
       </div>
       {sel ? <aside className="scroll-thin max-h-[55%] shrink-0 overflow-auto border-t p-4 sm:max-h-none sm:w-[360px] sm:border-l sm:border-t-0" style={{ borderColor: "var(--line)" }}>
@@ -74,13 +74,13 @@ function TeacherDetail({ h }: { h: Hw }) {
   return (
     <div>
       <div className="section-title">{h.title}</div>
-      <p className="muted mt-1 whitespace-pre-wrap text-[13px]">{h.description || "No instructions."}</p>
+      <p className="muted mt-1 whitespace-pre-wrap text-[14.5px]">{h.description || "No instructions."}</p>
       {h.status === "DRAFT" ? <Btn className="mt-3" variant="primary" disabled={publish.isPending} onClick={() => void publish.mutateAsync(undefined).catch(() => undefined)}><Send size={14} />Publish to students</Btn> : (
         <div className="mt-3">
           <div className="label">Submissions ({(subs.data ?? []).filter((s) => s.submitted).length}/{(subs.data ?? []).length})</div>
           {subs.isLoading ? <SkeletonRows rows={3} /> : (
             <ul className="grid gap-1.5">{(subs.data ?? []).map((s) => (
-              <li key={s.studentId} className="hair p-2 text-[13px]">
+              <li key={s.studentId} className="hair p-2 text-[14.5px]">
                 <div className="flex items-center gap-2"><span className="num faint w-6">{s.rollNo}</span><span className="flex-1 font-semibold">{s.fullName}</span>
                   {s.submitted ? <span className={`status ${s.grade ? "status-ok" : s.late ? "status-warn" : "status-info"}`}>{s.grade ? `Grade ${s.grade}` : s.late ? "Late" : "Submitted"}</span> : <span className="status status-muted">Not yet</span>}</div>
                 {s.submitted && s.text ? <div className="muted mt-1 whitespace-pre-wrap">{s.text}</div> : null}
@@ -101,10 +101,10 @@ function StudentDetail({ h }: { h: Hw }) {
   return (
     <div>
       <div className="section-title">{h.title}</div>
-      <div className="faint text-[12px]">{h.subjectName} · due {fmt(h.dueAt)}</div>
-      <p className="muted mt-2 whitespace-pre-wrap text-[13px]">{h.description || "No instructions."}</p>
+      <div className="faint text-[13.5px]">{h.subjectName} · due {fmt(h.dueAt)}</div>
+      <p className="muted mt-2 whitespace-pre-wrap text-[14.5px]">{h.description || "No instructions."}</p>
       {mine ? (
-        <div className="hair mt-3 p-3 text-[13px]"><div className="font-semibold">Submitted {fmt(mine.submittedAt)}{mine.late ? " · late" : ""}</div>
+        <div className="hair mt-3 p-3 text-[14.5px]"><div className="font-semibold">Submitted {fmt(mine.submittedAt)}{mine.late ? " · late" : ""}</div>
           {mine.grade ? <div className="mt-1">Grade: <b>{mine.grade}</b>{mine.feedback ? ` — ${mine.feedback}` : ""}</div> : <div className="faint mt-1">Waiting for your teacher to grade.</div>}</div>
       ) : (
         <div className="mt-3 grid gap-2"><label className="label" htmlFor="hw-answer">Your answer</label><textarea id="hw-answer" className="textarea" value={text} onChange={(e) => setText(e.target.value)} />

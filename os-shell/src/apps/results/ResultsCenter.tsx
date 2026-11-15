@@ -138,7 +138,7 @@ export default function ResultsCenter() {
                 const doneN = rc.filter((x) => x.state === "verified" || x.state === "published").length;
                 return (
                   <tr key={`${r.classNo}-${r.section}`}>
-                    <td className="sticky-col whitespace-nowrap"><div className="font-bold">{t("rc.class", { c: r.classNo, s: r.section })}</div><div className="faint num text-[11.5px]">{t("rc.progress", { a: n(doneN), b: n(rc.length) })}</div></td>
+                    <td className="sticky-col whitespace-nowrap"><div className="font-bold">{t("rc.class", { c: r.classNo, s: r.section })}</div><div className="faint num text-[13px]">{t("rc.progress", { a: n(doneN), b: n(rc.length) })}</div></td>
                     {cols.map((c) => {
                       const cell = cellMap.get(`${r.classNo}-${r.section}-${c.en}`);
                       if (!cell) return <td key={c.en} className="faint text-center">—</td>;
@@ -147,7 +147,7 @@ export default function ResultsCenter() {
                       const dim = stateFilter !== null && cell.state !== stateFilter;
                       return (
                         <td key={c.en} className="!p-1">
-                          <button type="button" className="flex w-full min-w-[84px] flex-col items-center gap-0.5 whitespace-nowrap rounded-lg border px-1.5 py-1.5 text-[11px] font-semibold" aria-label={`${t("rc.class", { c: r.classNo, s: r.section })} ${c.en}: ${t(`state.${cell.state}`)}`}
+                          <button type="button" className="flex w-full min-w-[84px] flex-col items-center gap-0.5 whitespace-nowrap rounded-lg border px-1.5 py-1.5 text-[12.5px] font-semibold" aria-label={`${t("rc.class", { c: r.classNo, s: r.section })} ${c.en}: ${t(`state.${cell.state}`)}`}
                             style={{ color: m.color, borderColor: active ? "var(--accent)" : "var(--line)", background: `color-mix(in srgb, ${m.color} 10%, transparent)`, outline: active ? "2px solid var(--accent)" : undefined, opacity: dim ? 0.32 : 1 }}
                             onClick={() => setSel({ classNo: r.classNo, section: r.section, subject: c.en })}>
                             <m.icon size={14} />{t(`state.${cell.state}`)}
@@ -168,7 +168,7 @@ export default function ResultsCenter() {
               })}
             </tbody>
           </table>
-          <p className="faint mt-3 text-[12px]">{t("rc.dragtip")}</p>
+          <p className="faint mt-3 text-[13.5px]">{t("rc.dragtip")}</p>
         </div>
       </div>
 
@@ -178,7 +178,7 @@ export default function ResultsCenter() {
             <div><div className="font-bold">{t("rc.class", { c: sel.classNo, s: sel.section })} · {sel.subject}</div><div className="mt-1"><StateChip state={selCell.state} /></div></div>
             <Btn variant="icon" aria-label={t("close")} onClick={() => setSel(null)}><X size={16} /></Btn>
           </div>
-          <div className="muted px-4 text-[12px]">
+          <div className="muted px-4 text-[13.5px]">
             {selCell.submittedBy ? <div>{t("rc.by")}: {(teachers.data ?? []).find((x) => x.id === selCell.submittedBy)?.name ?? "—"}</div> : null}
             <div>{t("rc.updated")}: {selCell.updatedAt ? fmtDateTime(selCell.updatedAt, lang) : "—"}</div>
             {selCell.returnComment ? <div style={{ color: "var(--warn)" }}>{t("rc.returned")}: {selCell.returnComment}</div> : null}
@@ -233,19 +233,19 @@ function PublishDialog({ examId, row, onClose }: { examId: string; row: { classN
     <Modal open onClose={onClose} title={t("rc.publish.title", { c: row.classNo, s: row.section })}
       footer={ok ? <Btn variant="primary" onClick={onClose}>{t("close")}</Btn> : <><Btn onClick={onClose}>{t("cancel")}</Btn><Btn variant="primary" disabled={pub.isPending || schedule.isPending || sum.isLoading} onClick={() => void run()}>{sched ? t("rc.schedule") : t("rc.publishnow")}</Btn></>}>
       {ok ? (
-        <div className="flex flex-col items-center gap-2 py-6 text-center"><CheckCircle2 size={44} style={{ color: "var(--ok)" }} /><div className="text-lg font-bold">{t("rc.success")}</div><div className="muted text-[13px]">{t("rc.success.sub")}</div></div>
+        <div className="flex flex-col items-center gap-2 py-6 text-center"><CheckCircle2 size={44} style={{ color: "var(--ok)" }} /><div className="text-lg font-bold">{t("rc.success")}</div><div className="muted text-[14.5px]">{t("rc.success.sub")}</div></div>
       ) : (
         <>
           {sum.isLoading ? <SkeletonRows rows={2} /> : sum.data ? (
             <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[[t("rc.sum.students"), n(sum.data.students)], [t("rc.sum.pass"), `${n(sum.data.passRate.toFixed(1))}%`], [t("rc.sum.gpa"), n(sum.data.avgGpa.toFixed(2))], [t("rc.sum.fail"), n(sum.data.failCount)]].map(([l, v]) => (
-                <div key={l} className="hair p-3 text-center"><div className="text-xl font-extrabold">{v}</div><div className="faint text-[11px]">{l}</div></div>
+                <div key={l} className="hair p-3 text-center"><div className="text-xl font-extrabold">{v}</div><div className="faint text-[12.5px]">{l}</div></div>
               ))}
             </div>
           ) : null}
-          <label className="mb-2 flex items-center gap-2 text-[13px]"><input type="checkbox" checked={sched} onChange={(e) => setSched(e.target.checked)} />{t("rc.schedule.opt")}</label>
+          <label className="mb-2 flex items-center gap-2 text-[14.5px]"><input type="checkbox" checked={sched} onChange={(e) => setSched(e.target.checked)} />{t("rc.schedule.opt")}</label>
           {sched ? <Field label={t("rc.schedule.at")}><input className="input" type="datetime-local" value={at} onChange={(e) => setAt(e.target.value)} /></Field> : null}
-          <p className="muted flex items-center gap-1.5 text-[12px]"><AlertTriangle size={13} />{t("rc.publish.warn")}</p>
+          <p className="muted flex items-center gap-1.5 text-[13.5px]"><AlertTriangle size={13} />{t("rc.publish.warn")}</p>
         </>
       )}
     </Modal>
@@ -260,7 +260,7 @@ function UnpublishDialog({ examId, row, onClose }: { examId: string; row: { clas
     <Modal open onClose={onClose} title={t("rc.unpublish.title", { c: row.classNo, s: row.section })}
       footer={<><Btn onClick={onClose}>{t("cancel")}</Btn><Btn variant="danger" disabled={reason.trim().length < 3 || m.isPending} onClick={() => void m.mutateAsync(undefined).then(onClose).catch(() => undefined)}>{t("rc.unpublish")}</Btn></>}>
       <Field label={t("rc.reason")}><textarea className="textarea" value={reason} onChange={(e) => setReason(e.target.value)} /></Field>
-      <p className="muted text-[12px]">{t("rc.unpublish.note")}</p>
+      <p className="muted text-[13.5px]">{t("rc.unpublish.note")}</p>
     </Modal>
   );
 }

@@ -20,7 +20,7 @@ export default function Faculty() {
             const subs = [...new Set(x.assignments.map((a) => a.subject))];
             return (
               <div key={x.id} className="card p-3">
-                <div className="flex items-center gap-2"><Avatar name={x.name} size={38} photo={x.photo} /><div className="min-w-0"><div className="truncate font-bold">{lang === "bn" ? x.nameBn : x.name}</div><div className="faint truncate text-[12px]">{x.designation}</div></div></div>
+                <div className="flex items-center gap-2"><Avatar name={x.name} size={38} photo={x.photo} /><div className="min-w-0"><div className="truncate font-bold">{lang === "bn" ? x.nameBn : x.name}</div><div className="faint truncate text-[13.5px]">{x.designation}</div></div></div>
                 <div className="mt-2 flex flex-wrap gap-1">{subs.map((su) => <span key={su} className="chip">{su}</span>)}</div>
               </div>
             );

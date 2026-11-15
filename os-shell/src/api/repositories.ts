@@ -3,7 +3,7 @@ import type {
   Notification, PaperFile, Publication, Role, RoutineSlot, ExamSlot, School, Season, Session, Student, StudentResult, SubjectDef, Teacher, ClassSummary,
 } from "./contracts";
 
-export type SchoolBrand = { id: string; name: string; nameBn: string; city: string; monogram: string; primary: string };
+export type SchoolBrand = { id: string; name: string; nameBn: string; city: string; monogram: string; primary: string; motto?: string };
 
 export interface AuthRepo {
   login(id: string, password: string): Promise<Session>;

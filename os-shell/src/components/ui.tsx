@@ -41,7 +41,7 @@ export function Modal({ open, onClose, title, children, width = 520, footer }: {
         <Dialog.Overlay className="fixed inset-0 z-[9000] bg-black/30 backdrop-blur-[3px]" />
         <Dialog.Content aria-describedby={undefined} className="sheet fixed left-1/2 top-1/2 z-[9001] flex max-h-[88vh] -translate-x-1/2 -translate-y-1/2 flex-col" style={{ width: `min(${width}px, 94vw)` }}>
           <div className="flex items-center justify-between px-5 pb-2 pt-4">
-            <Dialog.Title className="text-[15px] font-semibold">{title}</Dialog.Title>
+            <Dialog.Title className="text-[16.5px] font-semibold">{title}</Dialog.Title>
             <Dialog.Close asChild><Btn variant="icon" size="sm" aria-label="Close"><X size={14} /></Btn></Dialog.Close>
           </div>
           <div className="scroll-thin overflow-auto px-5 pb-4">{children}</div>
@@ -82,7 +82,7 @@ export function Empty({ title, hint, icon, action }: { title: string; hint?: str
     <div className="flex flex-col items-center justify-center gap-2 px-6 py-12 text-center">
       <div className="grid size-12 place-items-center rounded-2xl" style={{ background: "var(--paper-2)", color: "var(--ink-3)" }}>{icon ?? <Inbox size={22} />}</div>
       <div className="font-bold">{title}</div>
-      {hint ? <div className="muted max-w-sm text-[13px]">{hint}</div> : null}
+      {hint ? <div className="muted max-w-sm text-[14.5px]">{hint}</div> : null}
       {action}
     </div>
   );

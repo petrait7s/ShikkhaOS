@@ -29,7 +29,7 @@ export function PasswordGate() {
     <Modal open={need} onClose={() => undefined} title="Choose a new password" width={440}
       footer={<Btn variant="primary" disabled={busy || !cur || !pw || !pw2} onClick={() => void go()}>Save new password</Btn>}>
       <form onSubmit={(e) => { e.preventDefault(); void go(); }} className="grid gap-3">
-        <p className="muted text-[13px]">You signed in with a temporary password. Choose your own password to continue (at least 10 characters, with letters and numbers).</p>
+        <p className="muted text-[14.5px]">You signed in with a temporary password. Choose your own password to continue (at least 10 characters, with letters and numbers).</p>
         <div><label className="label" htmlFor="pg-cur">Temporary password</label><input id="pg-cur" className="input" type="password" autoComplete="current-password" value={cur} onChange={(e) => setCur(e.target.value)} /></div>
         <div><label className="label" htmlFor="pg-new">New password</label><input id="pg-new" className="input" type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} /></div>
         <div><label className="label" htmlFor="pg-new2">Repeat new password</label><input id="pg-new2" className="input" type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} /></div>

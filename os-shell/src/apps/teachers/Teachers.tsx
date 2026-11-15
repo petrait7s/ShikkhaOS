@@ -33,7 +33,7 @@ export default function Teachers() {
     <div className="flex h-full min-h-[420px] flex-col">
       <div className="flex flex-wrap items-center gap-2 border-b p-3" style={{ borderColor: "var(--line)" }}>
         <div className="flex rounded-lg p-0.5" style={{ background: "var(--paper-2)" }}>
-          {(["cards", "table"] as const).map((v) => <button key={v} type="button" onClick={() => setView(v)} aria-pressed={view === v} className="h-7 rounded-md px-3 text-[12px] font-semibold" style={{ background: view === v ? "var(--card)" : "transparent" }}>{t(`view.${v}`)}</button>)}
+          {(["cards", "table"] as const).map((v) => <button key={v} type="button" onClick={() => setView(v)} aria-pressed={view === v} className="h-7 rounded-md px-3 text-[13.5px] font-semibold" style={{ background: view === v ? "var(--card)" : "transparent" }}>{t(`view.${v}`)}</button>)}
         </div>
         <div className="flex-1" />
         <Btn onClick={() => setWiz(true)}><Upload size={14} />{t("teachers.import")}</Btn>
@@ -43,9 +43,9 @@ export default function Teachers() {
         <div className="scroll-thin grid flex-1 content-start gap-3 overflow-auto p-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))" }}>
           {list.map((x) => (
             <button key={x.id} type="button" className="card p-3 text-left" onClick={() => setSel(x)}>
-              <div className="flex items-center gap-2"><Avatar name={x.name} size={36} photo={x.photo} /><div className="min-w-0"><div className="truncate font-bold">{lang === "bn" ? x.nameBn : x.name}</div><div className="faint truncate text-[12px]">{x.designation}</div></div></div>
-              <div className="mt-2 flex items-center justify-between text-[12px]"><span className="muted">{x.phone}</span>{x.status === "invited" ? <Badge tone="warn">{t("teachers.invited")}</Badge> : <Badge tone="ok">{t("teachers.active")}</Badge>}</div>
-              <div className="faint mt-1 text-[12px]">{t("teachers.assignments", { n: x.assignments.length })}</div>
+              <div className="flex items-center gap-2"><Avatar name={x.name} size={36} photo={x.photo} /><div className="min-w-0"><div className="truncate font-bold">{lang === "bn" ? x.nameBn : x.name}</div><div className="faint truncate text-[13.5px]">{x.designation}</div></div></div>
+              <div className="mt-2 flex items-center justify-between text-[13.5px]"><span className="muted">{x.phone}</span>{x.status === "invited" ? <Badge tone="warn">{t("teachers.invited")}</Badge> : <Badge tone="ok">{t("teachers.active")}</Badge>}</div>
+              <div className="faint mt-1 text-[13.5px]">{t("teachers.assignments", { n: x.assignments.length })}</div>
             </button>
           ))}
         </div>
@@ -61,9 +61,9 @@ export default function Teachers() {
       </Drawer>
       <NewInvite open={newOpen} onClose={() => setNewOpen(false)} onDone={(c) => { setCreated(c); setNewOpen(false); }} />
       <Modal open={!!created} onClose={() => setCreated(null)} title={t("teachers.invite.ready")} footer={<Btn variant="primary" onClick={() => setCreated(null)}>{t("close")}</Btn>}>
-        {created ? <div className="grid gap-3 text-[13px]"><p className="muted">{LIVE ? "Give the teacher their sign-in ID (phone number) and this temporary password. They choose a new password at first sign-in. A CSV copy was downloaded. Delete it after handing it over." : t("teachers.invite.share")}</p>
-          <div className="hair flex items-center justify-between gap-2 p-3"><div><div className="faint text-[11px]">{LIVE ? "Temporary password" : t("signup.invitecode")}</div><code className="text-lg font-extrabold">{created}</code></div><Btn size="sm" onClick={() => copy(created)}><Copy size={13} />{t("copy")}</Btn></div>
-          {LIVE ? null : <div className="hair flex items-center justify-between gap-2 p-3"><code className="min-w-0 truncate text-[12px]">{link(created)}</code><Btn size="sm" onClick={() => copy(link(created))}><Link2 size={13} />{t("copy")}</Btn></div>}</div> : null}
+        {created ? <div className="grid gap-3 text-[14.5px]"><p className="muted">{LIVE ? "Give the teacher their sign-in ID (phone number) and this temporary password. They choose a new password at first sign-in. A CSV copy was downloaded. Delete it after handing it over." : t("teachers.invite.share")}</p>
+          <div className="hair flex items-center justify-between gap-2 p-3"><div><div className="faint text-[12.5px]">{LIVE ? "Temporary password" : t("signup.invitecode")}</div><code className="text-lg font-extrabold">{created}</code></div><Btn size="sm" onClick={() => copy(created)}><Copy size={13} />{t("copy")}</Btn></div>
+          {LIVE ? null : <div className="hair flex items-center justify-between gap-2 p-3"><code className="min-w-0 truncate text-[13.5px]">{link(created)}</code><Btn size="sm" onClick={() => copy(link(created))}><Link2 size={13} />{t("copy")}</Btn></div>}</div> : null}
       </Modal>
       {wiz ? <ImportWizard open mode="teachers" onClose={() => setWiz(false)} /> : null}
     </div>
@@ -106,15 +106,15 @@ function Profile({ teacher, code, link, copy, subjectsFor }: { teacher: Teacher;
   const [list, setList] = useState(teacher.assignments);
   const opts = subjectsFor(classNo);
   return (
-    <div className="grid gap-3 text-[13px]">
+    <div className="grid gap-3 text-[14.5px]">
       <div className="flex items-center gap-3"><Avatar name={teacher.name} size={52} photo={teacher.photo} /><div><div className="serif-bn text-lg font-bold">{lang === "bn" ? teacher.nameBn : teacher.name}</div><div className="muted">{teacher.designation}</div></div></div>
       <div className="muted">{teacher.phone} · {teacher.email}</div>
       <div><Btn size="sm" onClick={() => setEditing(true)}><Pencil size={13} />{t("pf.edit")}</Btn></div>
       {editing ? <PersonEdit kind="teacher" person={teacher} onClose={() => setEditing(false)} /> : null}
-      {teacher.status === "invited" && code ? <div className="hair grid gap-2 p-3"><div className="faint text-[11px]">{t("signup.invitecode")}</div><code className="font-extrabold">{code}</code><Btn size="sm" onClick={() => copy(link(code))}><Link2 size={13} />{t("teachers.copylink")}</Btn></div> : null}
+      {teacher.status === "invited" && code ? <div className="hair grid gap-2 p-3"><div className="faint text-[12.5px]">{t("signup.invitecode")}</div><code className="font-extrabold">{code}</code><Btn size="sm" onClick={() => copy(link(code))}><Link2 size={13} />{t("teachers.copylink")}</Btn></div> : null}
       <div>
         <div className="label">{t("teachers.assign")}</div>
-        <ul className="mb-2 grid gap-1">{list.map((a, i) => <li key={`${a.classNo}${a.section}${a.subject}`} className="hair flex items-center justify-between px-2 py-1"><span>{t("rc.class", { c: a.classNo, s: a.section })} · {a.subject}</span><button type="button" className="faint text-[12px] underline" onClick={() => setList(list.filter((_, j) => j !== i))}>{t("remove")}</button></li>)}</ul>
+        <ul className="mb-2 grid gap-1">{list.map((a, i) => <li key={`${a.classNo}${a.section}${a.subject}`} className="hair flex items-center justify-between px-2 py-1"><span>{t("rc.class", { c: a.classNo, s: a.section })} · {a.subject}</span><button type="button" className="faint text-[13.5px] underline" onClick={() => setList(list.filter((_, j) => j !== i))}>{t("remove")}</button></li>)}</ul>
         <div className="grid grid-cols-3 gap-2">
           <select className="select" aria-label={t("col.class")} value={classNo} onChange={(e) => { setClassNo(Number(e.target.value)); setSubject(""); }}>{Array.from({ length: 10 }, (_, i) => i + 1).map((c) => <option key={c} value={c}>{c}</option>)}</select>
           <select className="select" aria-label={t("col.section")} value={section} onChange={(e) => setSection(e.target.value)}><option>A</option><option>B</option></select>
@@ -126,7 +126,7 @@ function Profile({ teacher, code, link, copy, subjectsFor }: { teacher: Teacher;
         </div>
       </div>
       <Btn disabled={teacher.status === "invited"} onClick={() => { repos.teacher.resetPassword(teacher.id).then(setPw).catch((e: unknown) => toast.error(e instanceof Error ? e.message : t("error.generic"))); }}><KeyRound size={14} />{t("students.reset")}</Btn>
-      {pw ? <div className="hair p-3"><div className="faint text-[11px]">{t("students.reset.temp")}</div><code className="text-base font-bold">{pw}</code></div> : null}
+      {pw ? <div className="hair p-3"><div className="faint text-[12.5px]">{t("students.reset.temp")}</div><code className="text-base font-bold">{pw}</code></div> : null}
     </div>
   );
 }

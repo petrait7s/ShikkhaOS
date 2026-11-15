@@ -20,7 +20,7 @@ export default function Roster() {
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 border-b p-3" style={{ borderColor: "var(--line)" }}>
         <select className="select !w-auto" aria-label={t("col.class")} value={key} onChange={(e) => setPick(e.target.value)}>{groups.map((g) => <option key={`${g.classNo}-${g.section}`} value={`${g.classNo}-${g.section}`}>{t("rc.class", { c: g.classNo, s: g.section })}</option>)}</select>
-        <span className="faint text-[12px]">{list.length} {t("mc.students")}</span>
+        <span className="faint text-[13.5px]">{list.length} {t("mc.students")}</span>
       </div>
       <div className="scroll-thin min-h-0 flex-1 overflow-auto p-3">
         <table className="table"><thead><tr><th>{t("col.roll")}</th><th>{t("col.name")}</th><th>{t("col.studentid")}</th><th>{t("col.guardian")}</th></tr></thead>

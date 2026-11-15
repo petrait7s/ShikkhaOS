@@ -13,7 +13,7 @@ export default function Usage() {
   if (metrics.isLoading) return <SkeletonRows rows={6} />;
   if (metrics.isError) return <ErrorBox error={metrics.error} retry={() => void metrics.refetch()} />;
   const d = metrics.data ?? [];
-  const Card = ({ title, children }: { title: string; children: React.ReactNode }) => <section className="card p-4"><h3 className="faint mb-2 text-[11px] font-bold uppercase tracking-wider">{title}</h3><div style={{ height: 190 }}>{children}</div></section>;
+  const Card = ({ title, children }: { title: string; children: React.ReactNode }) => <section className="card p-4"><h3 className="faint mb-2 text-[12.5px] font-bold uppercase tracking-wider">{title}</h3><div style={{ height: 190 }}>{children}</div></section>;
   return (
     <div className="grid gap-4 p-4">
       <Card title={t("usage.dau")}><ResponsiveContainer width="100%" height="100%"><LineChart data={d} margin={{ left: -10, right: 8 }}><CartesianGrid stroke="var(--line)" vertical={false} /><XAxis dataKey="day" tickFormatter={(v: string) => v.slice(5)} tick={axis} minTickGap={24} /><YAxis tick={axis} /><RTip {...tip} /><Line type="monotone" dataKey="dau" stroke="var(--accent)" strokeWidth={2.5} dot={false} /></LineChart></ResponsiveContainer></Card>

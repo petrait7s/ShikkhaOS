@@ -10,7 +10,7 @@ import { Avatar, Btn, Monogram, Skeleton, Tip } from "@/components/ui";
 import { useHydrated, useT } from "@/lib/i18n";
 import { useUI } from "@/store/ui";
 import { appById, appsFor } from "@/apps/registry";
-import { AppIcon } from "./AppIcon";
+import { AppIcon, bigSurBackground } from "./AppIcon";
 import { useActionItems } from "@/features/actions/useActionItems";
 import { LockScreen } from "./LockScreen";
 import { Spotlight } from "./Spotlight";
@@ -54,7 +54,7 @@ function UserMenu() {
     <div className="relative">
       <button type="button" className="flex items-center gap-2 rounded-md px-1.5 py-0.5 hover:bg-[var(--hover)]" onClick={() => setOpen(!open)} aria-haspopup="menu" aria-expanded={open}>
         <Avatar name={session.name} size={20} photo={me.data?.photo} />
-        <span className="hidden max-w-[150px] truncate text-[12px] font-medium md:block">{session.name}</span>
+        <span className="hidden max-w-[150px] truncate text-[13.5px] font-medium md:block">{session.name}</span>
       </button>
       {open ? (
         <div role="menu" className="sheet absolute right-0 top-8 z-[9100] w-[200px] p-1.5">
@@ -73,7 +73,7 @@ function Clock() {
   const d = new Date(now);
   const day = new Intl.DateTimeFormat(lang === "bn" ? "bn-BD" : "en-GB", { timeZone: "Asia/Dhaka", weekday: "short", day: "numeric", month: "short" }).format(d);
   const time = new Intl.DateTimeFormat(lang === "bn" ? "bn-BD" : "en-US", { timeZone: "Asia/Dhaka", hour: "numeric", minute: "2-digit" }).format(d);
-  return <span className="hidden whitespace-nowrap px-1 text-[12.5px] font-medium tabular-nums sm:inline">{day}  {time}</span>;
+  return <span className="hidden whitespace-nowrap px-1 text-[14px] font-medium tabular-nums sm:inline">{day}  {time}</span>;
 }
 
 function TopBar({ mobile }: { mobile: boolean }) {
@@ -89,7 +89,7 @@ function TopBar({ mobile }: { mobile: boolean }) {
   return (
     <header className="menubar relative z-[9050] flex h-8 shrink-0 items-center gap-1 px-3">
       {school ? <img src="/logo-mark.png" alt="" className="menubar-logo" /> : role === "petra" ? <Monogram text="PE" color="#1f1b16" size={18} /> : <Skeleton w={18} h={18} />}
-      <span className="serif-bn ml-1.5 max-w-[46vw] truncate text-[13px] font-bold">{title}</span>
+      <span className="serif-bn ml-1.5 max-w-[46vw] truncate text-[14.5px] font-bold">{title}</span>
       <div className="flex-1" />
       <Btn variant="icon" size="sm" onClick={() => setSpot(true)} aria-label={t("spot.trigger")}><Search size={14} /></Btn>
       {role !== "petra" ? <ActionButton /> : null}
@@ -122,7 +122,7 @@ function DockItem({ app, mouseX, running, onClick, label }: { app: ReturnType<ty
 function AppIconFluid({ icon: Icon, color, size }: { icon: ReturnType<typeof appsFor>[number]["icon"]; color: string; size: MotionValue<number> }) {
   const glyph = useTransform(size, (v) => Math.round(v * 0.5));
   return (
-    <motion.span className="app-icon" style={{ width: size, height: size, background: `linear-gradient(180deg, color-mix(in srgb, ${color} 72%, #fff) 0%, ${color} 52%, color-mix(in srgb, ${color} 82%, #000) 100%)` }}>
+    <motion.span className="app-icon" style={{ width: size, height: size, background: bigSurBackground(color), ["--ic" as string]: color }}>
       <motion.span style={{ width: glyph, height: glyph }} className="grid place-items-center [&>svg]:size-full"><Icon /></motion.span>
     </motion.span>
   );
@@ -165,7 +165,7 @@ function MobileHome() {
         {appsFor(role).map((a) => (
           <button key={a.id} type="button" className="flex flex-col items-center gap-1.5" onClick={() => launch(a.id)}>
             <AppIcon icon={a.icon} color={a.color} size={58} />
-            <span className="text-center text-[11px] font-semibold leading-tight">{t(`app.${a.id}`)}</span>
+            <span className="text-center text-[12.5px] font-semibold leading-tight">{t(`app.${a.id}`)}</span>
           </button>
         ))}
       </div>

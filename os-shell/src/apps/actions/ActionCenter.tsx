@@ -51,7 +51,7 @@ export default function ActionCenter() {
         <div className="flex flex-wrap items-end gap-3">
           <div className="min-w-0 flex-1">
             <h2 className="app-title">{t("app.actions")}</h2>
-            <p className="muted text-[13px]" role="status" aria-live="polite">{items.length ? t("ac.count", { n: n(items.length) }) : t("ac.clear")}</p>
+            <p className="muted text-[14.5px]" role="status" aria-live="polite">{items.length ? t("ac.count", { n: n(items.length) }) : t("ac.clear")}</p>
           </div>
           {readable.length ? <Btn size="sm" disabled={busy === "all"} onClick={() => void readAll()}><CheckCheck size={14} />{t("ac.readall")}</Btn> : null}
         </div>
@@ -80,10 +80,10 @@ export default function ActionCenter() {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-baseline gap-x-2">
                       <span className="font-semibold leading-snug">{i.title}</span>
-                      {i.priority === "high" ? <span className="status status-danger !h-5 !text-[11px]">{t("ac.prio.high")}</span> : null}
+                      {i.priority === "high" ? <span className="status status-danger !h-5 !text-[12.5px]">{t("ac.prio.high")}</span> : null}
                     </div>
-                    {i.detail ? <div className="muted mt-0.5 line-clamp-2 text-[13px]">{i.detail}</div> : null}
-                    <div className="faint mt-1 text-[12px]">{t(`ac.cat.${i.category}`)}{i.at ? ` · ${fmtDateTime(i.at, lang)}` : ""}</div>
+                    {i.detail ? <div className="muted mt-0.5 line-clamp-2 text-[14.5px]">{i.detail}</div> : null}
+                    <div className="faint mt-1 text-[13.5px]">{t(`ac.cat.${i.category}`)}{i.at ? ` · ${fmtDateTime(i.at, lang)}` : ""}</div>
                   </div>
                   <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
                     {i.app !== "actions" ? <Btn size="sm" variant={i.priority === "high" ? "primary" : undefined} onClick={() => openAction(i)}>{i.openLabel}</Btn> : null}
@@ -97,7 +97,7 @@ export default function ActionCenter() {
         )}
       </div>
 
-      <footer className="faint flex flex-wrap items-center gap-2 border-t px-5 py-2 text-[12px]" style={{ borderColor: "var(--line)" }}>
+      <footer className="faint flex flex-wrap items-center gap-2 border-t px-5 py-2 text-[13.5px]" style={{ borderColor: "var(--line)" }}>
         <span className="flex-1">{t("ac.footnote")}</span>
         {dismissedCount ? <Btn size="sm" variant="ghost" onClick={() => restore(prefix)}><RotateCcw size={13} />{t("ac.restore", { n: n(dismissedCount) })}</Btn> : null}
       </footer>

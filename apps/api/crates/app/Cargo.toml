@@ -20,7 +20,7 @@ thiserror.workspace = true
 tokio = { version = "1", features = ["full"] }
 axum = { version = "0.8", features = ["ws", "macros"] }
 tower = "0.5"
-tower-http = { version = "0.6", features = ["trace", "cors", "request-id", "timeout", "limit", "set-header", "compression-gzip"] }
+tower-http = { version = "0.7", features = ["trace", "cors", "request-id", "timeout", "limit", "set-header", "compression-gzip"] }
 sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "tls-rustls", "postgres", "uuid", "chrono", "json", "rust_decimal", "migrate", "macros"] }
 uuid = { version = "1", features = ["v4", "v7", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }

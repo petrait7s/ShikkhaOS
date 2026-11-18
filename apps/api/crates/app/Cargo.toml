@@ -25,7 +25,7 @@ sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio",
 uuid = { version = "1", features = ["v4", "v7", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 rust_decimal = { version = "1", features = ["serde-float", "db-postgres"] }
-argon2 = "0.5"
+argon2 = "0.6"
 jsonwebtoken = "9"
 rand = "0.8"
 sha2 = "0.10"

@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # Build context: repository root.
-FROM node:22-bookworm-slim AS build
+FROM node:25-bookworm-slim AS build
 ARG NEXT_PUBLIC_API_BASE_URL=/api/v1
 ARG NEXT_PUBLIC_API_MODE=live
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL NEXT_PUBLIC_API_MODE=$NEXT_PUBLIC_API_MODE NEXT_TELEMETRY_DISABLED=1
@@ -11,7 +11,7 @@ COPY packages ./packages
 COPY apps/web ./apps/web
 RUN pnpm install --frozen-lockfile --filter web... && pnpm --filter web build
 
-FROM node:22-bookworm-slim AS run
+FROM node:25-bookworm-slim AS run
 ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0 NEXT_TELEMETRY_DISABLED=1
 RUN useradd --system --uid 10001 app
 WORKDIR /app
